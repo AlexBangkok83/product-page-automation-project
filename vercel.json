@@ -1,46 +1,10 @@
 {
+  "buildCommand": null,
   "framework": null,
+  "installCommand": null,
+  "outputDirectory": ".",
+  "functions": {},
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/stores/clipia.fi/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.fi"
-        }
-      ]
-    },
-    {
-      "source": "/",
-      "destination": "/stores/clipia.fi/index.html",
-      "has": [
-        {
-          "type": "host", 
-          "value": "www.clipia.fi"
-        }
-      ]
-    },
-    {
-      "source": "/",
-      "destination": "/stores/clipia.de/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.de"
-        }
-      ]
-    },
-    {
-      "source": "/",
-      "destination": "/stores/clipia.de/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.clipia.de"
-        }
-      ]
-    },
     {
       "source": "/(.*)",
       "destination": "/stores/clipia.fi/$1",
@@ -81,5 +45,6 @@
         }
       ]
     }
-  ]
+  ],
+  "trailingSlash": false
 }
