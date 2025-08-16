@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/public/stores/clipia.fi/index.html",
+      "destination": "/stores/clipia.fi/index.html",
       "has": [
         {
           "type": "host",
@@ -12,17 +12,17 @@
     },
     {
       "source": "/",
-      "destination": "/public/stores/clipia.fi/index.html",
+      "destination": "/stores/clipia.fi/index.html",
       "has": [
         {
-          "type": "host",
+          "type": "host", 
           "value": "www.clipia.fi"
         }
       ]
     },
     {
       "source": "/",
-      "destination": "/public/stores/clipia.de/index.html",
+      "destination": "/stores/clipia.de/index.html",
       "has": [
         {
           "type": "host",
@@ -32,47 +32,7 @@
     },
     {
       "source": "/",
-      "destination": "/public/stores/clipia.de/index.html",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.clipia.de"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/stores/clipia.fi/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.fi"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/stores/clipia.fi/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.clipia.fi"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/stores/clipia.de/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.de"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/public/stores/clipia.de/$1",
+      "destination": "/stores/clipia.de/index.html",
       "has": [
         {
           "type": "host",
