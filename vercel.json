@@ -43,6 +43,26 @@
           "value": "www.clipia.de"
         }
       ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/stores/clipia.co.uk/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "clipia.co.uk"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/stores/clipia.co.uk/$1",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.clipia.co.uk"
+        }
+      ]
     }
   ],
   "trailingSlash": false
