@@ -3,7 +3,6 @@
   "framework": null,
   "installCommand": null,
   "outputDirectory": ".",
-  "functions": {},
   "rewrites": [
     {
       "source": "/(.*)",
