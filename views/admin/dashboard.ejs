@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> MultiStore Platform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/admin">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/site-setup">Site Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/company-profile">Company Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="loadLiveStores()">Live Stores</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/product-template">Template Builder</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="bi bi-speedometer2 text-primary me-2"></i>
+                            Admin Dashboard
+                        </h1>
+                        <p class="text-muted mb-0">Manage your e-commerce stores</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/admin/company-profile" class="btn btn-outline-primary">
+                            <i class="bi bi-building me-2"></i>Company Profile
+                        </a>
+                        <a href="/admin/site-setup" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Create New Store
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-primary mb-2">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <h3 class="h4 mb-1"><%= totalStores %></h3>
+                        <p class="text-muted mb-0">Total Stores</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-success mb-2">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <h3 class="h4 mb-1"><%= activeStores %></h3>
+                        <p class="text-muted mb-0">Active Stores</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-info mb-2">
+                            <i class="bi bi-globe"></i>
+                        </div>
+                        <h3 class="h4 mb-1"><%= stores.filter(s => s.shopify_connected).length %></h3>
+                        <p class="text-muted mb-0">Shopify Connected</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="display-6 text-warning mb-2">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <h3 class="h4 mb-1"><%= stores.filter(s => s.status === 'pending').length %></h3>
+                        <p class="text-muted mb-0">Pending Setup</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stores List -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-ul me-2"></i>
+                            Your Stores
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <% if (stores.length === 0) { %>
+                            <div class="text-center py-5">
+                                <div class="display-1 text-muted mb-3">
+                                    <i class="bi bi-shop"></i>
+                                </div>
+                                <h4>No stores yet</h4>
+                                <p class="text-muted mb-4">Get started by creating your first e-commerce store</p>
+                                <a href="/admin/site-setup" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-plus-circle me-2"></i>Create Your First Store
+                                </a>
+                            </div>
+                        <% } else { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Store Name</th>
+                                            <th>Domain</th>
+                                            <th>Country</th>
+                                            <th>Status</th>
+                                            <th>Deployment</th>
+                                            <th>Shopify</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% stores.forEach(function(store) { %>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                            <%= store.name.charAt(0).toUpperCase() %>
+                                                        </div>
+                                                        <div>
+                                                            <h6 class="mb-0"><%= store.name %></h6>
+                                                            <small class="text-muted">UUID: <%= store.uuid.substring(0, 8) %>...</small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <a href="https://<%= store.domain %>" target="_blank" class="text-decoration-none">
+                                                        <%= store.domain %>
+                                                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-light text-dark">
+                                                        <%= store.country %> | <%= store.currency %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <% if (store.status === 'active') { %>
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-check-circle me-1"></i>Active
+                                                        </span>
+                                                    <% } else if (store.status === 'pending') { %>
+                                                        <span class="badge bg-warning">
+                                                            <i class="bi bi-clock me-1"></i>Pending
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-pause-circle me-1"></i>Inactive
+                                                        </span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <span class="deployment-status" data-store-uuid="<%= store.uuid %>">
+                                                        <span class="badge bg-secondary">Loading...</span>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <% if (store.shopify_connected) { %>
+                                                        <span class="text-success">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>Connected
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="text-muted">
+                                                            <i class="bi bi-x-circle me-1"></i>Not Connected
+                                                        </span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <%= new Date(store.created_at).toLocaleDateString() %>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary" title="View Live Store">
+                                                            <i class="bi bi-eye"></i>
+                                                        </a>
+                                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                                            <span class="visually-hidden">Toggle Dropdown</span>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a class="dropdown-item" href="https://<%= store.domain %>" target="_blank">
+                                                                <i class="bi bi-eye me-2"></i>View Live Store
+                                                            </a></li>
+                                                            <li><a class="dropdown-item" href="/admin/stores/<%= store.uuid %>">
+                                                                <i class="bi bi-info-circle me-2"></i>View Details
+                                                            </a></li>
+                                                            <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
+                                                                <i class="bi bi-pencil me-2"></i>Edit Settings
+                                                            </a></li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li><a class="dropdown-item deployment-action" href="#" onclick="deployStore('<%= store.uuid %>')" data-store-uuid="<%= store.uuid %>">
+                                                                <i class="bi bi-play-fill me-2"></i>Deploy Store
+                                                            </a></li>
+                                                            <li><a class="dropdown-item" href="#" onclick="regenerateStore('<%= store.uuid %>')">
+                                                                <i class="bi bi-arrow-clockwise me-2"></i>Regenerate Files
+                                                            </a></li>
+                                                            <li><hr class="dropdown-divider"></li>
+                                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteStore('<%= store.uuid %>')">
+                                                                <i class="bi bi-trash me-2"></i>Delete Store
+                                                            </a></li>
+                                                        </ul>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-4 text-primary mb-3">
+                            <i class="bi bi-plus-circle"></i>
+                        </div>
+                        <h5>Create New Store</h5>
+                        <p class="text-muted">Launch a new e-commerce store in minutes</p>
+                        <a href="/admin/site-setup" class="btn btn-primary">Get Started</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-4 text-info mb-3">
+                            <i class="bi bi-palette"></i>
+                        </div>
+                        <h5>Template Builder</h5>
+                        <p class="text-muted">Customize product page designs</p>
+                        <a href="/admin/product-template" class="btn btn-info">Design Now</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center">
+                        <div class="display-4 text-success mb-3">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h5>Analytics</h5>
+                        <p class="text-muted">Track performance across all stores</p>
+                        <button class="btn btn-success" disabled>Coming Soon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p>&copy; 2024 MultiStore Platform. Built with excellence by the Dream Team.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load deployment status for all stores
+        async function loadDeploymentStatuses() {
+            try {
+                const response = await fetch('/api/stores');
+                const data = await response.json();
+                
+                if (data.success) {
+                    data.stores.forEach(store => {
+                        const statusElement = document.querySelector(`[data-store-uuid="${store.uuid}"]`);
+                        if (statusElement) {
+                            let badgeClass = 'bg-secondary';
+                            let icon = 'bi-question-circle';
+                            let text = 'Unknown';
+                            
+                            switch (store.deployment_status) {
+                                case 'deployed':
+                                    badgeClass = 'bg-success';
+                                    icon = 'bi-check-circle';
+                                    text = 'Deployed';
+                                    break;
+                                case 'deploying':
+                                    badgeClass = 'bg-warning';
+                                    icon = 'bi-clock';
+                                    text = 'Deploying';
+                                    break;
+                                case 'failed':
+                                    badgeClass = 'bg-danger';
+                                    icon = 'bi-x-circle';
+                                    text = 'Failed';
+                                    break;
+                                default:
+                                    badgeClass = 'bg-secondary';
+                                    icon = 'bi-pause-circle';
+                                    text = 'Pending';
+                            }
+                            
+                            statusElement.innerHTML = `
+                                <span class="badge ${badgeClass}">
+                                    <i class="${icon} me-1"></i>${text}
+                                </span>
+                            `;
+                            
+                            // Update deployment action visibility
+                            const actionElement = document.querySelector(`[data-store-uuid="${store.uuid}"].deployment-action`);
+                            if (actionElement) {
+                                if (store.deployment_status === 'deployed') {
+                                    actionElement.style.display = 'none';
+                                } else if (store.deployment_status === 'deploying') {
+                                    actionElement.innerHTML = '<i class="bi bi-clock me-2"></i>Deploying...';
+                                    actionElement.onclick = null;
+                                }
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load deployment statuses:', error);
+            }
+        }
+        
+        // Deploy store
+        async function deployStore(uuid) {
+            if (!confirm('Deploy this store? This will generate all store files and make the store live.')) {
+                return;
+            }
+            
+            const statusElement = document.querySelector(`[data-store-uuid="${uuid}"]`);
+            if (statusElement) {
+                statusElement.innerHTML = '<span class="badge bg-warning"><i class="bi bi-clock me-1"></i>Deploying...</span>';
+            }
+            
+            try {
+                const response = await fetch(`/api/stores/${uuid}/deploy`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Store deployed successfully! It is now live at: https://' + data.store.domain);
+                    loadDeploymentStatuses();
+                } else {
+                    alert('Deployment failed: ' + data.error);
+                    loadDeploymentStatuses();
+                }
+            } catch (error) {
+                console.error('Deploy error:', error);
+                alert('Deployment failed. Please try again.');
+                loadDeploymentStatuses();
+            }
+        }
+        
+        // Regenerate store files
+        async function regenerateStore(uuid) {
+            if (!confirm('Regenerate store files? This will rebuild all pages and may cause temporary downtime.')) {
+                return;
+            }
+            
+            const statusElement = document.querySelector(`[data-store-uuid="${uuid}"]`);
+            if (statusElement) {
+                statusElement.innerHTML = '<span class="badge bg-warning"><i class="bi bi-arrow-clockwise me-1"></i>Regenerating...</span>';
+            }
+            
+            try {
+                const response = await fetch(`/api/stores/${uuid}/regenerate`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Store files regenerated successfully!');
+                    loadDeploymentStatuses();
+                } else {
+                    alert('Regeneration failed: ' + data.error);
+                    loadDeploymentStatuses();
+                }
+            } catch (error) {
+                console.error('Regeneration error:', error);
+                alert('Regeneration failed. Please try again.');
+                loadDeploymentStatuses();
+            }
+        }
+        
+        // Load live stores
+        function loadLiveStores() {
+            fetch('/api/stores')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const liveStores = data.stores.filter(s => s.deployment_status === 'deployed');
+                        if (liveStores.length === 0) {
+                            alert('No live stores found. Deploy some stores first!');
+                            return;
+                        }
+                        
+                        let message = 'Live Stores:\n\n';
+                        liveStores.forEach(store => {
+                            message += `• ${store.name}\n  https://${store.domain}\n\n`;
+                        });
+                        
+                        alert(message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load live stores');
+                });
+        }
+        
+        function deleteStore(storeUuid) {
+            if (confirm('Are you sure you want to delete this store? This action cannot be undone and will remove all files.')) {
+                fetch(`/api/stores/${storeUuid}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to delete store: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete store');
+                });
+            }
+        }
+        
+        // Load deployment statuses on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDeploymentStatuses();
+        });
+    </script>
+</body>
+</html>

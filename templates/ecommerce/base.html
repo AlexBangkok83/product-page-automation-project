@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{PRODUCT_TITLE}} - {{STORE_NAME}}</title>
+    <meta name="description" content="{{PRODUCT_DESCRIPTION}}">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{{MAIN_PRODUCT_IMAGE}}" as="image">
+    
+    <style>
+        :root {
+            /* Brand Colors */
+            --primary-color: {{PRIMARY_COLOR}};
+            --secondary-color: {{SECONDARY_COLOR}};
+            --accent-color: {{ACCENT_COLOR}};
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --text-light: #999;
+            --background: #ffffff;
+            --border-light: #e1e1e1;
+            
+            /* Typography */
+            --font-primary: {{FONT_PRIMARY}};
+            --font-secondary: {{FONT_SECONDARY}};
+            
+            /* Spacing */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            
+            /* Layout */
+            --container-max: 1200px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            
+            /* Mobile breakpoints */
+            --mobile-max: 768px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-primary), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background);
+        }
+        
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 var(--spacing-sm);
+        }
+        
+        .section {
+            position: relative;
+        }
+        
+        .section--hidden {
+            display: none;
+        }
+        
+        /* Mobile-first responsive */
+        @media (max-width: 768px) {
+            :root {
+                --spacing-sm: 0.75rem;
+                --spacing-md: 1rem;
+                --spacing-lg: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Section placeholders - each will be populated by components -->
+    {{ANNOUNCEMENT_BAR}}
+    {{COUNTDOWN_BANNER}}
+    {{SHIPPING_PROGRESS_BAR}}
+    {{NAVIGATION_HEADER}}
+    
+    <main class="product-page">
+        {{PRODUCT_GALLERY}}
+        {{PRODUCT_BADGES}}
+        {{PRODUCT_TITLE}}
+        {{PRICE_DISPLAY}}
+        {{PRODUCT_RATING}}
+        {{GUARANTEE_BADGE}}
+        {{LIVE_STATS}}
+        {{SOCIAL_AVATARS}}
+        {{SAVINGS_CALCULATOR}}
+        {{BUNDLE_SELECTOR}}
+        {{ADD_TO_CART_BUTTON}}
+        {{PAYMENT_METHODS}}
+        {{TRUST_SIGNALS}}
+        {{REVIEWS_SECTION}}
+        {{FAQ_SECTION}}
+        {{CROSS_SELL}}
+    </main>
+    
+    {{FOOTER}}
+    {{MOBILE_MENU}}
+    
+    <!-- Shopify integration -->
+    <script>
+        // Global config for Shopify integration
+        window.shopifyConfig = {
+            domain: '{{SHOPIFY_DOMAIN}}',
+            storefrontToken: '{{STOREFRONT_TOKEN}}',
+            productId: '{{PRODUCT_ID}}',
+            variantId: '{{VARIANT_ID}}'
+        };
+    </script>
+    
+    <!-- Component scripts will be injected here -->
+    {{COMPONENT_SCRIPTS}}
+</body>
+</html>

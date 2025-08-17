@@ -3,145 +3,804 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Landing Page Config</title>
+    <title>E-commerce Site Generator</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
-        input[type="color"] {
-            width: 100%;
-            height: 40px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
         }
-        button {
-            background-color: #007bff;
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            min-height: calc(100vh - 120px);
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+
+        .preview-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Custom Color Picker */
+        .color-picker-group {
+            position: relative;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .color-preview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .color-preview-inner {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
             color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .color-input {
+            position: absolute;
+            opacity: 0;
             width: 100%;
-            margin-top: 10px;
+            height: 100%;
+            cursor: pointer;
         }
-        button:hover {
-            background-color: #0056b3;
+
+        .color-suggestions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
+
+        .color-suggestion {
+            width: 100%;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-suggestion:hover {
+            transform: scale(1.1);
+            border-color: #667eea;
+        }
+
+        /* iOS Toggle Switches */
+        .toggle-group {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-item:hover {
+            background: #f3f4f6;
+        }
+
+        .toggle-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-input:checked + .toggle-slider {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .toggle-input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Product Browser */
+        .product-browser {
+            margin-bottom: 1.5rem;
+        }
+
+        .product-search {
+            margin-bottom: 1rem;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .product-card {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .product-card:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+        }
+
+        .product-card.selected {
+            border-color: #667eea;
+            background: #eef2ff;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #374151;
+            line-height: 1.2;
+        }
+
+        .product-price {
+            font-size: 0.75rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        /* Deploy Button */
+        .deploy-button {
+            width: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .deploy-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .deploy-button:active {
+            transform: translateY(0);
+        }
+
+        /* Wireframe Preview */
+        .wireframe {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 2px dashed #cbd5e0;
+            min-height: 600px;
+        }
+
+        .wireframe-section {
+            background: var(--section-bg, #e2e8f0);
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 6px;
+            position: relative;
+            border: 2px solid var(--section-border, transparent);
+        }
+
+        .wireframe-section.enabled {
+            --section-bg: #eef2ff;
+            --section-border: #667eea;
+        }
+
+        .wireframe-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Status Messages */
         .status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 4px;
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
             display: none;
         }
+
         .status.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
+
         .status.error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .control-panel {
+                position: static;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Landing Page Generator</h1>
-        
-        <form id="configForm">
-            <div class="form-group">
-                <label for="siteName">Site Name:</label>
-                <input type="text" id="siteName" name="siteName" placeholder="e.g., clipia.no" required>
-            </div>
+    <header class="header">
+        <div class="container">
+            <div class="logo">⚡ E-commerce Generator</div>
+            <div style="font-size: 0.875rem; color: #64748b;">Create high-converting product pages</div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h2 class="panel-title">🎨 Site Configuration</h2>
             
-            <div class="form-group">
-                <label for="backgroundColor">Background Color:</label>
-                <input type="color" id="backgroundColor" name="backgroundColor" value="#000000">
-            </div>
+            <form id="configForm">
+                <!-- Basic Settings -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span>🏪</span>
+                        Basic Settings
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Site Name</label>
+                        <input type="text" class="form-input" id="siteName" placeholder="e.g., clipia.co.uk" required>
+                    </div>
+                </div>
+
+                <!-- Product Selection -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span>📦</span>
+                        Product Selection
+                    </div>
+                    
+                    <div class="product-browser">
+                        <div class="product-search">
+                            <input type="text" class="form-input" id="productSearch" placeholder="Search products...">
+                        </div>
+                        <div class="product-grid" id="productGrid">
+                            <!-- Products will be loaded here -->
+                            <div class="product-card selected">
+                                <img src="https://via.placeholder.com/100x60/ff6f91/white?text=Product" alt="Sample Product" class="product-image">
+                                <div class="product-title">Sample Product Name</div>
+                                <div class="product-price">$29.99</div>
+                            </div>
+                            <div class="product-card">
+                                <img src="https://via.placeholder.com/100x60/667eea/white?text=Product" alt="Sample Product" class="product-image">
+                                <div class="product-title">Another Product</div>
+                                <div class="product-price">$39.99</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Scheme -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span>🎨</span>
+                        Color Scheme
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Primary Color</label>
+                        <div class="color-picker-group">
+                            <div class="color-preview" id="primaryColorPreview">
+                                <input type="color" class="color-input" id="primaryColor" value="#ff6f91">
+                                <div class="color-preview-inner" id="primaryColorText">#ff6f91</div>
+                            </div>
+                            <div class="color-suggestions" id="primarySuggestions"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Secondary Color</label>
+                        <div class="color-picker-group">
+                            <div class="color-preview" id="secondaryColorPreview">
+                                <input type="color" class="color-input" id="secondaryColor" value="#667eea">
+                                <div class="color-preview-inner" id="secondaryColorText">#667eea</div>
+                            </div>
+                            <div class="color-suggestions" id="secondarySuggestions"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Button Color</label>
+                        <div class="color-picker-group">
+                            <div class="color-preview" id="buttonColorPreview">
+                                <input type="color" class="color-input" id="buttonColor" value="#10b981">
+                                <div class="color-preview-inner" id="buttonColorText">#10b981</div>
+                            </div>
+                            <div class="color-suggestions" id="buttonSuggestions"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Toggles -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <span>🧩</span>
+                        Page Sections
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <div class="toggle-item">
+                            <span class="toggle-label">Announcement Bar</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="announcementBar" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">Countdown Banner</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="countdownBanner" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">Shipping Progress</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="shippingProgress" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">Product Badges</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="productBadges" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">Live Stats</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="liveStats" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">Social Avatars</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="socialAvatars" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">Reviews Section</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="reviewsSection" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="toggle-item">
+                            <span class="toggle-label">FAQ Section</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" class="toggle-input" id="faqSection">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="deploy-button">
+                    🚀 Deploy E-commerce Site
+                </button>
+                
+                <div id="status" class="status"></div>
+            </form>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel">
+            <h2 class="panel-title">📱 Live Preview</h2>
             
-            <button type="submit">Deploy Landing Page</button>
-        </form>
-        
-        <div id="status" class="status"></div>
+            <div class="wireframe" id="wireframe">
+                <div class="wireframe-section enabled" data-section="announcement">
+                    <div class="wireframe-label">Announcement Bar</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="countdown">
+                    <div class="wireframe-label">Countdown Banner</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="shipping">
+                    <div class="wireframe-label">Shipping Progress</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="navigation">
+                    <div class="wireframe-label">Navigation Header</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="gallery">
+                    <div class="wireframe-label">Product Gallery</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="badges">
+                    <div class="wireframe-label">Product Badges</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="title">
+                    <div class="wireframe-label">Product Title & Price</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="stats">
+                    <div class="wireframe-label">Live Stats</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="avatars">
+                    <div class="wireframe-label">Social Avatars</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="bundle">
+                    <div class="wireframe-label">Bundle Selector</div>
+                </div>
+                <div class="wireframe-section enabled" data-section="reviews">
+                    <div class="wireframe-label">Reviews Section</div>
+                </div>
+                <div class="wireframe-section" data-section="faq">
+                    <div class="wireframe-label">FAQ Section</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
+        // Color harmony generator
+        function generateColorHarmony(baseColor) {
+            const hex = baseColor.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            
+            // Convert to HSL
+            const [h, s, l] = rgbToHsl(r, g, b);
+            
+            // Generate harmonious colors
+            const complementary = hslToHex((h + 180) % 360, s, l);
+            const analogous1 = hslToHex((h + 30) % 360, s, l);
+            const analogous2 = hslToHex((h - 30 + 360) % 360, s, l);
+            const triadic = hslToHex((h + 120) % 360, s, l);
+            
+            return [complementary, analogous1, analogous2, triadic];
+        }
+        
+        function rgbToHsl(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+            
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            
+            return [h * 360, s, l];
+        }
+        
+        function hslToHex(h, s, l) {
+            const a = s * Math.min(l, 1 - l);
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+        
+        // Setup color pickers
+        function setupColorPicker(inputId, previewId, textId, suggestionsId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const text = document.getElementById(textId);
+            const suggestions = document.getElementById(suggestionsId);
+            
+            function updateColor(color) {
+                input.value = color;
+                preview.style.background = color;
+                text.textContent = color.toUpperCase();
+                
+                // Generate and display suggestions
+                const harmonies = generateColorHarmony(color);
+                suggestions.innerHTML = '';
+                harmonies.forEach(harmonyColor => {
+                    const suggestion = document.createElement('div');
+                    suggestion.className = 'color-suggestion';
+                    suggestion.style.backgroundColor = harmonyColor;
+                    suggestion.title = harmonyColor.toUpperCase();
+                    suggestion.onclick = () => updateColor(harmonyColor);
+                    suggestions.appendChild(suggestion);
+                });
+            }
+            
+            input.addEventListener('change', (e) => updateColor(e.target.value));
+            updateColor(input.value);
+        }
+        
+        setupColorPicker('primaryColor', 'primaryColorPreview', 'primaryColorText', 'primarySuggestions');
+        setupColorPicker('secondaryColor', 'secondaryColorPreview', 'secondaryColorText', 'secondarySuggestions');
+        setupColorPicker('buttonColor', 'buttonColorPreview', 'buttonColorText', 'buttonSuggestions');
+        
+        // Section toggles
+        document.querySelectorAll('.toggle-input').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const sectionMap = {
+                    'announcementBar': 'announcement',
+                    'countdownBanner': 'countdown',
+                    'shippingProgress': 'shipping',
+                    'productBadges': 'badges',
+                    'liveStats': 'stats',
+                    'socialAvatars': 'avatars',
+                    'reviewsSection': 'reviews',
+                    'faqSection': 'faq'
+                };
+                
+                const sectionName = sectionMap[this.id];
+                if (sectionName) {
+                    const wireframeSection = document.querySelector(`[data-section="${sectionName}"]`);
+                    if (wireframeSection) {
+                        wireframeSection.classList.toggle('enabled', this.checked);
+                    }
+                }
+            });
+        });
+        
+        // Form submission
         document.getElementById('configForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const siteName = document.getElementById('siteName').value.trim();
-            const backgroundColor = document.getElementById('backgroundColor').value;
-            const statusDiv = document.getElementById('status');
+            const formData = {
+                siteName: document.getElementById('siteName').value.trim(),
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                buttonColor: document.getElementById('buttonColor').value,
+                sections: {}
+            };
             
-            if (!siteName) {
+            // Collect section toggles
+            document.querySelectorAll('.toggle-input').forEach(toggle => {
+                formData.sections[toggle.id] = toggle.checked;
+            });
+            
+            if (!formData.siteName) {
                 showStatus('Please enter a site name', 'error');
                 return;
             }
             
             try {
-                // Send deploy request to backend
+                // For now, we'll use the existing API endpoint
                 const response = await fetch('/api/deploy', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        siteName: siteName,
-                        backgroundColor: backgroundColor
+                        siteName: formData.siteName,
+                        backgroundColor: formData.primaryColor,
+                        config: formData
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    showStatus(result.message + ` (saved to ${result.path})`, 'success');
+                    showStatus(`🎉 ${result.message} (saved to ${result.path})`, 'success');
                 } else {
-                    showStatus('Error: ' + result.message, 'error');
+                    showStatus('❌ Error: ' + result.message, 'error');
                 }
                 
             } catch (error) {
-                showStatus('Error: ' + error.message, 'error');
+                showStatus('❌ Error: ' + error.message, 'error');
             }
         });
         
         function showStatus(message, type) {
             const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
+            statusDiv.innerHTML = message;
             statusDiv.className = `status ${type}`;
             statusDiv.style.display = 'block';
             
@@ -149,7 +808,6 @@
                 statusDiv.style.display = 'none';
             }, 5000);
         }
-        
     </script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+<div class="section announcement-bar {{ANNOUNCEMENT_BAR_ENABLED}}" data-section="announcement-bar">
+    <div class="announcement-bar__content">
+        <div class="announcement-bar__text">
+            {{ANNOUNCEMENT_TEXT}}
+        </div>
+    </div>
+</div>
+
+<style>
+.announcement-bar {
+    background: linear-gradient(45deg, #000, #333);
+    color: white;
+    text-align: center;
+    padding: var(--spacing-xs);
+    font-size: 0.9rem;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+.announcement-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+.announcement-bar__content {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+@media (max-width: 768px) {
+    .announcement-bar {
+        font-size: 0.8rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}</style>

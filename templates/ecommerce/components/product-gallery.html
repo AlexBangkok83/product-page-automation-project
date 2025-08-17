@@ -1,0 +1,129 @@
+<div class="section product-gallery {{PRODUCT_GALLERY_ENABLED}}" data-section="product-gallery">
+    <div class="container">
+        <div class="product-gallery__wrapper">
+            <div class="product-gallery__main">
+                <img 
+                    src="{{MAIN_PRODUCT_IMAGE}}" 
+                    alt="{{PRODUCT_TITLE}}"
+                    class="product-gallery__main-image"
+                    id="mainProductImage"
+                >
+                <div class="product-gallery__badges">
+                    {{PRODUCT_BADGES}}
+                </div>
+            </div>
+            
+            <div class="product-gallery__thumbnails">
+                {{#each PRODUCT_IMAGES}}
+                <button 
+                    class="product-gallery__thumbnail {{#if @first}}active{{/if}}"
+                    onclick="changeMainImage('{{this.src}}')"
+                >
+                    <img src="{{this.thumbnail}}" alt="{{../PRODUCT_TITLE}} view {{@index}}">
+                </button>
+                {{/each}}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-gallery {
+    padding: var(--spacing-lg) 0;
+}
+
+.product-gallery__wrapper {
+    display: grid;
+    gap: var(--spacing-md);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.product-gallery__main {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: #f8f8f8;
+}
+
+.product-gallery__main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.product-gallery__main-image:hover {
+    transform: scale(1.05);
+}
+
+.product-gallery__badges {
+    position: absolute;
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+    z-index: 2;
+}
+
+.product-gallery__thumbnails {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: center;
+    overflow-x: auto;
+    padding: var(--spacing-xs) 0;
+}
+
+.product-gallery__thumbnail {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border: 2px solid transparent;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.product-gallery__thumbnail.active {
+    border-color: var(--primary-color);
+}
+
+.product-gallery__thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (min-width: 769px) {
+    .product-gallery__wrapper {
+        grid-template-columns: 1fr 100px;
+        max-width: 700px;
+    }
+    
+    .product-gallery__thumbnails {
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+    
+    .product-gallery__thumbnail {
+        width: 100px;
+        height: 100px;
+    }
+}
+</style>
+
+<script>
+function changeMainImage(newSrc) {
+    const mainImage = document.getElementById('mainProductImage');
+    const thumbnails = document.querySelectorAll('.product-gallery__thumbnail');
+    
+    mainImage.src = newSrc;
+    
+    // Update active thumbnail
+    thumbnails.forEach(thumb => {
+        const isActive = thumb.querySelector('img').src.includes(newSrc.split('/').pop());
+        thumb.classList.toggle('active', isActive);
+    });
+}
+</script>

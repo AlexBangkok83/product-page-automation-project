@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-shop"></i> MultiStore Platform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/site-setup">Site Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/product-template">Template Builder</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+                        <li class="breadcrumb-item active" aria-current="page"><%= store.name %></li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <div class="avatar bg-primary text-white rounded-circle me-3 d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <%= store.name.charAt(0).toUpperCase() %>
+                            </div>
+                            <%= store.name %>
+                        </h1>
+                        <p class="text-muted mb-0">Store Details & Management</p>
+                    </div>
+                    <div>
+                        <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>Visit Store
+                        </a>
+                        <a href="/admin/site-setup?store=<%= store.uuid %>" class="btn btn-primary">
+                            <i class="bi bi-pencil me-2"></i>Edit Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Overview -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Store Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Basic Details</h6>
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td><strong>Store Name:</strong></td>
+                                        <td><%= store.name %></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Domain:</strong></td>
+                                        <td>
+                                            <a href="https://<%= store.domain %>" target="_blank" class="text-decoration-none">
+                                                <%= store.domain %>
+                                                <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>UUID:</strong></td>
+                                        <td><code><%= store.uuid %></code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Status:</strong></td>
+                                        <td>
+                                            <% if (store.status === 'active') { %>
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle me-1"></i>Active
+                                                </span>
+                                            <% } else if (store.status === 'pending') { %>
+                                                <span class="badge bg-warning">
+                                                    <i class="bi bi-clock me-1"></i>Pending
+                                                </span>
+                                            <% } else { %>
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-pause-circle me-1"></i>Inactive
+                                                </span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Localization</h6>
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td><strong>Country:</strong></td>
+                                        <td><%= store.country %></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Currency:</strong></td>
+                                        <td><%= store.currency %></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Language:</strong></td>
+                                        <td><%= store.language %></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Created:</strong></td>
+                                        <td><%= new Date(store.created_at).toLocaleDateString() %></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <% if (store.meta_title || store.meta_description) { %>
+                            <hr>
+                            <h6 class="text-muted">SEO Settings</h6>
+                            <% if (store.meta_title) { %>
+                                <p><strong>Meta Title:</strong> <%= store.meta_title %></p>
+                            <% } %>
+                            <% if (store.meta_description) { %>
+                                <p><strong>Meta Description:</strong> <%= store.meta_description %></p>
+                            <% } %>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="bi bi-shop me-2"></i>Shopify Integration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (store.shopify_connected) { %>
+                            <div class="text-center mb-3">
+                                <div class="display-6 text-success mb-2">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <h6 class="text-success">Connected</h6>
+                            </div>
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td><strong>Domain:</strong></td>
+                                    <td><%= store.shopify_domain %></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Token:</strong></td>
+                                    <td><code>****<%= store.shopify_access_token ? store.shopify_access_token.slice(-4) : 'None' %></code></td>
+                                </tr>
+                            </table>
+                        <% } else { %>
+                            <div class="text-center">
+                                <div class="display-6 text-muted mb-2">
+                                    <i class="bi bi-x-circle"></i>
+                                </div>
+                                <h6 class="text-muted">Not Connected</h6>
+                                <p class="small text-muted mb-3">Connect your Shopify store to sync products</p>
+                                <a href="/admin/site-setup?store=<%= store.uuid %>" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-link me-1"></i>Connect Shopify
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Store Settings -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear me-2"></i>Store Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Shipping & Returns</h6>
+                                <% if (store.shipping_info) { %>
+                                    <p><strong>Shipping Policy:</strong><br>
+                                    <%= store.shipping_info %></p>
+                                <% } %>
+                                <% if (store.shipping_time) { %>
+                                    <p><strong>Delivery Time:</strong> <%= store.shipping_time %></p>
+                                <% } %>
+                                <% if (store.return_policy) { %>
+                                    <p><strong>Return Policy:</strong><br>
+                                    <%= store.return_policy %></p>
+                                <% } %>
+                                <% if (store.return_period) { %>
+                                    <p><strong>Return Period:</strong> <%= store.return_period %></p>
+                                <% } %>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Contact & Legal</h6>
+                                <% if (store.support_email) { %>
+                                    <p><strong>Support Email:</strong> 
+                                    <a href="mailto:<%= store.support_email %>"><%= store.support_email %></a></p>
+                                <% } %>
+                                <% if (store.support_phone) { %>
+                                    <p><strong>Support Phone:</strong> 
+                                    <a href="tel:<%= store.support_phone %>"><%= store.support_phone %></a></p>
+                                <% } %>
+                                <% if (store.business_address) { %>
+                                    <p><strong>Business Address:</strong><br>
+                                    <%= store.business_address %></p>
+                                <% } %>
+                                <% if (store.gdpr_compliant || store.cookie_consent) { %>
+                                    <p><strong>Compliance:</strong><br>
+                                    <% if (store.gdpr_compliant) { %>
+                                        <span class="badge bg-success me-1">GDPR Compliant</span>
+                                    <% } %>
+                                    <% if (store.cookie_consent) { %>
+                                        <span class="badge bg-info">Cookie Consent</span>
+                                    <% } %>
+                                    </p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Pages -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="bi bi-grid-3x3 me-2"></i>Selected Pages
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (store.selected_pages) { %>
+                            <% const selectedPages = store.selected_pages.split(','); %>
+                            <div class="row">
+                                <% selectedPages.forEach(function(page) { %>
+                                    <div class="col-md-3 col-sm-6 mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <% if (page === 'home') { %>
+                                                    <i class="bi bi-house-door text-primary"></i>
+                                                <% } else if (page === 'products') { %>
+                                                    <i class="bi bi-grid-3x3-gap text-primary"></i>
+                                                <% } else if (page === 'about') { %>
+                                                    <i class="bi bi-info-circle text-primary"></i>
+                                                <% } else if (page === 'contact') { %>
+                                                    <i class="bi bi-envelope text-primary"></i>
+                                                <% } else if (page === 'blog') { %>
+                                                    <i class="bi bi-journal-text text-primary"></i>
+                                                <% } else if (page === 'faq') { %>
+                                                    <i class="bi bi-question-circle text-primary"></i>
+                                                <% } else if (page === 'terms') { %>
+                                                    <i class="bi bi-file-text text-primary"></i>
+                                                <% } else if (page === 'privacy') { %>
+                                                    <i class="bi bi-shield-check text-primary"></i>
+                                                <% } else { %>
+                                                    <i class="bi bi-file-earmark text-primary"></i>
+                                                <% } %>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0"><%= page.charAt(0).toUpperCase() + page.slice(1) %></h6>
+                                                <small class="text-muted">Page</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <p class="text-muted">No pages selected</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="bi bi-tools me-2"></i>Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="/admin/site-setup?store=<%= store.uuid %>" class="btn btn-primary w-100 mb-2">
+                                    <i class="bi bi-pencil me-2"></i>Edit Settings
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary w-100 mb-2">
+                                    <i class="bi bi-box-arrow-up-right me-2"></i>Visit Store
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-secondary w-100 mb-2" disabled>
+                                    <i class="bi bi-download me-2"></i>Export Data
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-danger w-100 mb-2" onclick="deleteStore('<%= store.uuid %>')">
+                                    <i class="bi bi-trash me-2"></i>Delete Store
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <p>&copy; 2024 MultiStore Platform. Built with excellence by the Dream Team.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function deleteStore(storeUuid) {
+            if (confirm('Are you sure you want to delete this store? This action cannot be undone.')) {
+                fetch(`/api/stores/${storeUuid}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = '/admin';
+                    } else {
+                        alert('Failed to delete store: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete store');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<div class="section price-display {{PRICE_DISPLAY_ENABLED}}" data-section="price-display">
+    <div class="container">
+        <div class="price-display__wrapper">
+            <div class="price-display__main">
+                <span class="price-display__current">{{CURRENT_PRICE}}</span>
+                {{#if ORIGINAL_PRICE}}
+                <span class="price-display__original">{{ORIGINAL_PRICE}}</span>
+                {{/if}}
+            </div>
+            
+            {{#if SAVINGS_AMOUNT}}
+            <div class="price-display__savings">
+                <span class="price-display__savings-text">You save</span>
+                <span class="price-display__savings-amount">{{SAVINGS_AMOUNT}}</span>
+                <span class="price-display__savings-percent">({{SAVINGS_PERCENT}}% off)</span>
+            </div>
+            {{/if}}
+            
+            {{#if PAYMENT_OPTIONS}}
+            <div class="price-display__payment">
+                <span class="price-display__payment-text">or</span>
+                <span class="price-display__installments">{{INSTALLMENT_AMOUNT}}/month with {{PAYMENT_PROVIDER}}</span>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</div>
+
+<style>
+.price-display {
+    padding: var(--spacing-md) 0;
+    text-align: center;
+}
+
+.price-display__wrapper {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.price-display__main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.price-display__current {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.price-display__original {
+    font-size: 1.5rem;
+    color: var(--text-light);
+    text-decoration: line-through;
+    font-weight: 400;
+}
+
+.price-display__savings {
+    background: linear-gradient(135deg, #ff6b6b, #ff4757);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--spacing-xs);
+    font-weight: 600;
+}
+
+.price-display__savings-amount {
+    font-size: 1.1em;
+    margin: 0 var(--spacing-xs);
+}
+
+.price-display__payment {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.price-display__payment-text {
+    margin-right: var(--spacing-xs);
+}
+
+.price-display__installments {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .price-display__current {
+        font-size: 2rem;
+    }
+    
+    .price-display__original {
+        font-size: 1.2rem;
+    }
+    
+    .price-display__main {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+}
+</style>

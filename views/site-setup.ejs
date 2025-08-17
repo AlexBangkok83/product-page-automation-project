@@ -1,0 +1,492 @@
+<%- include('partials/header', { title: title }) %>
+
+<div class="container py-5">
+    <!-- Progress Steps -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="progress-steps d-flex justify-content-between align-items-center mb-4">
+                <div class="step <%= step === '1' ? 'active' : step > '1' ? 'completed' : '' %>">
+                    <div class="step-circle">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <div class="step-label">Basic Info</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step <%= step === '2' ? 'active' : step > '2' ? 'completed' : '' %>">
+                    <div class="step-circle">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                    <div class="step-label">Shopify</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step <%= step === '3' ? 'active' : step > '3' ? 'completed' : '' %>">
+                    <div class="step-circle">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                    </div>
+                    <div class="step-label">Pages</div>
+                </div>
+                <div class="step-line"></div>
+                <div class="step <%= step === '4' ? 'active' : step > '4' ? 'completed' : '' %>">
+                    <div class="step-circle">
+                        <i class="bi bi-gear"></i>
+                    </div>
+                    <div class="step-label">Settings</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Site Setup Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="bi bi-rocket-takeoff me-2"></i>
+                        Create Your Amazing Store
+                    </h2>
+                    <p class="mb-0 opacity-75">Let's build something incredible together!</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Error Alert -->
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Oops!</strong> <%= typeof message !== 'undefined' ? message : 'There was an error creating your store.' %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <% } %>
+                    
+                    <form id="siteSetupForm" method="POST" action="/site-setup">
+                        <!-- Hidden field to indicate this is store creation -->
+                        <input type="hidden" name="step" value="create-store">
+                        
+                        <!-- Hidden fields for auto-detected values -->
+                        <input type="hidden" name="country" id="hiddenCountry" value="US">
+                        <input type="hidden" name="language" id="hiddenLanguage" value="en">
+                        <input type="hidden" name="currency" id="hiddenCurrency" value="USD">
+                        
+                        <!-- Step 1: Basic Information -->
+                        <div class="setup-step" id="step1" style="<%= step !== '1' ? 'display: none;' : '' %>">
+                            <h4 class="mb-4 text-primary">
+                                <i class="bi bi-info-circle me-2"></i>Basic Information
+                            </h4>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="siteUrl" class="form-label fw-semibold">
+                                        <i class="bi bi-globe me-2"></i>Site URL *
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="siteUrl" 
+                                           name="siteUrl" placeholder="yourdomain.com" 
+                                           value="<%= typeof siteUrl !== 'undefined' ? siteUrl : '' %>"
+                                           data-required="true"
+                                           data-tooltip="Enter your website domain (we'll add https:// automatically)">
+                                    <div class="form-text">
+                                        <i class="bi bi-magic me-1"></i>
+                                        We'll auto-detect language and currency from your domain
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="brandName" class="form-label fw-semibold">
+                                        <i class="bi bi-award me-2"></i>Brand Name *
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="brandName" 
+                                           name="brandName" placeholder="Your Awesome Brand" required
+                                           data-tooltip="This will appear in your store header and branding">
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Choose a memorable name that represents your brand
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Auto-detection Results -->
+                            <div id="autoDetectionResults" class="alert alert-info d-none">
+                                <h6><i class="bi bi-magic me-2"></i>Auto-detected Settings:</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Country:</strong> <span id="detectedCountry">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Currency:</strong> <span id="detectedCurrency">-</span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Language:</strong> <span id="detectedLanguage">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="button" class="btn btn-primary btn-lg px-4" onclick="nextStep(2)">
+                                    Continue <i class="bi bi-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Shopify Connection -->
+                        <div class="setup-step" id="step2" style="<%= step !== '2' ? 'display: none;' : '' %>">
+                            <h4 class="mb-4 text-primary">
+                                <i class="bi bi-shop me-2"></i>Connect Your Shopify Store
+                            </h4>
+                            
+                            <div class="alert alert-info mb-4">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="mb-1">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            Connect Your Shopify Store
+                                        </h6>
+                                        <p class="mb-0 small">
+                                            We'll sync your products and settings automatically. 
+                                            <a href="#" class="text-decoration-none" data-tooltip="Learn how to get your Shopify credentials">
+                                                Need help finding these?
+                                            </a>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <span class="badge bg-primary">Secure Connection</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="shopifyDomain" class="form-label fw-semibold">
+                                        <i class="bi bi-shop me-2"></i>Shopify Domain *
+                                    </label>
+                                    <input type="text" class="form-control form-control-lg" id="shopifyDomain" 
+                                           name="shopifyDomain" placeholder="yourstore.myshopify.com" required
+                                           value="ecominter.myshopify.com"
+                                           data-tooltip="Your Shopify store's .myshopify.com domain">
+                                    <div class="form-text">
+                                        <i class="bi bi-shield-check me-1"></i>
+                                        Enter your store's full Shopify domain
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="shopifyToken" class="form-label fw-semibold">
+                                        <i class="bi bi-key me-2"></i>Access Token *
+                                    </label>
+                                    <input type="password" class="form-control form-control-lg" id="shopifyToken" 
+                                           name="shopifyToken" placeholder="shpat_..." required
+                                           data-tooltip="Private app token from your Shopify admin">
+                                    <div class="form-text">
+                                        <i class="bi bi-lock me-1"></i>
+                                        Your credentials are encrypted and secure
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <button type="button" class="btn btn-outline-primary btn-lg" id="validateShopify">
+                                    <i class="bi bi-check-circle me-2"></i>Test Connection
+                                </button>
+                            </div>
+
+                            <!-- Shopify Connection Status -->
+                            <div id="shopifyStatus" class="d-none">
+                                <div class="alert alert-success">
+                                    <h6><i class="bi bi-check-circle me-2"></i>Connected Successfully!</h6>
+                                    <p class="mb-0">Store: <strong id="shopName">-</strong> | Products: <strong id="productCount">-</strong></p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary btn-lg px-4" onclick="prevStep(1)">
+                                    <i class="bi bi-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="button" class="btn btn-primary btn-lg px-4" onclick="nextStep(3)">
+                                    Continue <i class="bi bi-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Page Selection & Product Browser -->
+                        <div class="setup-step" id="step3" style="<%= step !== '3' ? 'display: none;' : '' %>">
+                            <h4 class="mb-4 text-primary">
+                                <i class="bi bi-grid-3x3-gap me-2"></i>Choose Your Pages & Featured Products
+                            </h4>
+
+                            <!-- Page Templates Section -->
+                            <div class="mb-5">
+                                <h5 class="mb-3">
+                                    <i class="bi bi-layout-text-window me-2"></i>Page Templates
+                                </h5>
+                                <div id="pageTemplates" class="row">
+                                    <!-- Page templates will be loaded dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Product Browser Section -->
+                            <div class="mb-4">
+                                <h5 class="mb-3">
+                                    <i class="bi bi-shop me-2"></i>Featured Products
+                                    <small class="text-muted">(Select products to highlight on your homepage)</small>
+                                </h5>
+                                
+                                <!-- Product Browser Controls -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="bi bi-search"></i>
+                                            </span>
+                                            <input type="text" class="form-control" id="productSearch" 
+                                                   placeholder="Search products..." 
+                                                   data-tooltip="Search by product name, vendor, or type">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-outline-primary" id="loadProducts">
+                                                <i class="bi bi-arrow-clockwise me-2"></i>Load Products
+                                            </button>
+                                            <button type="button" class="btn btn-outline-success" id="selectAllProducts" style="display: none;">
+                                                <i class="bi bi-check-all me-2"></i>Select All
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning" id="selectFeaturedProducts" style="display: none;">
+                                                <i class="bi bi-star me-2"></i>Auto-Select Featured
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" id="clearSelection" style="display: none;">
+                                                <i class="bi bi-x-circle me-2"></i>Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Product Grid Container -->
+                                <div id="productBrowser" class="product-browser">
+                                    <!-- Initial state -->
+                                    <div id="productBrowserEmpty" class="text-center py-5">
+                                        <div class="mb-4">
+                                            <i class="bi bi-shop" style="font-size: 4rem; color: var(--bs-primary); opacity: 0.3;"></i>
+                                        </div>
+                                        <h6 class="text-muted mb-3">Load Your Shopify Products</h6>
+                                        <p class="text-muted mb-4">
+                                            Click "Load Products" to browse and select products from your connected Shopify store.
+                                            <br>Selected products will be featured prominently on your homepage.
+                                        </p>
+                                        <button type="button" class="btn btn-primary" onclick="document.getElementById('loadProducts').click()">
+                                            <i class="bi bi-download me-2"></i>Load Products Now
+                                        </button>
+                                    </div>
+
+                                    <!-- Loading state -->
+                                    <div id="productBrowserLoading" class="text-center py-5" style="display: none;">
+                                        <div class="spinner-border text-primary mb-3" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <h6 class="text-muted mb-2">Loading Products...</h6>
+                                        <p class="text-muted small">Fetching products from your Shopify store</p>
+                                    </div>
+
+                                    <!-- Error state -->
+                                    <div id="productBrowserError" class="text-center py-5" style="display: none;">
+                                        <div class="mb-4">
+                                            <i class="bi bi-exclamation-triangle" style="font-size: 3rem; color: var(--bs-warning);"></i>
+                                        </div>
+                                        <h6 class="text-warning mb-3">Could Not Load Products</h6>
+                                        <p class="text-muted mb-4" id="productErrorMessage">
+                                            Please ensure your Shopify connection is valid and try again.
+                                        </p>
+                                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('loadProducts').click()">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                                        </button>
+                                    </div>
+
+                                    <!-- Products grid -->
+                                    <div id="productGrid" class="row g-3" style="display: none;">
+                                        <!-- Products will be loaded here -->
+                                    </div>
+
+                                    <!-- Load more button -->
+                                    <div id="loadMoreContainer" class="text-center mt-4" style="display: none;">
+                                        <button type="button" class="btn btn-outline-primary" id="loadMoreProducts">
+                                            <i class="bi bi-plus-circle me-2"></i>Load More Products
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Selected Products Summary -->
+                                <div id="selectedProductsSummary" class="mt-4" style="display: none;">
+                                    <div class="alert alert-info border-0" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.1) 0%, rgba(255, 255, 255, 0.9) 100%);">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    <i class="bi bi-check-circle me-2"></i>
+                                                    <span id="selectedProductsCount">0</span> Products Selected
+                                                </h6>
+                                                <p class="mb-0 small text-muted">
+                                                    These products will be featured on your homepage and product pages.
+                                                </p>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" id="previewSelection">
+                                                <i class="bi bi-eye me-1"></i>Preview
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden form fields for selected products -->
+                                <input type="hidden" name="selectedProducts" id="selectedProductsInput" value="[]">
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary btn-lg px-4" onclick="prevStep(2)">
+                                    <i class="bi bi-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="button" class="btn btn-primary btn-lg px-4" onclick="nextStep(4)">
+                                    Continue <i class="bi bi-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Global Settings -->
+                        <div class="setup-step" id="step4" style="<%= step !== '4' ? 'display: none;' : '' %>">
+                            <h4 class="mb-4 text-primary">
+                                <i class="bi bi-gear me-2"></i>Global Settings
+                            </h4>
+                            
+                            <div class="alert alert-info mb-4">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-lightbulb me-2"></i>
+                                    Pro Tip: Clear Policies Build Trust
+                                </h6>
+                                <p class="mb-0 small">
+                                    Well-defined shipping and return policies reduce customer concerns and increase conversion rates.
+                                    You can always update these later from your dashboard.
+                                </p>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="shippingPolicy" class="form-label fw-semibold">
+                                        <i class="bi bi-truck me-2"></i>Shipping Policy
+                                    </label>
+                                    <textarea class="form-control" id="shippingPolicy" name="shippingPolicy" rows="4" 
+                                              placeholder="Free shipping on orders over $50. Standard delivery 3-5 business days..."
+                                              data-tooltip="Clear shipping terms help reduce cart abandonment"></textarea>
+                                    <div class="form-text">
+                                        <i class="bi bi-clock me-1"></i>
+                                        Include delivery times and costs
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="returnPolicy" class="form-label fw-semibold">
+                                        <i class="bi bi-arrow-repeat me-2"></i>Return Policy
+                                    </label>
+                                    <textarea class="form-control" id="returnPolicy" name="returnPolicy" rows="4" 
+                                              placeholder="30-day returns. Items must be unused and in original packaging..."
+                                              data-tooltip="Fair return policies increase customer confidence"></textarea>
+                                    <div class="form-text">
+                                        <i class="bi bi-shield-check me-1"></i>
+                                        Specify timeframes and conditions
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body p-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableAnalytics" name="enableAnalytics" checked>
+                                                <label class="form-check-label fw-semibold" for="enableAnalytics">
+                                                    <i class="bi bi-graph-up me-2"></i>Enable Analytics
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">
+                                                Track visitor behavior and conversion metrics to optimize your store performance.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body p-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableNewsletter" name="enableNewsletter" checked>
+                                                <label class="form-check-label fw-semibold" for="enableNewsletter">
+                                                    <i class="bi bi-envelope-heart me-2"></i>Newsletter Signup
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">
+                                                Collect email addresses to build your customer base and drive repeat sales.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body p-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableSEO" name="enableSEO" checked>
+                                                <label class="form-check-label fw-semibold" for="enableSEO">
+                                                    <i class="bi bi-search me-2"></i>SEO Optimization
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">
+                                                Automatic meta tags, structured data, and search engine optimization features.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body p-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enableSocial" name="enableSocial" checked>
+                                                <label class="form-check-label fw-semibold" for="enableSocial">
+                                                    <i class="bi bi-share me-2"></i>Social Sharing
+                                                </label>
+                                            </div>
+                                            <small class="text-muted">
+                                                Social media integration and sharing buttons to increase your reach.
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary btn-lg px-4" onclick="prevStep(3)">
+                                    <i class="bi bi-arrow-left me-2"></i>Back
+                                </button>
+                                <button type="submit" class="btn btn-success btn-lg px-5" data-tooltip="Create your amazing store!">
+                                    <i class="bi bi-rocket-takeoff me-2"></i>Launch Store!
+                                </button>
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Action Button for Help -->
+<button class="fab" data-tooltip="Need help? Click for assistance!" id="helpFab">
+    <i class="bi bi-question-circle"></i>
+</button>
+
+<!-- Premium Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h4>Creating Your Amazing Store...</h4>
+        <p class="mb-0">Please wait while we set up everything perfectly for you.</p>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
