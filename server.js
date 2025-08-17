@@ -5,6 +5,7 @@ const path = require('path');
 const db = require('./database/db');
 const { globalErrorHandler, notFoundHandler, handleUncaughtException, handleUnhandledRejection } = require('./middleware/errorHandler');
 const domainRouter = require('./middleware/domainRouter');
+const { getAgentSystem } = require('./agent-automation-system');
 require('dotenv').config();
 
 // Handle uncaught exceptions
@@ -45,46 +46,72 @@ app.use('/stores', express.static(path.join(__dirname, 'stores'), {
 app.use(notFoundHandler);      // 404 handler
 app.use(globalErrorHandler);   // Global error handler
 
-// Initialize database and start server
-async function startServer() {
+// Initialize for serverless and local environments
+async function initialize() {
   try {
     // Initialize database
     await db.initialize();
     console.log('✅ Database initialized successfully');
     
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 Multi-Store Platform running on port ${PORT}`);
-      console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin`);
-      console.log(`🛠️  Site Setup: http://localhost:${PORT}/admin/site-setup`);
-      console.log(`🎨 Template Builder: http://localhost:${PORT}/admin/product-template`);
-      console.log(`🔗 API Endpoints: http://localhost:${PORT}/api`);
-      console.log(`🏢 Stores Directory: ${path.join(__dirname, 'stores')}`);
-      console.log(`🌐 Domain Routing: Enabled for all custom domains`);
-    });
+    // Initialize Agent Automation System
+    console.log('\n🤖 INITIALIZING AUTOMATED AGENT SYSTEM');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    const agentSystem = getAgentSystem();
+    console.log('✅ Agent Automation System is now the DEFAULT workflow\n');
     
-    // Handle unhandled promise rejections
-    handleUnhandledRejection(server);
-    
-    return server;
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
+    console.error('❌ Failed to initialize:', error);
   }
 }
 
-// Handle graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down gracefully...');
-  await db.close();
-  process.exit(0);
-});
+// Initialize for serverless environment
+initialize();
 
-process.on('SIGTERM', async () => {
-  console.log('\n🛑 Shutting down gracefully...');
-  await db.close();
-  process.exit(0);
-});
-
-startServer();
+// Start server only if not in serverless environment
+if (require.main === module) {
+  async function startServer() {
+    try {
+      const server = app.listen(PORT, () => {
+        console.log(`🚀 Multi-Store Platform running on port ${PORT}`);
+        console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin`);
+        console.log(`🤖 Agent Dashboard: http://localhost:${PORT}/admin/agents`);
+        console.log(`🛠️  Site Setup: http://localhost:${PORT}/admin/site-setup`);
+        console.log(`🎨 Template Builder: http://localhost:${PORT}/admin/product-template`);
+        console.log(`🔗 API Endpoints: http://localhost:${PORT}/api`);
+        console.log(`🏢 Stores Directory: ${path.join(__dirname, 'stores')}`);
+        console.log(`🌐 Domain Routing: Enabled for all custom domains`);
+        console.log('\n🎯 AGENT AUTOMATION IS NOW THE DEFAULT!');
+        console.log('✅ Auto-deployment: ACTIVE for all technical tasks');
+        console.log('✅ Expert agents working continuously without prompting');
+        console.log('✅ Full transparency with real-time dashboard');
+        console.log('✅ Intelligent coordination and handoffs');
+        console.log('\n📝 NO MORE ASKING "WHERE ARE THE AGENTS?" - THEY\'RE ALWAYS WORKING!');
+      });
+      
+      // Handle unhandled promise rejections
+      handleUnhandledRejection(server);
+      
+      // Handle graceful shutdown
+      process.on('SIGINT', async () => {
+        console.log('\n🛑 Shutting down gracefully...');
+        await db.close();
+        process.exit(0);
+      });
+      
+      process.on('SIGTERM', async () => {
+        console.log('\n🛑 Shutting down gracefully...');
+        await db.close();
+        process.exit(0);
+      });
+      
+      return server;
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
+  }
+  
+  startServer();
+}
 
 module.exports = app;

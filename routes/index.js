@@ -2,10 +2,26 @@ const express = require('express');
 const Store = require('../models/Store');
 const CompanyShopifyStore = require('../models/CompanyShopifyStore');
 const { validateSiteSetup, sanitizeInput } = require('../middleware/validation');
+const { getAgentSystem } = require('../agent-automation-system');
 const router = express.Router();
 
 // Apply input sanitization to all routes
 router.use(sanitizeInput);
+
+// Initialize agent system for all requests
+router.use((req, res, next) => {
+  // Auto-deploy agents for any technical work detected
+  if (req.method === 'POST' && req.path.includes('site-setup')) {
+    // Deploy agents for site setup work
+    const agentSystem = getAgentSystem();
+    agentSystem.autoDeployAgents('Site setup and store creation workflow', {
+      type: 'store-creation',
+      method: req.method,
+      path: req.path
+    }).catch(err => console.warn('Auto-agent deployment failed:', err));
+  }
+  next();
+});
 
 // Homepage - Landing page for the platform
 router.get('/', (req, res) => {
@@ -212,11 +228,73 @@ router.get('/admin/product-template', (req, res) => {
   });
 });
 
+// Agent Dashboard - Real-time agent monitoring and control
+router.get('/admin/agents', async (req, res) => {
+  try {
+    const agentSystem = getAgentSystem();
+    const dashboardData = {
+      activeAgents: agentSystem.getActiveAgents(),
+      taskProgress: agentSystem.getAllTasksProgress(),
+      agentRegistry: agentSystem.getAgentRegistry(),
+      systemStatus: {
+        isRunning: agentSystem.isRunning,
+        totalAgents: agentSystem.agentRegistry.size,
+        activeTasks: agentSystem.progressTracker.size
+      }
+    };
+    
+    res.render('agent-dashboard', {
+      title: 'Agent Automation Dashboard',
+      dashboardData: dashboardData
+    });
+  } catch (error) {
+    console.error('Agent dashboard error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load agent dashboard'
+    });
+  }
+});
+
 // Company Profile - Manage Shopify stores
 router.get('/admin/company-profile', (req, res) => {
   res.render('admin/company-profile', { 
     title: 'Company Profile - Manage Shopify Stores'
   });
+});
+
+// Deploy agents for specific task (API endpoint)
+router.post('/admin/agents/deploy', async (req, res) => {
+  try {
+    const { taskDescription, context } = req.body;
+    
+    if (!taskDescription) {
+      return res.status(400).json({
+        error: 'Task description is required'
+      });
+    }
+    
+    const agentSystem = getAgentSystem();
+    const deployment = await agentSystem.autoDeployAgents(taskDescription, context || {});
+    
+    res.json({
+      success: true,
+      taskId: deployment.taskId,
+      deployedAgents: deployment.deployedAgents.map(agent => ({
+        id: agent.id,
+        name: agent.name,
+        department: agent.department,
+        priority: agent.priority
+      })),
+      coordination: deployment.coordination
+    });
+  } catch (error) {
+    console.error('Agent deployment error:', error);
+    res.status(500).json({
+      error: 'Failed to deploy agents',
+      message: error.message
+    });
+  }
 });
 
 // Store management - View/edit individual store

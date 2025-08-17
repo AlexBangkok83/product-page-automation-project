@@ -4,6 +4,7 @@ const validator = require('validator');
 const Store = require('../models/Store');
 const CompanyShopifyStore = require('../models/CompanyShopifyStore');
 const { validateStoreCreation, sanitizeInput, createRateLimiter } = require('../middleware/validation');
+const { getAgentSystem } = require('../agent-automation-system');
 const router = express.Router();
 
 // Helper function to get Shopify product count
@@ -27,6 +28,37 @@ async function getShopifyProductCount(domain, accessToken) {
 // Apply input sanitization and rate limiting
 router.use(sanitizeInput);
 router.use(createRateLimiter(15 * 60 * 1000, 100)); // 100 requests per 15 minutes
+
+// Auto-deploy agents for API activities
+router.use((req, res, next) => {
+  // Auto-deploy agents for technical API work
+  if (req.method === 'POST' || req.method === 'PUT') {
+    const agentSystem = getAgentSystem();
+    const taskDescription = `API ${req.method} request to ${req.path}`;
+    
+    // Detect specific API work types
+    if (req.path.includes('stores')) {
+      agentSystem.autoDeployAgents(`Store management: ${taskDescription}`, {
+        type: 'store-management',
+        api: true,
+        endpoint: req.path
+      }).catch(err => console.warn('Auto-agent deployment failed:', err));
+    } else if (req.path.includes('shopify')) {
+      agentSystem.autoDeployAgents(`Shopify integration: ${taskDescription}`, {
+        type: 'shopify-integration',
+        api: true,
+        endpoint: req.path
+      }).catch(err => console.warn('Auto-agent deployment failed:', err));
+    } else if (req.path.includes('deploy')) {
+      agentSystem.autoDeployAgents(`Deployment operation: ${taskDescription}`, {
+        type: 'deployment',
+        api: true,
+        endpoint: req.path
+      }).catch(err => console.warn('Auto-agent deployment failed:', err));
+    }
+  }
+  next();
+});
 
 // Middleware to validate JSON content type for POST requests (skip for specific endpoints)
 router.use((req, res, next) => {
@@ -887,5 +919,149 @@ router.patch('/company-shopify-stores/:uuid/toggle-status', async (req, res) => 
     });
   }
 });
+
+// === AGENT AUTOMATION API ENDPOINTS ===
+
+// Get agent system status and metrics
+router.get('/agents/status', (req, res) => {
+  try {
+    const agentSystem = getAgentSystem();
+    
+    res.json({
+      success: true,
+      system: {
+        isRunning: agentSystem.isRunning,
+        totalAgents: agentSystem.agentRegistry.size,
+        activeAgents: agentSystem.activeAgents.size,
+        activeTasks: agentSystem.progressTracker.size
+      },
+      activeAgents: agentSystem.getActiveAgents(),
+      taskProgress: agentSystem.getAllTasksProgress()
+    });
+  } catch (error) {
+    console.error('Agent status error:', error);
+    res.status(500).json({ error: 'Failed to get agent system status' });
+  }
+});
+
+// Get all active agents
+router.get('/agents/active', (req, res) => {
+  try {
+    const agentSystem = getAgentSystem();
+    const activeAgents = agentSystem.getActiveAgents();
+    
+    res.json({
+      success: true,
+      agents: activeAgents,
+      count: activeAgents.length
+    });
+  } catch (error) {
+    console.error('Get active agents error:', error);
+    res.status(500).json({ error: 'Failed to get active agents' });
+  }
+});
+
+// Get agent registry
+router.get('/agents/registry', (req, res) => {
+  try {
+    const agentSystem = getAgentSystem();
+    const registry = agentSystem.getAgentRegistry();
+    
+    res.json({
+      success: true,
+      agents: registry,
+      count: registry.length
+    });
+  } catch (error) {
+    console.error('Get agent registry error:', error);
+    res.status(500).json({ error: 'Failed to get agent registry' });
+  }
+});
+
+// Deploy agents for a specific task
+router.post('/agents/deploy', async (req, res) => {
+  try {
+    const { taskDescription, context } = req.body;
+    
+    if (!taskDescription) {
+      return res.status(400).json({
+        error: 'Task description is required'
+      });
+    }
+    
+    const agentSystem = getAgentSystem();
+    const deployment = await agentSystem.autoDeployAgents(taskDescription, context || {});
+    
+    res.json({
+      success: true,
+      taskId: deployment.taskId,
+      deployedAgents: deployment.deployedAgents.map(agent => ({
+        id: agent.id,
+        name: agent.name,
+        department: agent.department,
+        priority: agent.priority
+      })),
+      coordination: deployment.coordination,
+      message: `Successfully deployed ${deployment.deployedAgents.length} agents`
+    });
+  } catch (error) {
+    console.error('Agent deployment error:', error);
+    res.status(500).json({
+      error: 'Failed to deploy agents',
+      message: error.message
+    });
+  }
+});
+
+// Get task progress
+router.get('/agents/tasks/:taskId', (req, res) => {
+  try {
+    const agentSystem = getAgentSystem();
+    const taskProgress = agentSystem.getTaskProgress(req.params.taskId);
+    
+    if (!taskProgress) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    res.json({
+      success: true,
+      task: taskProgress
+    });
+  } catch (error) {
+    console.error('Get task progress error:', error);
+    res.status(500).json({ error: 'Failed to get task progress' });
+  }
+});
+
+// Get all task progress
+router.get('/agents/tasks', (req, res) => {
+  try {
+    const agentSystem = getAgentSystem();
+    const allTasks = agentSystem.getAllTasksProgress();
+    
+    res.json({
+      success: true,
+      tasks: allTasks,
+      count: allTasks.length
+    });
+  } catch (error) {
+    console.error('Get all tasks error:', error);
+    res.status(500).json({ error: 'Failed to get task progress' });
+  }
+});
+
+// Auto-deploy agents for common scenarios when API is used
+setInterval(() => {
+  const agentSystem = getAgentSystem();
+  
+  // Check if we should deploy monitoring agents
+  if (agentSystem.activeAgents.size === 0) {
+    // System is idle, deploy monitoring agents
+    agentSystem.autoDeployAgents('System monitoring and readiness check', {
+      type: 'monitoring',
+      source: 'auto-scheduled'
+    }).catch(err => console.warn('Auto-monitoring deployment failed:', err));
+  }
+}, 300000); // Every 5 minutes
 
 module.exports = router;
