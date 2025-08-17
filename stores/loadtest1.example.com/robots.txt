@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://loadtest1.example.com/sitemap.xml
