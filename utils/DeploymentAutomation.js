@@ -269,21 +269,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
     // Ensure vercel.json is properly configured
     const vercelConfig = {
       version: 2,
-      builds: [
-        {
-          src: "api/serverless.js",
-          use: "@vercel/node"
+      functions: {
+        "api/serverless.js": {
+          maxDuration: 30
         }
-      ],
+      },
       routes: [
         {
           src: "/(.*)",
           dest: "/api/serverless.js"
         }
       ],
-      functions: {
-        "api/serverless.js": {
-          maxDuration: 30
+      env: {
+        NODE_ENV: "production"
+      },
+      git: {
+        deploymentEnabled: {
+          main: true
         }
       }
     };

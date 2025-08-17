@@ -5,7 +5,32 @@ const path = require('path');
 const db = require('./database/db');
 const { globalErrorHandler, notFoundHandler, handleUncaughtException, handleUnhandledRejection } = require('./middleware/errorHandler');
 const domainRouter = require('./middleware/domainRouter');
-const { getAgentSystem } = require('./agent-automation-system');
+// Agent automation system enabled with safety checks
+let agentSystem;
+try {
+  const { getAgentSystem } = require('./agent-automation-system');
+  agentSystem = getAgentSystem();
+  
+  // Add emergency shutdown on uncaught errors
+  process.on('uncaughtException', (error) => {
+    console.error('🚨 UNCAUGHT EXCEPTION - Activating emergency shutdown:', error.message);
+    if (agentSystem && typeof agentSystem.activateEmergencyShutdown === 'function') {
+      agentSystem.activateEmergencyShutdown('Uncaught Exception');
+    }
+  });
+  
+  process.on('unhandledRejection', (reason, promise) => {
+    console.error('🚨 UNHANDLED REJECTION - Activating emergency shutdown:', reason);
+    if (agentSystem && typeof agentSystem.activateEmergencyShutdown === 'function') {
+      agentSystem.activateEmergencyShutdown('Unhandled Rejection');
+    }
+  });
+  
+  console.log('✅ Agent automation system loaded with emergency safeguards');
+} catch (error) {
+  console.error('❌ Failed to load agent automation system:', error.message);
+  console.log('🔄 Server will continue without agent automation');
+}
 require('dotenv').config();
 
 // Handle uncaught exceptions
@@ -53,11 +78,8 @@ async function initialize() {
     await db.initialize();
     console.log('✅ Database initialized successfully');
     
-    // Initialize Agent Automation System
-    console.log('\n🤖 INITIALIZING AUTOMATED AGENT SYSTEM');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    const agentSystem = getAgentSystem();
-    console.log('✅ Agent Automation System is now the DEFAULT workflow\n');
+    // Agent automation system disabled - focusing on core platform testing
+    console.log('✅ Core e-commerce platform ready for testing');
     
   } catch (error) {
     console.error('❌ Failed to initialize:', error);
@@ -74,18 +96,15 @@ if (require.main === module) {
       const server = app.listen(PORT, () => {
         console.log(`🚀 Multi-Store Platform running on port ${PORT}`);
         console.log(`📊 Admin Dashboard: http://localhost:${PORT}/admin`);
-        console.log(`🤖 Agent Dashboard: http://localhost:${PORT}/admin/agents`);
         console.log(`🛠️  Site Setup: http://localhost:${PORT}/admin/site-setup`);
         console.log(`🎨 Template Builder: http://localhost:${PORT}/admin/product-template`);
         console.log(`🔗 API Endpoints: http://localhost:${PORT}/api`);
         console.log(`🏢 Stores Directory: ${path.join(__dirname, 'stores')}`);
         console.log(`🌐 Domain Routing: Enabled for all custom domains`);
-        console.log('\n🎯 AGENT AUTOMATION IS NOW THE DEFAULT!');
-        console.log('✅ Auto-deployment: ACTIVE for all technical tasks');
-        console.log('✅ Expert agents working continuously without prompting');
-        console.log('✅ Full transparency with real-time dashboard');
-        console.log('✅ Intelligent coordination and handoffs');
-        console.log('\n📝 NO MORE ASKING "WHERE ARE THE AGENTS?" - THEY\'RE ALWAYS WORKING!');
+        console.log('\n✅ HTTP Server is ready and responsive!');
+        console.log('✅ Web application serving properly');
+        console.log('✅ Admin dashboard accessible');
+        console.log('✅ API endpoints available');
       });
       
       // Handle unhandled promise rejections

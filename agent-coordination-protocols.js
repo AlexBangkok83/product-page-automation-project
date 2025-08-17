@@ -240,14 +240,24 @@ class AgentCoordinationProtocols extends EventEmitter {
   
   // AUTOMATIC HANDOFF DETECTION
   checkHandoffOpportunities() {
-    const activeAgents = this.agentSystem.getActiveAgents();
-    
-    for (const agent of activeAgents) {
-      const handoffRule = this.handoffRules.get(agent.name);
-      
-      if (handoffRule && this.shouldTriggerHandoff(agent, handoffRule)) {
-        this.initiateHandoff(agent, handoffRule);
+    try {
+      if (!this.agentSystem || this.agentSystem.emergencyShutdown) {
+        return;
       }
+      
+      const activeAgents = this.agentSystem.getActiveAgents() || [];
+      
+      for (const agent of activeAgents) {
+        if (!agent || !agent.name) continue;
+        
+        const handoffRule = this.handoffRules.get(agent.name);
+        
+        if (handoffRule && this.shouldTriggerHandoff(agent, handoffRule)) {
+          this.initiateHandoff(agent, handoffRule);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error checking handoff opportunities:', error.message);
     }
   }
   
@@ -332,35 +342,80 @@ class AgentCoordinationProtocols extends EventEmitter {
   }
   
   async ensureAgentDeployed(agentName, taskId, handoffContext) {
-    const activeAgents = this.agentSystem.getActiveAgents();
-    const existingAgent = activeAgents.find(a => a.name === agentName && a.taskId === taskId);
-    
-    if (!existingAgent) {
-      console.log(`🚀 Auto-deploying ${agentName} for handoff coordination`);
-      
-      const deployment = await this.agentSystem.autoDeployAgents(
-        `Handoff coordination: ${handoffContext.fromAgent.taskDescription}`,
-        {
-          type: 'handoff-coordination',
-          fromAgent: handoffContext.fromAgent.name,
-          deliverables: handoffContext.deliverables,
-          parentTaskId: taskId
-        }
-      );
-      
-      return deployment.deployedAgents.find(a => a.name === agentName);
+    // Critical: Add safety checks and prevent infinite recursion
+    if (!this.agentSystem || !handoffContext || !handoffContext.fromAgent) {
+      console.log(`⚠️ Invalid handoff context for ${agentName} - skipping deployment`);
+      return null;
     }
     
-    return existingAgent;
+    // Check for emergency shutdown
+    if (this.agentSystem.emergencyShutdown) {
+      console.log(`⚠️ Emergency shutdown active - blocking deployment of ${agentName}`);
+      return null;
+    }
+    
+    // Prevent handoff loops by checking if this is a recursive handoff
+    const handoffKey = `${handoffContext.fromAgent.name}-${agentName}-${taskId}`;
+    if (!this.handoffCooldown) {
+      this.handoffCooldown = new Map();
+    }
+    
+    const now = Date.now();
+    const lastHandoff = this.handoffCooldown.get(handoffKey);
+    
+    // Minimum 30 seconds between same handoffs to prevent infinite loops
+    if (lastHandoff && (now - lastHandoff) < 30000) {
+      console.log(`⚠️ Handoff cooldown active for ${agentName} - skipping deployment`);
+      return null;
+    }
+    
+    try {
+      const activeAgents = this.agentSystem.getActiveAgents() || [];
+      const existingAgent = activeAgents.find(a => a.name === agentName && a.taskId === taskId);
+      
+      if (!existingAgent) {
+        // Set cooldown before attempting deployment
+        this.handoffCooldown.set(handoffKey, now);
+        
+        console.log(`🚀 Auto-deploying ${agentName} for handoff coordination`);
+        
+        const deployment = await this.agentSystem.autoDeployAgents(
+          `Handoff coordination: ${handoffContext.fromAgent.taskDescription}`,
+          {
+            type: 'handoff-coordination',
+            fromAgent: handoffContext.fromAgent.name,
+            deliverables: handoffContext.deliverables,
+            parentTaskId: taskId
+          }
+        );
+        
+        return deployment?.deployedAgents?.find(a => a.name === agentName) || null;
+      }
+      
+      return existingAgent;
+    } catch (error) {
+      console.error(`❌ Error deploying agent ${agentName}:`, error.message);
+      return null;
+    }
   }
   
   processCoordinationQueues() {
-    for (const [taskId, handoffs] of this.coordinationQueues) {
-      for (const handoff of handoffs) {
-        if (handoff.status === 'initiated') {
-          this.processHandoff(handoff);
+    try {
+      if (!this.coordinationQueues || this.agentSystem?.emergencyShutdown) {
+        return;
+      }
+      
+      for (const [taskId, handoffs] of this.coordinationQueues) {
+        if (!Array.isArray(handoffs)) continue;
+        
+        for (const handoff of handoffs) {
+          if (handoff && handoff.status === 'initiated') {
+            this.processHandoff(handoff);
+          }
         }
       }
+    } catch (error) {
+      console.error('❌ Error processing coordination queues:', error.message);
     }
   }
   
@@ -430,20 +485,30 @@ class AgentCoordinationProtocols extends EventEmitter {
   }
   
   resolveBlockingDependencies() {
-    for (const [blockedAgent, dependency] of this.blockingDependencies) {
-      if (this.areDependenciesResolved(dependency)) {
-        console.log(`🔓 Resolving blocking dependency for ${blockedAgent}`);
-        
-        // Remove the blocking dependency
-        this.blockingDependencies.delete(blockedAgent);
-        
-        // Notify agent that it can proceed
-        this.emit('dependency-resolved', {
-          agent: blockedAgent,
-          handoffId: dependency.handoffId,
-          deliverables: dependency.deliverables
-        });
+    try {
+      if (!this.blockingDependencies || this.agentSystem?.emergencyShutdown) {
+        return;
       }
+      
+      for (const [blockedAgent, dependency] of this.blockingDependencies) {
+        if (!blockedAgent || !dependency) continue;
+        
+        if (this.areDependenciesResolved(dependency)) {
+          console.log(`🔓 Resolving blocking dependency for ${blockedAgent}`);
+          
+          // Remove the blocking dependency
+          this.blockingDependencies.delete(blockedAgent);
+          
+          // Notify agent that it can proceed
+          this.emit('dependency-resolved', {
+            agent: blockedAgent,
+            handoffId: dependency.handoffId,
+            deliverables: dependency.deliverables
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error resolving blocking dependencies:', error.message);
     }
   }
   
@@ -564,7 +629,15 @@ class AgentCoordinationProtocols extends EventEmitter {
   }
   
   getBlockingDependencies() {
-    return Object.fromEntries(this.blockingDependencies);
+    try {
+      if (!this.blockingDependencies || !(this.blockingDependencies instanceof Map)) {
+        return {};
+      }
+      return Object.fromEntries(this.blockingDependencies);
+    } catch (error) {
+      console.error('❌ Error getting blocking dependencies:', error.message);
+      return {};
+    }
   }
   
   getWorkflowTemplates() {

@@ -30,6 +30,13 @@ class AgentAutomationSystem extends EventEmitter {
     this.assignmentMatrix = null;
     this.startTime = new Date();
     
+    // Critical: Add circuit breakers to prevent infinite loops
+    this.maxActiveAgents = 50; // Maximum concurrent agents
+    this.handoffCooldown = new Map(); // Prevent rapid recursive handoffs
+    this.recursionDepth = 0;
+    this.maxRecursionDepth = 3;
+    this.emergencyShutdown = false;
+    
     // Auto-trigger rules for different task types
     this.taskTriggers = {
       // Code changes → Backend/Frontend agents
@@ -337,6 +344,27 @@ class AgentAutomationSystem extends EventEmitter {
   
   // AUTO-DEPLOY AGENTS FOR ANY TASK
   async autoDeployAgents(taskDescription, context = {}) {
+    // Critical: Check circuit breakers first
+    if (this.emergencyShutdown) {
+      console.log('⚠️ Emergency shutdown active - blocking new agent deployments');
+      return { taskId: null, deployedAgents: [], coordination: {} };
+    }
+    
+    if (this.activeAgents.size >= this.maxActiveAgents) {
+      console.log(`⚠️ Max agent limit reached (${this.maxActiveAgents}) - cannot deploy more agents`);
+      return { taskId: null, deployedAgents: [], coordination: {} };
+    }
+    
+    // Prevent recursive handoff loops
+    if (context.type === 'handoff-coordination') {
+      this.recursionDepth++;
+      if (this.recursionDepth > this.maxRecursionDepth) {
+        console.log(`⚠️ Max recursion depth reached (${this.maxRecursionDepth}) - blocking handoff coordination`);
+        this.recursionDepth--;
+        return { taskId: null, deployedAgents: [], coordination: {} };
+      }
+    }
+    
     console.log('\n🚀 AUTO-DEPLOYING AGENTS FOR TASK');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`📝 Task: ${taskDescription}`);
@@ -375,6 +403,11 @@ class AgentAutomationSystem extends EventEmitter {
     
     console.log(`✅ Successfully deployed ${deployedAgents.length} agents for task ${taskId}`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+    
+    // Reset recursion depth after successful deployment
+    if (context.type === 'handoff-coordination') {
+      this.recursionDepth = Math.max(0, this.recursionDepth - 1);
+    }
     
     return {
       taskId,
@@ -787,29 +820,24 @@ class AgentAutomationSystem extends EventEmitter {
   }
   
   scanForNewTasks() {
-    // In a real implementation, this would scan for:
-    // - New git commits
-    // - File changes
-    // - Issue creation
-    // - User requests
-    // - System alerts
+    // DISABLED: Auto-scanning was causing infinite agent deployment loops
+    // This method now only logs that scanning is disabled for stability
     
-    // For now, demonstrate the scanning capability
-    if (Math.random() < 0.1) { // 10% chance per scan
-      const mockTasks = [
-        'Fix performance issue in product loading',
-        'Implement user authentication system',
-        'Update UI components for mobile responsiveness',
-        'Deploy latest changes to production',
-        'Add new API endpoint for user profiles'
-      ];
-      
-      const randomTask = mockTasks[Math.floor(Math.random() * mockTasks.length)];
-      console.log(`🔍 Detected new task: ${randomTask}`);
-      
-      // Auto-deploy agents for detected task
-      this.autoDeployAgents(randomTask, { source: 'auto-detected' });
+    if (this.emergencyShutdown) {
+      return; // Don't even log during emergency shutdown
     }
+    
+    // Only log occasionally to avoid spam
+    if (Math.random() < 0.01) { // 1% chance per scan (much lower)
+      console.log('🔍 Task scanning disabled for system stability - manual deployment only');
+    }
+    
+    // In a production system, this would:
+    // - Scan git commits with proper debouncing
+    // - Monitor file changes with intelligent filtering  
+    // - Check issue trackers with rate limiting
+    // - Process user requests from a queue
+    // - Monitor system alerts with proper thresholds
   }
   
   checkCoordinationOpportunities() {
@@ -860,14 +888,25 @@ class AgentAutomationSystem extends EventEmitter {
     const basicProgress = Array.from(this.progressTracker.values());
     
     if (this.coordinationProtocols) {
-      // Enrich with coordination data
-      return basicProgress.map(task => ({
-        ...task,
-        handoffs: this.coordinationProtocols.getActiveHandoffs().filter(h => h.taskId === task.taskId),
-        coordinationQueues: this.coordinationProtocols.getCoordinationQueues()[task.taskId] || [],
-        blockingDependencies: Array.from(this.coordinationProtocols.getBlockingDependencies().entries())
-          .filter(([_, dep]) => dep.taskId === task.taskId)
-      }));
+      try {
+        // Safely enrich with coordination data
+        return basicProgress.map(task => {
+          const handoffs = this.coordinationProtocols.getActiveHandoffs?.() || [];
+          const coordinationQueues = this.coordinationProtocols.getCoordinationQueues?.() || {};
+          const blockingDependencies = this.coordinationProtocols.getBlockingDependencies?.() || new Map();
+          
+          return {
+            ...task,
+            handoffs: handoffs.filter(h => h?.taskId === task?.taskId),
+            coordinationQueues: coordinationQueues[task?.taskId] || [],
+            blockingDependencies: Array.from(blockingDependencies.entries())
+              .filter(([_, dep]) => dep?.taskId === task?.taskId)
+          };
+        });
+      } catch (error) {
+        console.error('❌ Error enriching progress data:', error.message);
+        return basicProgress;
+      }
     }
     
     return basicProgress;
@@ -915,11 +954,32 @@ class AgentAutomationSystem extends EventEmitter {
   
   shutdown() {
     console.log('🛑 Shutting down Agent Automation System...');
+    this.emergencyShutdown = true;
     this.isRunning = false;
     this.activeAgents.clear();
     this.taskQueue = [];
     this.progressTracker.clear();
+    this.handoffCooldown.clear();
+    this.recursionDepth = 0;
+    
+    // Clear any interval timers
+    if (this.progressTrackingInterval) {
+      clearInterval(this.progressTrackingInterval);
+    }
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+    }
+    
     console.log('✅ Agent Automation System shutdown complete');
+  }
+  
+  // Emergency circuit breaker
+  activateEmergencyShutdown(reason = 'Unknown') {
+    console.log(`🚨 EMERGENCY SHUTDOWN ACTIVATED: ${reason}`);
+    this.emergencyShutdown = true;
+    this.activeAgents.clear();
+    this.taskQueue = [];
+    this.recursionDepth = 0;
   }
 }
 
@@ -994,27 +1054,9 @@ module.exports = {
   }
 };
 
-// Demonstration - show system is working
-setTimeout(() => {
-  console.log('\n🎯 DEMONSTRATION: Auto-deploying agents for sample tasks...\n');
-  
-  // Example 1: Code changes detected
-  agentSystem.autoDeployAgents('Update server.js to handle new API endpoints', {
-    files: ['server.js', 'routes/api.js']
-  });
-  
-  setTimeout(() => {
-    // Example 2: Frontend work detected
-    agentSystem.autoDeployAgents('Redesign product page with better mobile experience', {
-      files: ['views/product.ejs', 'public/styles.css']
-    });
-  }, 2000);
-  
-  setTimeout(() => {
-    // Example 3: Performance issue detected
-    agentSystem.autoDeployAgents('Database queries are slow, need optimization', {
-      type: 'performance-issue'
-    });
-  }, 4000);
-  
-}, 3000);
+// DEMONSTRATION DISABLED - was causing infinite recursion
+// Demo functionality has been disabled to prevent system overload
+// The system is now stable and ready for manual task deployment
+console.log('\n🛡️  DEMO MODE DISABLED - System ready for manual operations');
+console.log('   Use: agentSystem.autoDeployAgents("your task", {context}) to deploy agents');
+console.log('   The automatic demonstration has been disabled for system stability\n');

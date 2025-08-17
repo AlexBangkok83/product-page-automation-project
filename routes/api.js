@@ -4,7 +4,7 @@ const validator = require('validator');
 const Store = require('../models/Store');
 const CompanyShopifyStore = require('../models/CompanyShopifyStore');
 const { validateStoreCreation, sanitizeInput, createRateLimiter } = require('../middleware/validation');
-const { getAgentSystem } = require('../agent-automation-system');
+const { getAgentSystem } = require('../agent-automation-system'); // Enabled for full automation
 const router = express.Router();
 
 // Helper function to get Shopify product count
@@ -29,7 +29,32 @@ async function getShopifyProductCount(domain, accessToken) {
 router.use(sanitizeInput);
 router.use(createRateLimiter(15 * 60 * 1000, 100)); // 100 requests per 15 minutes
 
-// Auto-deploy agents for API activities
+// Base API route - API information and status
+router.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Multi-Store E-commerce Platform API',
+    version: '1.0.0',
+    status: 'operational',
+    endpoints: {
+      stores: '/api/stores',
+      agents: '/api/agents/status',
+      countries: '/api/countries',
+      templates: '/api/page-templates',
+      validation: {
+        domain: '/api/check-domain',
+        shopify: '/api/validate-shopify'
+      },
+      shopify: {
+        products: '/api/shopify-products',
+        stores: '/api/company-shopify-stores'
+      }
+    },
+    documentation: 'Available endpoints listed above'
+  });
+});
+
+// Auto-deploy agents for API activities - ENABLED for full automation
 router.use((req, res, next) => {
   // Auto-deploy agents for technical API work
   if (req.method === 'POST' || req.method === 'PUT') {
@@ -926,21 +951,18 @@ router.patch('/company-shopify-stores/:uuid/toggle-status', async (req, res) => 
 router.get('/agents/status', (req, res) => {
   try {
     const agentSystem = getAgentSystem();
+    const status = agentSystem.getSystemStatus();
     
     res.json({
       success: true,
-      system: {
-        isRunning: agentSystem.isRunning,
-        totalAgents: agentSystem.agentRegistry.size,
-        activeAgents: agentSystem.activeAgents.size,
-        activeTasks: agentSystem.progressTracker.size
-      },
+      message: 'Agent automation system is active and monitoring',
+      system: status,
       activeAgents: agentSystem.getActiveAgents(),
       taskProgress: agentSystem.getAllTasksProgress()
     });
   } catch (error) {
-    console.error('Agent status error:', error);
-    res.status(500).json({ error: 'Failed to get agent system status' });
+    console.error('Get agent status error:', error);
+    res.status(500).json({ error: 'Failed to get agent status' });
   }
 });
 
@@ -1050,18 +1072,18 @@ router.get('/agents/tasks', (req, res) => {
   }
 });
 
-// Auto-deploy agents for common scenarios when API is used
-setInterval(() => {
-  const agentSystem = getAgentSystem();
-  
-  // Check if we should deploy monitoring agents
-  if (agentSystem.activeAgents.size === 0) {
-    // System is idle, deploy monitoring agents
-    agentSystem.autoDeployAgents('System monitoring and readiness check', {
-      type: 'monitoring',
-      source: 'auto-scheduled'
-    }).catch(err => console.warn('Auto-monitoring deployment failed:', err));
-  }
-}, 300000); // Every 5 minutes
+// Auto-deploy agents for common scenarios when API is used - DISABLED
+// setInterval(() => {
+//   const agentSystem = getAgentSystem();
+//   
+//   // Check if we should deploy monitoring agents
+//   if (agentSystem.activeAgents.size === 0) {
+//     // System is idle, deploy monitoring agents
+//     agentSystem.autoDeployAgents('System monitoring and readiness check', {
+//       type: 'monitoring',
+//       source: 'auto-scheduled'
+//     }).catch(err => console.warn('Auto-monitoring deployment failed:', err));
+//   }
+// }, 300000); // Every 5 minutes
 
 module.exports = router;

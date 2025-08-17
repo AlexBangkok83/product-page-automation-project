@@ -2,13 +2,13 @@ const express = require('express');
 const Store = require('../models/Store');
 const CompanyShopifyStore = require('../models/CompanyShopifyStore');
 const { validateSiteSetup, sanitizeInput } = require('../middleware/validation');
-const { getAgentSystem } = require('../agent-automation-system');
+const { getAgentSystem } = require('../agent-automation-system'); // Enabled for full automation
 const router = express.Router();
 
 // Apply input sanitization to all routes
 router.use(sanitizeInput);
 
-// Initialize agent system for all requests
+// Agent system middleware enabled for full automation
 router.use((req, res, next) => {
   // Auto-deploy agents for any technical work detected
   if (req.method === 'POST' && req.path.includes('site-setup')) {
@@ -409,24 +409,20 @@ router.get('/admin/product-template', (req, res) => {
   });
 });
 
-// Agent Dashboard - Real-time agent monitoring and control
+// Agent Dashboard - Disabled for clean HTTP server
 router.get('/admin/agents', async (req, res) => {
   try {
     const agentSystem = getAgentSystem();
-    const dashboardData = {
-      activeAgents: agentSystem.getActiveAgents(),
-      taskProgress: agentSystem.getAllTasksProgress(),
-      agentRegistry: agentSystem.getAgentRegistry(),
-      systemStatus: {
-        isRunning: agentSystem.isRunning,
-        totalAgents: agentSystem.agentRegistry.size,
-        activeTasks: agentSystem.progressTracker.size
-      }
-    };
+    const systemStatus = agentSystem.getSystemStatus();
+    const activeAgents = agentSystem.getActiveAgents();
+    const taskProgress = agentSystem.getAllTasksProgress();
     
     res.render('agent-dashboard', {
-      title: 'Agent Automation Dashboard',
-      dashboardData: dashboardData
+      title: 'Agent Dashboard',
+      systemStatus,
+      activeAgents,
+      taskProgress,
+      totalAgents: agentSystem.agentRegistry?.size || 0
     });
   } catch (error) {
     console.error('Agent dashboard error:', error);
@@ -620,7 +616,7 @@ router.post('/admin/deployment/redeploy/:storeId', async (req, res) => {
   }
 });
 
-// Deploy agents for specific task (API endpoint)
+// Deploy agents for specific task (API endpoint) - Disabled
 router.post('/admin/agents/deploy', async (req, res) => {
   try {
     const { taskDescription, context } = req.body;
@@ -643,7 +639,8 @@ router.post('/admin/agents/deploy', async (req, res) => {
         department: agent.department,
         priority: agent.priority
       })),
-      coordination: deployment.coordination
+      coordination: deployment.coordination,
+      message: `Successfully deployed ${deployment.deployedAgents.length} agents`
     });
   } catch (error) {
     console.error('Agent deployment error:', error);

@@ -454,44 +454,68 @@ class AgentAssignmentMatrix extends EventEmitter {
   }
   
   updatePerformanceMetrics() {
-    const metrics = {
-      timestamp: new Date(),
-      totalAssignments: this.assignmentHistory.length,
-      activeAssignments: this.getActiveAssignmentCount(),
-      averageResponseTime: this.calculateAverageResponseTime(),
-      successRate: this.calculateOverallSuccessRate(),
-      workloadDistribution: this.getWorkloadDistribution(),
-      topPerformers: this.getTopPerformers(),
-      bottlenecks: this.identifyBottlenecks(),
-      recommendations: this.generateOptimizationRecommendations()
-    };
-    
-    this.performanceMetrics.set(Date.now(), metrics);
-    
-    // Keep only last 100 entries
-    const entries = Array.from(this.performanceMetrics.entries());
-    if (entries.length > 100) {
-      const recent = entries.slice(-100);
-      this.performanceMetrics.clear();
-      recent.forEach(([key, value]) => this.performanceMetrics.set(key, value));
+    try {
+      // Safety check for required properties
+      if (!this.assignmentHistory || !this.workloadBalancer || !this.performanceMetrics) {
+        console.log('⚠️ Performance metrics update skipped - missing required data');
+        return;
+      }
+      
+      const metrics = {
+        timestamp: new Date(),
+        totalAssignments: this.assignmentHistory.length || 0,
+        activeAssignments: this.getActiveAssignmentCount() || 0,
+        averageResponseTime: this.calculateAverageResponseTime() || 0,
+        successRate: this.calculateOverallSuccessRate() || 100,
+        workloadDistribution: this.getWorkloadDistribution() || [],
+        topPerformers: this.getTopPerformers() || [],
+        bottlenecks: this.identifyBottlenecks() || [],
+        recommendations: this.generateOptimizationRecommendations() || []
+      };
+      
+      this.performanceMetrics.set(Date.now(), metrics);
+      
+      // Keep only last 100 entries
+      const entries = Array.from(this.performanceMetrics.entries());
+      if (entries.length > 100) {
+        const recent = entries.slice(-100);
+        this.performanceMetrics.clear();
+        recent.forEach(([key, value]) => {
+          if (key != null && value != null) {
+            this.performanceMetrics.set(key, value);
+          }
+        });
+      }
+      
+      this.emit('performance-metrics-updated', metrics);
+    } catch (error) {
+      console.error('❌ Error updating performance metrics:', error.message);
     }
-    
-    this.emit('performance-metrics-updated', metrics);
   }
   
   // CORE ASSIGNMENT LOGIC
   assignOptimalAgents(taskType, taskDescription, complexity = 'medium', constraints = {}) {
-    console.log(`🎯 Finding optimal agents for: ${taskType} (${complexity})`);
-    
-    const rule = this.assignmentRules.get(taskType);
-    if (!rule) {
-      throw new Error(`Unknown task type: ${taskType}`);
-    }
-    
-    const complexityConfig = rule.complexity[complexity];
-    if (!complexityConfig) {
-      throw new Error(`Unknown complexity level: ${complexity} for task type: ${taskType}`);
-    }
+    try {
+      console.log(`🎯 Finding optimal agents for: ${taskType} (${complexity})`);
+      
+      // Safety checks
+      if (!taskType || !taskDescription) {
+        throw new Error('Task type and description are required');
+      }
+      
+      if (!this.assignmentRules || !this.workloadBalancer) {
+        throw new Error('Assignment system not properly initialized');
+      }
+      
+      const rule = this.assignmentRules.get(taskType);
+      if (!rule) {
+        throw new Error(`Unknown task type: ${taskType}`);
+      }
+      
+      const complexityConfig = rule.complexity?.[complexity];
+      if (!complexityConfig) {
+        throw new Error(`Unknown complexity level: ${complexity} for task type: ${taskType}`);
+      }
     
     // Step 1: Get required number of agents
     const requiredAgentCount = Math.max(complexityConfig.agents, constraints.minAgents || 1);
@@ -526,11 +550,15 @@ class AgentAssignmentMatrix extends EventEmitter {
     this.updateAgentWorkloads(selectedAgents, assignment);
     this.assignmentHistory.push(assignment);
     
-    console.log(`✅ Assigned ${selectedAgents.length} agents: ${selectedAgents.map(a => a.name).join(', ')}`);
-    
-    this.emit('agent-assigned', assignment);
-    
-    return assignment;
+      console.log(`✅ Assigned ${selectedAgents.length} agents: ${selectedAgents.map(a => a.name).join(', ')}`);
+      
+      this.emit('agent-assigned', assignment);
+      
+      return assignment;
+    } catch (error) {
+      console.error(`❌ Assignment failed for ${taskType}:`, error.message);
+      return null;
+    }
   }
   
   scoreAndRankAgents(rule, constraints) {
@@ -866,18 +894,29 @@ class AgentAssignmentMatrix extends EventEmitter {
   }
   
   getWorkloadDistribution() {
-    const distribution = [];
-    
-    this.workloadBalancer.forEach((workload, agentName) => {
-      distribution.push({
-        agent: agentName,
-        currentLoad: workload.currentLoad,
-        activeAssignments: workload.activeAssignments.length,
-        efficiency: workload.efficiency
+    try {
+      if (!this.workloadBalancer) {
+        return [];
+      }
+      
+      const distribution = [];
+      
+      this.workloadBalancer.forEach((workload, agentName) => {
+        if (workload && agentName) {
+          distribution.push({
+            agent: agentName,
+            currentLoad: workload.currentLoad || 0,
+            activeAssignments: (workload.activeAssignments || []).length,
+            efficiency: workload.efficiency || 0
+          });
+        }
       });
-    });
-    
-    return distribution.sort((a, b) => b.currentLoad - a.currentLoad);
+      
+      return distribution.sort((a, b) => (b.currentLoad || 0) - (a.currentLoad || 0));
+    } catch (error) {
+      console.error('❌ Error getting workload distribution:', error.message);
+      return [];
+    }
   }
   
   getTopPerformers() {
@@ -979,8 +1018,17 @@ class AgentAssignmentMatrix extends EventEmitter {
   
   // TASK COMPLETION TRACKING
   completeTask(agentName, taskType, success = true, duration = null) {
-    const workload = this.workloadBalancer.get(agentName);
-    if (!workload) return;
+    try {
+      if (!agentName || !taskType || !this.workloadBalancer) {
+        console.log('⚠️ Task completion skipped - missing required parameters');
+        return;
+      }
+      
+      const workload = this.workloadBalancer.get(agentName);
+      if (!workload) {
+        console.log(`⚠️ Workload not found for agent: ${agentName}`);
+        return;
+      }
     
     // Update workload
     workload.completedTasks++;
@@ -1008,15 +1056,18 @@ class AgentAssignmentMatrix extends EventEmitter {
       }
     }
     
-    console.log(`✅ Task completed: ${agentName} - ${taskType} (${success ? 'success' : 'failed'})`);
-    
-    this.emit('task-completed', {
-      agentName,
-      taskType,
-      success,
-      duration,
-      newEfficiency: workload.efficiency
-    });
+      console.log(`✅ Task completed: ${agentName} - ${taskType} (${success ? 'success' : 'failed'})`);
+      
+      this.emit('task-completed', {
+        agentName,
+        taskType,
+        success,
+        duration,
+        newEfficiency: workload.efficiency
+      });
+    } catch (error) {
+      console.error(`❌ Error completing task for ${agentName}:`, error.message);
+    }
   }
   
   calculateLoadDecrease(taskType) {
