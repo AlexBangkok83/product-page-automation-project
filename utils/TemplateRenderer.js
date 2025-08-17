@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 class TemplateRenderer {
   constructor() {
@@ -31,6 +32,10 @@ class TemplateRenderer {
       await this.generateAssets(store, storePath);
       
       console.log(`✅ All files generated for ${store.name}`);
+      
+      // 🚀 GIT AUTOMATION: Add, commit, and push to GitHub
+      await this.autoCommitAndPush(store, storePath);
+      
       return storePath;
       
     } catch (error) {
@@ -1477,6 +1482,66 @@ Sitemap: https://${store.domain}/sitemap.xml`;
     } catch (error) {
       console.error('Error generating assets:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Automatically commit and push store files to GitHub
+   */
+  async autoCommitAndPush(store, storePath) {
+    try {
+      console.log(`🔧 Auto-committing store files for ${store.name}...`);
+      
+      // Change to project root directory
+      const projectRoot = process.cwd();
+      
+      // Add the store directory to git
+      const relativePath = path.relative(projectRoot, storePath);
+      execSync(`git add "${relativePath}"`, { cwd: projectRoot });
+      console.log(`✅ Added store files to git: ${relativePath}`);
+      
+      // Also add database changes to the same commit
+      execSync('git add database/multistore.db', { cwd: projectRoot });
+      console.log('✅ Added database changes to git');
+      
+      // Create commit message
+      const commitMessage = `Add ${store.name} store files and deployment
+
+Domain: ${store.domain}
+Country: ${store.country}
+Language: ${store.language}
+Currency: ${store.currency}
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>`;
+      
+      // Commit the changes using HEREDOC to handle multi-line messages properly
+      execSync(`git commit -m "$(cat <<'EOF'
+${commitMessage}
+EOF
+)"`, { cwd: projectRoot });
+      console.log(`✅ Committed changes for ${store.name}`);
+      
+      // Push to GitHub
+      execSync('git push', { cwd: projectRoot });
+      console.log(`🚀 Pushed to GitHub successfully!`);
+      
+      console.log(`✅ Git automation completed for ${store.name}`);
+      console.log(`🌐 Files should now appear on GitHub and trigger Vercel deployment`);
+      
+    } catch (error) {
+      console.error(`❌ Git automation failed for ${store.name}:`, error.message);
+      console.error('Full error details:', error);
+      console.warn(`⚠️ Store files were created locally but not pushed to GitHub`);
+      console.warn(`🔧 Manual push required:`);
+      console.warn(`   git add stores/${store.domain}/`);
+      console.warn(`   git add database/multistore.db`);
+      console.warn(`   git commit -m "Add ${store.name} store files"`);
+      console.warn(`   git push`);
+      
+      // Don't throw error - store creation should succeed even if git fails
+      // throw error;
     }
   }
 }
