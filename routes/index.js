@@ -327,10 +327,7 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
           console.error('🔍 Automation Error Details:', {
             errorMessage: error.message,
             errorStack: error.stack,
-            storeData: {
-              name: storeData.name,
-              domain: storeData.domain
-            },
+            requestData: req.body,
             timestamp: new Date().toISOString()
           });
         }

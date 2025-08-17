@@ -40,6 +40,9 @@ class DeploymentAutomation {
       // Step 5: Trigger deployment
       const deploymentResult = await this.triggerDeployment();
       
+      // Step 6: Connect domain to project
+      await this.connectDomainToProject(store.domain);
+      
       // Step 6: Monitor deployment progress
       await this.monitorDeployment(deploymentResult, store);
       
@@ -344,6 +347,54 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   extractDeploymentUrl(output) {
     const urlMatch = output.match(/https:\/\/[^\s]+\.vercel\.app/);
     return urlMatch ? urlMatch[0] : null;
+  }
+
+  /**
+   * Connect domain to Vercel project
+   */
+  async connectDomainToProject(domain) {
+    console.log(`🔗 Connecting domain ${domain} to project...`);
+    
+    try {
+      // Check if domain exists in Vercel
+      await execAsync(`vercel domains inspect ${domain}`);
+      console.log(`✅ Domain ${domain} exists in Vercel`);
+      
+      // Add domain to current project
+      const { stdout } = await execAsync(`vercel domains add ${domain}`);
+      console.log(`✅ Domain ${domain} connected to project`);
+      
+      return {
+        success: true,
+        domain,
+        message: 'Domain connected successfully'
+      };
+      
+    } catch (error) {
+      if (error.message.includes('already assigned')) {
+        console.log(`✅ Domain ${domain} already connected to project`);
+        return {
+          success: true,
+          domain,
+          message: 'Domain already connected'
+        };
+      } else if (error.message.includes('not found')) {
+        console.log(`⚠️ Domain ${domain} not found in Vercel - skipping connection`);
+        console.log(`💡 Add domain manually: vercel domains add ${domain}`);
+        return {
+          success: false,
+          domain,
+          message: 'Domain not found in Vercel'
+        };
+      } else {
+        console.error(`❌ Failed to connect domain ${domain}:`, error.message);
+        return {
+          success: false,
+          domain,
+          message: error.message
+        };
+      }
+    }
   }
 
   /**
