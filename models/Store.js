@@ -1,6 +1,7 @@
 const db = require('../database/db');
 const { v4: uuidv4 } = require('uuid');
 const TemplateRenderer = require('../utils/TemplateRenderer');
+const DeploymentAutomation = require('../utils/DeploymentAutomation');
 const fs = require('fs');
 const path = require('path');
 
@@ -437,6 +438,187 @@ class Store {
       }
     } catch (error) {
       console.error(`❌ Error deleting store files for ${this.name}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create store with complete deployment automation
+   * This is the main method for true end-to-end automation
+   */
+  static async createWithDeployment(storeData, progressCallback = null) {
+    console.log('🚀 Starting COMPLETE AUTOMATION: Store Creation → Git → Vercel → Live Domain');
+    
+    // Helper function to send progress updates
+    const sendProgress = (step, message, progress, type = 'progress') => {
+      console.log(`📊 [${progress}%] ${step}: ${message}`);
+      if (progressCallback) {
+        progressCallback({ type, step, message, progress });
+      }
+    };
+
+    const deploymentAutomation = new DeploymentAutomation();
+
+    try {
+      sendProgress('validation', 'Validating store data and prerequisites...', 5);
+      
+      // Step 1: Create store in database
+      sendProgress('database', 'Creating store in database...', 15);
+      const store = await Store.create(storeData);
+      
+      // Step 2: Generate store files
+      sendProgress('files', 'Generating store files...', 25);
+      await store.generateStoreFiles();
+      
+      // Step 3: Execute complete deployment automation
+      sendProgress('deployment-start', 'Starting complete deployment automation...', 35);
+      
+      const deploymentResult = await deploymentAutomation.executeCompleteDeployment(store, {
+        progressCallback: (update) => {
+          // Forward deployment progress updates
+          const progressMap = {
+            'git-init': 45,
+            'git-commit': 55,
+            'vercel-config': 65,
+            'deployment-trigger': 75,
+            'domain-verify': 85
+          };
+          
+          const progress = progressMap[update.step] || 50;
+          sendProgress(update.step, update.message, progress, update.type || 'progress');
+        }
+      });
+      
+      if (deploymentResult.success) {
+        // Update store with deployment results
+        await store.update({ 
+          deployment_status: 'deployed',
+          deployed_at: new Date().toISOString(),
+          deployment_url: `https://${store.domain}`
+        });
+        
+        if (deploymentResult.isLive) {
+          sendProgress('complete', 'Store is LIVE and accessible!', 100, 'complete');
+          console.log(`✅ AUTOMATION COMPLETE: https://${store.domain}`);
+        } else {
+          sendProgress('deployed-propagating', 'Deployment successful, domain propagating...', 95, 'warning');
+          console.log(`⚠️ DEPLOYMENT COMPLETE, DOMAIN PROPAGATING: https://${store.domain}`);
+        }
+      } else {
+        throw new Error('Deployment automation failed');
+      }
+      
+      return store;
+      
+    } catch (error) {
+      console.error('❌ AUTOMATION FAILED:', error.message);
+      
+      // Update store deployment status
+      try {
+        if (error.store) {
+          await error.store.update({ deployment_status: 'failed' });
+        }
+      } catch (updateError) {
+        console.error('Failed to update deployment status:', updateError.message);
+      }
+      
+      sendProgress('error', `Automation failed: ${error.message}`, 0, 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Quick deployment method for simpler use cases
+   */
+  async deployToLive() {
+    try {
+      console.log(`🚀 Deploying ${this.name} to live domain...`);
+      
+      const deploymentAutomation = new DeploymentAutomation();
+      const result = await deploymentAutomation.executeCompleteDeployment(this);
+      
+      if (result.success) {
+        await this.update({ 
+          deployment_status: 'deployed',
+          deployed_at: new Date().toISOString(),
+          deployment_url: `https://${this.domain}`
+        });
+        console.log(`✅ ${this.name} deployed successfully: https://${this.domain}`);
+      }
+      
+      return result;
+      
+    } catch (error) {
+      console.error(`❌ Deployment failed for ${this.name}:`, error.message);
+      
+      await this.update({ deployment_status: 'failed' });
+      throw error;
+    }
+  }
+
+  /**
+   * Check if domain is accessible
+   */
+  async isDomainLive() {
+    try {
+      const deploymentAutomation = new DeploymentAutomation();
+      return await deploymentAutomation.verifyDomainLive(this.domain, 3, 5000); // Quick check
+    } catch (error) {
+      console.error(`Error checking domain ${this.domain}:`, error.message);
+      return false;
+    }
+  }
+
+  /**
+   * Get deployment information
+   */
+  getDeploymentInfo() {
+    return {
+      status: this.deployment_status,
+      url: this.deployment_url || `https://${this.domain}`,
+      deployedAt: this.deployed_at,
+      filesExist: this.storeFilesExist(),
+      canDeploy: this.deployment_status !== 'deploying',
+      needsDeployment: !this.storeFilesExist() || this.deployment_status === 'failed'
+    };
+  }
+
+  /**
+   * Force redeploy the store
+   */
+  async forceDeploy(progressCallback = null) {
+    try {
+      console.log(`🔄 Force redeploying ${this.name}...`);
+      
+      // Update status to deploying
+      await this.update({ deployment_status: 'deploying' });
+      
+      // Regenerate files first
+      await this.regenerateStoreFiles();
+      
+      // Execute deployment
+      const deploymentAutomation = new DeploymentAutomation();
+      const result = await deploymentAutomation.executeCompleteDeployment(this, {
+        progressCallback
+      });
+      
+      if (result.success) {
+        await this.update({ 
+          deployment_status: 'deployed',
+          deployed_at: new Date().toISOString(),
+          deployment_url: `https://${this.domain}`
+        });
+        console.log(`✅ ${this.name} force redeployed successfully`);
+      } else {
+        await this.update({ deployment_status: 'failed' });
+        throw new Error('Force deployment failed');
+      }
+      
+      return result;
+      
+    } catch (error) {
+      console.error(`❌ Force deployment failed for ${this.name}:`, error.message);
+      await this.update({ deployment_status: 'failed' });
       throw error;
     }
   }
