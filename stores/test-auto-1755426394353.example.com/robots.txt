@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://test-auto-1755426394353.example.com/sitemap.xml

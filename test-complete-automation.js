@@ -74,16 +74,17 @@ class CompleteAutomationTester {
     console.log('🚀 Test 2: Complete Automation Pipeline...');
     
     try {
-      // Create test store data
+      // Create test store data with unique timestamp
+      const timestamp = Date.now();
       const testStoreData = {
-        name: 'Complete Automation Test Store',
-        domain: `test-automation-${Date.now()}.example.com`,
+        name: `Automation Test ${timestamp}`,
+        domain: `test-auto-${timestamp}.example.com`,
         country: 'US',
         language: 'en',
         currency: 'USD',
         primary_color: '#007cba',
         secondary_color: '#f8f9fa',
-        meta_title: 'Complete Automation Test Store',
+        meta_title: `Automation Test ${timestamp}`,
         meta_description: 'Testing complete end-to-end automation pipeline',
         support_email: 'test@automation.example.com',
         selected_pages: ['home', 'products', 'about', 'contact']
@@ -249,4 +250,60 @@ class CompleteAutomationTester {
     const passed = this.testResults.filter(r => r.passed).length;
     const total = this.testResults.length;
     
-    this.testResults.forEach((result, index) => {\n      const status = result.passed ? '✅' : '❌';\n      console.log(`${status} Test ${index + 1}: ${result.test} - ${result.message}`);\n    });\n    \n    console.log(`\\n🎯 OVERALL RESULT: ${passed}/${total} tests passed`);\n    \n    if (passed === total) {\n      console.log('\\n🎉 COMPLETE AUTOMATION SYSTEM IS WORKING!');\n      console.log('✅ True end-to-end automation from dashboard to live domain is functional');\n      console.log('🚀 Users can now deploy stores with genuine \"one-click\" experience');\n    } else {\n      console.log('\\n⚠️ Some automation components need attention');\n      console.log('🔧 Review failed tests and implement fixes');\n    }\n    \n    if (this.testStore) {\n      console.log(`\\n📋 Test Store Details:`);\n      console.log(`   UUID: ${this.testStore.uuid}`);\n      console.log(`   Name: ${this.testStore.name}`);\n      console.log(`   Domain: ${this.testStore.domain}`);\n      console.log(`   Status: ${this.testStore.deployment_status}`);\n      console.log(`   Live URL: https://${this.testStore.domain}`);\n    }\n  }\n\n  async cleanup() {\n    console.log('\\n🧹 Cleaning up test data...');\n    \n    try {\n      if (this.testStore) {\n        console.log(`🗑️ Removing test store: ${this.testStore.name}`);\n        await this.testStore.delete();\n        console.log('✅ Test store removed');\n      }\n    } catch (error) {\n      console.warn('⚠️ Cleanup warning:', error.message);\n    }\n  }\n}\n\n// Run the test if called directly\nif (require.main === module) {\n  const tester = new CompleteAutomationTester();\n  \n  tester.runCompleteTest()\n    .then(() => {\n      console.log('\\n✅ Complete automation testing finished successfully!');\n      process.exit(0);\n    })\n    .catch((error) => {\n      console.error('\\n❌ Complete automation testing failed:', error.message);\n      process.exit(1);\n    });\n}\n\nmodule.exports = CompleteAutomationTester;
+    this.testResults.forEach((result, index) => {
+      const status = result.passed ? '✅' : '❌';
+      console.log(`${status} Test ${index + 1}: ${result.test} - ${result.message}`);
+    });
+    
+    console.log(`\n🎯 OVERALL RESULT: ${passed}/${total} tests passed`);
+    
+    if (passed === total) {
+      console.log('\n🎉 COMPLETE AUTOMATION SYSTEM IS WORKING!');
+      console.log('✅ True end-to-end automation from dashboard to live domain is functional');
+      console.log('🚀 Users can now deploy stores with genuine "one-click" experience');
+    } else {
+      console.log('\n⚠️ Some automation components need attention');
+      console.log('🔧 Review failed tests and implement fixes');
+    }
+    
+    if (this.testStore) {
+      console.log(`\n📋 Test Store Details:`);
+      console.log(`   UUID: ${this.testStore.uuid}`);
+      console.log(`   Name: ${this.testStore.name}`);
+      console.log(`   Domain: ${this.testStore.domain}`);
+      console.log(`   Status: ${this.testStore.deployment_status}`);
+      console.log(`   Live URL: https://${this.testStore.domain}`);
+    }
+  }
+
+  async cleanup() {
+    console.log('\n🧹 Cleaning up test data...');
+    
+    try {
+      if (this.testStore) {
+        console.log(`🗑️ Removing test store: ${this.testStore.name}`);
+        await this.testStore.delete();
+        console.log('✅ Test store removed');
+      }
+    } catch (error) {
+      console.warn('⚠️ Cleanup warning:', error.message);
+    }
+  }
+}
+
+// Run the test if called directly
+if (require.main === module) {
+  const tester = new CompleteAutomationTester();
+  
+  tester.runCompleteTest()
+    .then(() => {
+      console.log('\n✅ Complete automation testing finished successfully!');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('\n❌ Complete automation testing failed:', error.message);
+      process.exit(1);
+    });
+}
+
+module.exports = CompleteAutomationTester;

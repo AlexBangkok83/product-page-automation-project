@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://test-automation-1755424129156.example.com/sitemap.xml

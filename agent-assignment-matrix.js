@@ -29,7 +29,1083 @@ class AgentAssignmentMatrix extends EventEmitter {
   }
   
   setupAssignmentMatrix() {
-    console.log('📋 Setting up comprehensive assignment matrix...');
+    console.log('📋 Setting up assignment matrix...');
     
-    // Define sophisticated assignment rules for different task categories
-    this.assignmentRules = new Map([\n      // DEVELOPMENT TASKS\n      ['frontend-development', {\n        primaryAgents: ['frontend-developer'],\n        supportAgents: ['ui-designer', 'whimsy-injector'],\n        requiredSkills: ['javascript', 'react', 'css', 'html'],\n        optionalSkills: ['typescript', 'webpack', 'testing'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-5 days' }\n        },\n        dependencies: ['ui-designer'],\n        handoffTo: ['test-writer-fixer'],\n        qualityGates: ['code-review', 'testing', 'accessibility-check']\n      }],\n      \n      ['backend-development', {\n        primaryAgents: ['backend-architect'],\n        supportAgents: ['api-tester', 'infrastructure-maintainer'],\n        requiredSkills: ['nodejs', 'databases', 'api-design'],\n        optionalSkills: ['microservices', 'caching', 'security'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '3-6 hours' },\n          medium: { agents: 2, timeEstimate: '1-3 days' },\n          complex: { agents: 3, timeEstimate: '4-7 days' }\n        },\n        dependencies: [],\n        handoffTo: ['api-tester', 'devops-automator'],\n        qualityGates: ['unit-tests', 'integration-tests', 'security-scan']\n      }],\n      \n      ['fullstack-feature', {\n        primaryAgents: ['frontend-developer', 'backend-architect'],\n        supportAgents: ['ui-designer', 'api-tester', 'devops-automator'],\n        requiredSkills: ['fullstack', 'system-design'],\n        optionalSkills: ['performance-optimization', 'security'],\n        complexity: {\n          simple: { agents: 2, timeEstimate: '1-2 days' },\n          medium: { agents: 4, timeEstimate: '3-5 days' },\n          complex: { agents: 6, timeEstimate: '1-2 weeks' }\n        },\n        coordination: 'parallel-with-sync-points',\n        dependencies: ['ui-designer'],\n        handoffTo: ['test-writer-fixer', 'performance-benchmarker'],\n        qualityGates: ['design-review', 'api-documentation', 'e2e-tests']\n      }],\n      \n      // DESIGN TASKS\n      ['ui-design', {\n        primaryAgents: ['ui-designer'],\n        supportAgents: ['brand-guardian', 'ux-researcher'],\n        requiredSkills: ['figma', 'design-systems', 'user-interface'],\n        optionalSkills: ['prototyping', 'animation', 'accessibility'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-4 days' }\n        },\n        dependencies: ['ux-researcher'],\n        handoffTo: ['frontend-developer'],\n        qualityGates: ['brand-consistency', 'accessibility-compliance', 'stakeholder-approval']\n      }],\n      \n      ['ux-research', {\n        primaryAgents: ['ux-researcher'],\n        supportAgents: ['analytics-reporter', 'feedback-synthesizer'],\n        requiredSkills: ['user-research', 'data-analysis', 'personas'],\n        optionalSkills: ['a-b-testing', 'surveys', 'interviews'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['ui-designer', 'sprint-prioritizer'],\n        qualityGates: ['sample-size-validation', 'statistical-significance', 'actionable-insights']\n      }],\n      \n      ['brand-design', {\n        primaryAgents: ['brand-guardian'],\n        supportAgents: ['visual-storyteller', 'content-creator'],\n        requiredSkills: ['brand-design', 'visual-identity', 'guidelines'],\n        optionalSkills: ['illustration', 'photography', 'video'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['ui-designer', 'content-creator'],\n        qualityGates: ['brand-guidelines-compliance', 'stakeholder-approval', 'consistency-check']\n      }],\n      \n      // TESTING AND QA\n      ['automated-testing', {\n        primaryAgents: ['test-writer-fixer'],\n        supportAgents: ['api-tester', 'performance-benchmarker'],\n        requiredSkills: ['test-automation', 'testing-frameworks', 'ci-cd'],\n        optionalSkills: ['load-testing', 'security-testing', 'mobile-testing'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '4-8 hours' },\n          medium: { agents: 2, timeEstimate: '1-3 days' },\n          complex: { agents: 3, timeEstimate: '4-6 days' }\n        },\n        dependencies: ['frontend-developer', 'backend-architect'],\n        handoffTo: ['devops-automator'],\n        qualityGates: ['test-coverage', 'test-reliability', 'execution-speed']\n      }],\n      \n      ['api-testing', {\n        primaryAgents: ['api-tester'],\n        supportAgents: ['backend-architect', 'performance-benchmarker'],\n        requiredSkills: ['api-testing', 'postman', 'rest-graphql'],\n        optionalSkills: ['load-testing', 'security-testing', 'documentation'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-5 days' }\n        },\n        dependencies: ['backend-architect'],\n        handoffTo: ['performance-benchmarker'],\n        qualityGates: ['endpoint-coverage', 'error-handling', 'performance-baseline']\n      }],\n      \n      ['performance-testing', {\n        primaryAgents: ['performance-benchmarker'],\n        supportAgents: ['infrastructure-maintainer', 'workflow-optimizer'],\n        requiredSkills: ['performance-testing', 'load-testing', 'monitoring'],\n        optionalSkills: ['database-optimization', 'caching', 'cdn'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '3-6 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-4 days' }\n        },\n        dependencies: ['backend-architect', 'frontend-developer'],\n        handoffTo: ['infrastructure-maintainer'],\n        qualityGates: ['baseline-established', 'bottlenecks-identified', 'optimization-recommendations']\n      }],\n      \n      // DEPLOYMENT AND INFRASTRUCTURE\n      ['deployment-automation', {\n        primaryAgents: ['devops-automator'],\n        supportAgents: ['infrastructure-maintainer', 'backend-architect'],\n        requiredSkills: ['ci-cd', 'docker', 'cloud-platforms'],\n        optionalSkills: ['kubernetes', 'terraform', 'monitoring'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-5 days' }\n        },\n        dependencies: ['backend-architect', 'test-writer-fixer'],\n        handoffTo: ['infrastructure-maintainer'],\n        qualityGates: ['deployment-success', 'rollback-capability', 'monitoring-setup']\n      }],\n      \n      ['infrastructure-setup', {\n        primaryAgents: ['infrastructure-maintainer'],\n        supportAgents: ['devops-automator', 'finance-tracker'],\n        requiredSkills: ['cloud-infrastructure', 'networking', 'security'],\n        optionalSkills: ['cost-optimization', 'disaster-recovery', 'compliance'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '4-8 hours' },\n          medium: { agents: 2, timeEstimate: '2-3 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['devops-automator', 'analytics-reporter'],\n        qualityGates: ['security-compliance', 'scalability-testing', 'cost-efficiency']\n      }],\n      \n      // PRODUCT AND STRATEGY\n      ['feature-planning', {\n        primaryAgents: ['sprint-prioritizer'],\n        supportAgents: ['trend-researcher', 'feedback-synthesizer'],\n        requiredSkills: ['product-management', 'roadmapping', 'stakeholder-management'],\n        optionalSkills: ['market-research', 'competitive-analysis', 'metrics'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: ['trend-researcher', 'feedback-synthesizer'],\n        handoffTo: ['rapid-prototyper', 'ui-designer'],\n        qualityGates: ['stakeholder-alignment', 'resource-feasibility', 'success-metrics']\n      }],\n      \n      ['market-research', {\n        primaryAgents: ['trend-researcher'],\n        supportAgents: ['analytics-reporter', 'growth-hacker'],\n        requiredSkills: ['market-analysis', 'competitive-research', 'trend-identification'],\n        optionalSkills: ['surveys', 'focus-groups', 'data-mining'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-3 days' },\n          medium: { agents: 2, timeEstimate: '1 week' },\n          complex: { agents: 3, timeEstimate: '2-3 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['sprint-prioritizer', 'growth-hacker'],\n        qualityGates: ['data-reliability', 'actionable-insights', 'strategic-alignment']\n      }],\n      \n      ['rapid-prototyping', {\n        primaryAgents: ['rapid-prototyper'],\n        supportAgents: ['ui-designer', 'frontend-developer'],\n        requiredSkills: ['prototyping', 'mvp-development', 'user-testing'],\n        optionalSkills: ['no-code-tools', 'animation', 'user-feedback'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: ['ui-designer'],\n        handoffTo: ['frontend-developer', 'ux-researcher'],\n        qualityGates: ['user-validation', 'technical-feasibility', 'iteration-ready']\n      }],\n      \n      // MARKETING AND GROWTH\n      ['growth-strategy', {\n        primaryAgents: ['growth-hacker'],\n        supportAgents: ['analytics-reporter', 'content-creator'],\n        requiredSkills: ['growth-hacking', 'metrics-analysis', 'experimentation'],\n        optionalSkills: ['viral-marketing', 'retention-strategies', 'conversion-optimization'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: ['analytics-reporter'],\n        handoffTo: ['content-creator', 'twitter-engager'],\n        qualityGates: ['hypothesis-validation', 'experiment-design', 'success-metrics']\n      }],\n      \n      ['content-creation', {\n        primaryAgents: ['content-creator'],\n        supportAgents: ['brand-guardian', 'visual-storyteller'],\n        requiredSkills: ['copywriting', 'content-strategy', 'brand-voice'],\n        optionalSkills: ['seo', 'social-media', 'video-editing'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-4 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: ['brand-guardian'],\n        handoffTo: ['instagram-curator', 'twitter-engager'],\n        qualityGates: ['brand-consistency', 'engagement-potential', 'seo-optimization']\n      }],\n      \n      ['social-media-campaign', {\n        primaryAgents: ['instagram-curator', 'twitter-engager', 'tiktok-strategist'],\n        supportAgents: ['content-creator', 'growth-hacker'],\n        requiredSkills: ['social-media-marketing', 'community-management', 'content-adaptation'],\n        optionalSkills: ['influencer-outreach', 'paid-advertising', 'analytics'],\n        complexity: {\n          simple: { agents: 2, timeEstimate: '3-5 days' },\n          medium: { agents: 3, timeEstimate: '1-2 weeks' },\n          complex: { agents: 4, timeEstimate: '2-4 weeks' }\n        },\n        coordination: 'platform-specific-parallel',\n        dependencies: ['content-creator'],\n        handoffTo: ['analytics-reporter'],\n        qualityGates: ['platform-optimization', 'engagement-rates', 'brand-safety']\n      }],\n      \n      // BUSINESS OPERATIONS\n      ['business-analysis', {\n        primaryAgents: ['analytics-reporter'],\n        supportAgents: ['finance-tracker', 'feedback-synthesizer'],\n        requiredSkills: ['data-analysis', 'business-intelligence', 'reporting'],\n        optionalSkills: ['predictive-analytics', 'data-visualization', 'kpi-tracking'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['sprint-prioritizer', 'finance-tracker'],\n        qualityGates: ['data-accuracy', 'actionable-insights', 'stakeholder-relevance']\n      }],\n      \n      ['legal-compliance', {\n        primaryAgents: ['legal-compliance-checker'],\n        supportAgents: ['finance-tracker', 'support-responder'],\n        requiredSkills: ['legal-compliance', 'privacy-regulations', 'terms-conditions'],\n        optionalSkills: ['international-law', 'intellectual-property', 'contracts'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-3 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['support-responder'],\n        qualityGates: ['compliance-verification', 'risk-assessment', 'documentation-completeness']\n      }],\n      \n      ['customer-support', {\n        primaryAgents: ['support-responder'],\n        supportAgents: ['feedback-synthesizer', 'legal-compliance-checker'],\n        requiredSkills: ['customer-service', 'communication', 'problem-solving'],\n        optionalSkills: ['technical-support', 'escalation-management', 'satisfaction-tracking'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-5 days' }\n        },\n        dependencies: [],\n        handoffTo: ['feedback-synthesizer'],\n        qualityGates: ['customer-satisfaction', 'resolution-time', 'knowledge-base-update']\n      }],\n      \n      // SPECIALIZED TASKS\n      ['security-audit', {\n        primaryAgents: ['legal-compliance-checker', 'backend-architect'],\n        supportAgents: ['api-tester', 'infrastructure-maintainer'],\n        requiredSkills: ['security-auditing', 'penetration-testing', 'vulnerability-assessment'],\n        optionalSkills: ['compliance-frameworks', 'incident-response', 'security-training'],\n        complexity: {\n          simple: { agents: 2, timeEstimate: '2-3 days' },\n          medium: { agents: 3, timeEstimate: '1 week' },\n          complex: { agents: 4, timeEstimate: '2-3 weeks' }\n        },\n        dependencies: ['backend-architect'],\n        handoffTo: ['infrastructure-maintainer'],\n        qualityGates: ['vulnerability-assessment', 'penetration-testing', 'compliance-verification']\n      }],\n      \n      ['workflow-optimization', {\n        primaryAgents: ['workflow-optimizer'],\n        supportAgents: ['analytics-reporter', 'tool-evaluator'],\n        requiredSkills: ['process-optimization', 'workflow-analysis', 'automation'],\n        optionalSkills: ['change-management', 'training', 'roi-analysis'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: ['analytics-reporter'],\n        handoffTo: ['tool-evaluator'],\n        qualityGates: ['efficiency-improvement', 'user-adoption', 'roi-validation']\n      }],\n      \n      ['tool-evaluation', {\n        primaryAgents: ['tool-evaluator'],\n        supportAgents: ['workflow-optimizer', 'finance-tracker'],\n        requiredSkills: ['tool-assessment', 'vendor-evaluation', 'integration-analysis'],\n        optionalSkills: ['cost-benefit-analysis', 'security-assessment', 'training-requirements'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '1-2 days' },\n          medium: { agents: 2, timeEstimate: '3-5 days' },\n          complex: { agents: 3, timeEstimate: '1-2 weeks' }\n        },\n        dependencies: [],\n        handoffTo: ['workflow-optimizer', 'finance-tracker'],\n        qualityGates: ['feature-comparison', 'cost-analysis', 'integration-feasibility']\n      }]\n    ]);\n    \n    console.log(`✅ Configured ${this.assignmentRules.size} comprehensive task assignment rules`);\n  }\n  \n  initializeSkillMapping() {\n    console.log('🎯 Initializing skill matrix and agent capabilities...');\n    \n    // Map each agent to their skills and proficiency levels\n    this.skillMatrix = new Map([\n      ['frontend-developer', {\n        primary: ['javascript', 'react', 'css', 'html', 'responsive-design'],\n        secondary: ['typescript', 'vue', 'angular', 'webpack', 'testing'],\n        proficiency: {\n          'javascript': 95,\n          'react': 90,\n          'css': 85,\n          'html': 90,\n          'typescript': 80,\n          'testing': 75\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 3 // Can handle 3 concurrent tasks\n      }],\n      \n      ['backend-architect', {\n        primary: ['nodejs', 'databases', 'api-design', 'microservices'],\n        secondary: ['python', 'docker', 'redis', 'security', 'performance'],\n        proficiency: {\n          'nodejs': 95,\n          'databases': 90,\n          'api-design': 95,\n          'microservices': 85,\n          'security': 80,\n          'performance': 85\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 3\n      }],\n      \n      ['ui-designer', {\n        primary: ['figma', 'design-systems', 'user-interface', 'prototyping'],\n        secondary: ['sketch', 'adobe-creative', 'animation', 'accessibility'],\n        proficiency: {\n          'figma': 95,\n          'design-systems': 90,\n          'user-interface': 95,\n          'prototyping': 85,\n          'accessibility': 80\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 2\n      }],\n      \n      ['ux-researcher', {\n        primary: ['user-research', 'data-analysis', 'personas', 'user-testing'],\n        secondary: ['surveys', 'interviews', 'a-b-testing', 'analytics'],\n        proficiency: {\n          'user-research': 95,\n          'data-analysis': 90,\n          'personas': 90,\n          'user-testing': 85,\n          'a-b-testing': 80\n        },\n        experience: 'senior',\n        availability: 'medium',\n        workloadCapacity: 2\n      }],\n      \n      ['test-writer-fixer', {\n        primary: ['test-automation', 'testing-frameworks', 'ci-cd', 'quality-assurance'],\n        secondary: ['selenium', 'jest', 'cypress', 'performance-testing'],\n        proficiency: {\n          'test-automation': 95,\n          'testing-frameworks': 90,\n          'ci-cd': 85,\n          'quality-assurance': 95,\n          'performance-testing': 80\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 4\n      }],\n      \n      ['devops-automator', {\n        primary: ['ci-cd', 'docker', 'cloud-platforms', 'automation'],\n        secondary: ['kubernetes', 'terraform', 'monitoring', 'security'],\n        proficiency: {\n          'ci-cd': 95,\n          'docker': 90,\n          'cloud-platforms': 90,\n          'kubernetes': 85,\n          'monitoring': 85\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 3\n      }],\n      \n      ['brand-guardian', {\n        primary: ['brand-design', 'visual-identity', 'guidelines', 'consistency'],\n        secondary: ['illustration', 'photography', 'video', 'social-media'],\n        proficiency: {\n          'brand-design': 95,\n          'visual-identity': 95,\n          'guidelines': 90,\n          'consistency': 95,\n          'social-media': 75\n        },\n        experience: 'senior',\n        availability: 'medium',\n        workloadCapacity: 2\n      }],\n      \n      ['growth-hacker', {\n        primary: ['growth-hacking', 'metrics-analysis', 'experimentation', 'viral-marketing'],\n        secondary: ['analytics', 'conversion-optimization', 'retention', 'acquisition'],\n        proficiency: {\n          'growth-hacking': 95,\n          'metrics-analysis': 90,\n          'experimentation': 90,\n          'viral-marketing': 85,\n          'analytics': 85\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 3\n      }],\n      \n      ['content-creator', {\n        primary: ['copywriting', 'content-strategy', 'brand-voice', 'storytelling'],\n        secondary: ['seo', 'social-media', 'video-editing', 'podcasting'],\n        proficiency: {\n          'copywriting': 95,\n          'content-strategy': 90,\n          'brand-voice': 90,\n          'seo': 80,\n          'social-media': 85\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 4\n      }],\n      \n      ['analytics-reporter', {\n        primary: ['data-analysis', 'business-intelligence', 'reporting', 'kpi-tracking'],\n        secondary: ['predictive-analytics', 'data-visualization', 'sql', 'statistics'],\n        proficiency: {\n          'data-analysis': 95,\n          'business-intelligence': 90,\n          'reporting': 95,\n          'predictive-analytics': 85,\n          'statistics': 85\n        },\n        experience: 'senior',\n        availability: 'high',\n        workloadCapacity: 3\n      }]\n    ]);\n    \n    console.log(`✅ Skill matrix configured for ${this.skillMatrix.size} agents`);\n  }\n  \n  configureWorkloadBalancing() {\n    console.log('⚖️ Configuring intelligent workload balancing...');\n    \n    // Initialize workload tracking for each agent\n    this.skillMatrix.forEach((skills, agentName) => {\n      this.workloadBalancer.set(agentName, {\n        currentLoad: 0,\n        maxCapacity: skills.workloadCapacity,\n        activeTasks: [],\n        averageTaskDuration: 0,\n        efficiency: 1.0, // Performance multiplier\n        specialization: this.calculateSpecializationScore(skills),\n        availability: skills.availability,\n        lastAssignment: null\n      });\n    });\n    \n    console.log('✅ Workload balancing configured');\n  }\n  \n  calculateSpecializationScore(skills) {\n    // Calculate how specialized an agent is (higher = more specialized)\n    const avgProficiency = Object.values(skills.proficiency).reduce((sum, val) => sum + val, 0) / Object.values(skills.proficiency).length;\n    const skillCount = skills.primary.length + skills.secondary.length;\n    \n    // More skills = less specialized, higher proficiency = more specialized\n    return (avgProficiency / 100) * (10 / skillCount);\n  }\n  \n  startPerformanceTracking() {\n    console.log('📈 Starting assignment performance tracking...');\n    \n    // Track assignment success rates every 5 minutes\n    setInterval(() => {\n      this.updatePerformanceMetrics();\n    }, 300000);\n    \n    // Adjust workload capacities based on performance every 15 minutes\n    setInterval(() => {\n      this.adjustWorkloadCapacities();\n    }, 900000);\n  }\n  \n  // INTELLIGENT AGENT ASSIGNMENT\n  async assignOptimalAgents(taskType, taskDescription, complexity = 'medium', constraints = {}) {\n    console.log(`🎯 Assigning optimal agents for task: ${taskType} (${complexity})`);\n    \n    const assignmentRule = this.assignmentRules.get(taskType);\n    if (!assignmentRule) {\n      throw new Error(`No assignment rule found for task type: ${taskType}`);\n    }\n    \n    const assignment = {\n      taskType,\n      taskDescription,\n      complexity,\n      constraints,\n      timestamp: new Date(),\n      assignedAgents: [],\n      alternativeAgents: [],\n      estimatedDuration: assignmentRule.complexity[complexity]?.timeEstimate,\n      qualityGates: assignmentRule.qualityGates,\n      dependencies: assignmentRule.dependencies,\n      handoffPlan: assignmentRule.handoffTo\n    };\n    \n    // Step 1: Identify required agents based on complexity\n    const requiredAgentCount = assignmentRule.complexity[complexity]?.agents || 1;\n    \n    // Step 2: Score and rank available agents\n    const candidateAgents = this.scoreAgentsForTask(assignmentRule, constraints);\n    \n    // Step 3: Apply workload balancing\n    const balancedCandidates = this.applyWorkloadBalancing(candidateAgents, requiredAgentCount);\n    \n    // Step 4: Select optimal combination\n    assignment.assignedAgents = this.selectOptimalCombination(\n      balancedCandidates,\n      requiredAgentCount,\n      assignmentRule\n    );\n    \n    // Step 5: Identify alternatives\n    assignment.alternativeAgents = balancedCandidates\n      .filter(agent => !assignment.assignedAgents.some(assigned => assigned.name === agent.name))\n      .slice(0, 3);\n    \n    // Step 6: Update workload tracking\n    this.updateWorkloadTracking(assignment.assignedAgents, assignment);\n    \n    // Step 7: Log assignment\n    this.logAssignment(assignment);\n    \n    console.log(`✅ Assigned ${assignment.assignedAgents.length} agents: ${assignment.assignedAgents.map(a => a.name).join(', ')}`);\n    \n    return assignment;\n  }\n  \n  scoreAgentsForTask(assignmentRule, constraints) {\n    const candidates = [];\n    \n    // Get all potential agents (primary + support)\n    const potentialAgents = [...assignmentRule.primaryAgents, ...assignmentRule.supportAgents];\n    \n    potentialAgents.forEach(agentName => {\n      const skills = this.skillMatrix.get(agentName);\n      const workload = this.workloadBalancer.get(agentName);\n      \n      if (!skills || !workload) return;\n      \n      const score = this.calculateAgentScore(agentName, skills, workload, assignmentRule, constraints);\n      \n      candidates.push({\n        name: agentName,\n        score,\n        skills,\n        workload,\n        isPrimary: assignmentRule.primaryAgents.includes(agentName),\n        reasoning: this.getScoreReasoning(score, skills, workload)\n      });\n    });\n    \n    // Sort by score (highest first)\n    return candidates.sort((a, b) => b.score - a.score);\n  }\n  \n  calculateAgentScore(agentName, skills, workload, assignmentRule, constraints) {\n    let score = 0;\n    \n    // 1. Skill match score (40% weight)\n    const skillMatch = this.calculateSkillMatch(skills, assignmentRule.requiredSkills, assignmentRule.optionalSkills);\n    score += skillMatch * 0.4;\n    \n    // 2. Availability score (25% weight)\n    const availabilityScore = this.calculateAvailabilityScore(workload);\n    score += availabilityScore * 0.25;\n    \n    // 3. Efficiency score (20% weight)\n    score += workload.efficiency * 20;\n    \n    // 4. Specialization bonus (10% weight)\n    score += workload.specialization * 10;\n    \n    // 5. Primary agent bonus (5% weight)\n    if (assignmentRule.primaryAgents.includes(agentName)) {\n      score += 5;\n    }\n    \n    // Apply constraints\n    if (constraints.preferredAgents && constraints.preferredAgents.includes(agentName)) {\n      score += 10;\n    }\n    \n    if (constraints.excludedAgents && constraints.excludedAgents.includes(agentName)) {\n      score = 0;\n    }\n    \n    if (constraints.urgency === 'high' && workload.currentLoad > workload.maxCapacity * 0.7) {\n      score *= 0.5; // Penalize overloaded agents for urgent tasks\n    }\n    \n    return Math.round(score);\n  }\n  \n  calculateSkillMatch(skills, requiredSkills, optionalSkills) {\n    let match = 0;\n    let totalWeight = 0;\n    \n    // Required skills (higher weight)\n    requiredSkills.forEach(skill => {\n      const proficiency = skills.proficiency[skill] || 0;\n      match += proficiency * 2; // Double weight for required skills\n      totalWeight += 200; // Max possible score for required skill\n    });\n    \n    // Optional skills (lower weight)\n    optionalSkills.forEach(skill => {\n      const proficiency = skills.proficiency[skill] || 0;\n      match += proficiency;\n      totalWeight += 100;\n    });\n    \n    return totalWeight > 0 ? (match / totalWeight) * 100 : 0;\n  }\n  \n  calculateAvailabilityScore(workload) {\n    const utilizationRate = workload.currentLoad / workload.maxCapacity;\n    \n    if (utilizationRate <= 0.5) return 100; // Low utilization = high availability\n    if (utilizationRate <= 0.7) return 80;\n    if (utilizationRate <= 0.9) return 60;\n    if (utilizationRate < 1.0) return 40;\n    return 20; // Overloaded\n  }\n  \n  getScoreReasoning(score, skills, workload) {\n    const reasons = [];\n    \n    if (score >= 80) reasons.push('Excellent skill match');\n    else if (score >= 60) reasons.push('Good skill match');\n    else reasons.push('Moderate skill match');\n    \n    const utilization = workload.currentLoad / workload.maxCapacity;\n    if (utilization <= 0.5) reasons.push('Low workload');\n    else if (utilization <= 0.8) reasons.push('Moderate workload');\n    else reasons.push('High workload');\n    \n    if (workload.efficiency > 1.2) reasons.push('High efficiency');\n    if (workload.specialization > 0.8) reasons.push('High specialization');\n    \n    return reasons.join(', ');\n  }\n  \n  applyWorkloadBalancing(candidates, requiredCount) {\n    // Prioritize agents with lower workload while maintaining quality\n    return candidates.filter(candidate => {\n      const utilizationRate = candidate.workload.currentLoad / candidate.workload.maxCapacity;\n      \n      // Allow some overload for high-priority tasks, but prefer balanced load\n      return utilizationRate < 1.2; // 20% overload tolerance\n    });\n  }\n  \n  selectOptimalCombination(candidates, requiredCount, assignmentRule) {\n    const selected = [];\n    const usedAgents = new Set();\n    \n    // First, select primary agents with highest scores\n    const primaryCandidates = candidates.filter(c => c.isPrimary && !usedAgents.has(c.name));\n    \n    for (const candidate of primaryCandidates) {\n      if (selected.length < requiredCount) {\n        selected.push(candidate);\n        usedAgents.add(candidate.name);\n      }\n    }\n    \n    // Then, fill remaining slots with support agents\n    const supportCandidates = candidates.filter(c => !c.isPrimary && !usedAgents.has(c.name));\n    \n    for (const candidate of supportCandidates) {\n      if (selected.length < requiredCount) {\n        selected.push(candidate);\n        usedAgents.add(candidate.name);\n      }\n    }\n    \n    return selected;\n  }\n  \n  updateWorkloadTracking(assignedAgents, assignment) {\n    assignedAgents.forEach(agent => {\n      const workload = this.workloadBalancer.get(agent.name);\n      if (workload) {\n        workload.currentLoad += 1;\n        workload.activeTasks.push({\n          taskType: assignment.taskType,\n          assignedAt: assignment.timestamp,\n          estimatedDuration: assignment.estimatedDuration\n        });\n        workload.lastAssignment = assignment.timestamp;\n      }\n    });\n  }\n  \n  logAssignment(assignment) {\n    this.assignmentHistory.push(assignment);\n    \n    // Keep only last 1000 assignments\n    if (this.assignmentHistory.length > 1000) {\n      this.assignmentHistory = this.assignmentHistory.slice(-1000);\n    }\n    \n    this.emit('agent-assigned', assignment);\n  }\n  \n  // PERFORMANCE TRACKING AND OPTIMIZATION\n  updatePerformanceMetrics() {\n    console.log('📈 Updating assignment performance metrics...');\n    \n    // Calculate success rates, efficiency metrics, etc.\n    const recentAssignments = this.assignmentHistory.slice(-50); // Last 50 assignments\n    \n    if (recentAssignments.length === 0) return;\n    \n    const metrics = {\n      totalAssignments: recentAssignments.length,\n      averageScore: 0,\n      taskTypeDistribution: {},\n      agentUtilization: {},\n      assignmentPatterns: this.analyzeAssignmentPatterns(recentAssignments)\n    };\n    \n    // Calculate average assignment score\n    const totalScore = recentAssignments.reduce((sum, assignment) => {\n      return sum + assignment.assignedAgents.reduce((agentSum, agent) => agentSum + agent.score, 0);\n    }, 0);\n    \n    const totalAgents = recentAssignments.reduce((sum, assignment) => sum + assignment.assignedAgents.length, 0);\n    metrics.averageScore = totalAgents > 0 ? Math.round(totalScore / totalAgents) : 0;\n    \n    // Task type distribution\n    recentAssignments.forEach(assignment => {\n      metrics.taskTypeDistribution[assignment.taskType] = \n        (metrics.taskTypeDistribution[assignment.taskType] || 0) + 1;\n    });\n    \n    // Agent utilization\n    this.workloadBalancer.forEach((workload, agentName) => {\n      metrics.agentUtilization[agentName] = {\n        utilization: Math.round((workload.currentLoad / workload.maxCapacity) * 100),\n        efficiency: workload.efficiency,\n        activeTasks: workload.activeTasks.length\n      };\n    });\n    \n    this.performanceMetrics.set(Date.now(), metrics);\n    \n    // Emit performance update\n    this.emit('performance-metrics-updated', metrics);\n  }\n  \n  analyzeAssignmentPatterns(assignments) {\n    const patterns = {\n      mostAssignedAgents: {},\n      popularTaskTypes: {},\n      complexityDistribution: { simple: 0, medium: 0, complex: 0 },\n      averageTeamSize: 0\n    };\n    \n    assignments.forEach(assignment => {\n      // Track agent assignments\n      assignment.assignedAgents.forEach(agent => {\n        patterns.mostAssignedAgents[agent.name] = \n          (patterns.mostAssignedAgents[agent.name] || 0) + 1;\n      });\n      \n      // Track task types\n      patterns.popularTaskTypes[assignment.taskType] = \n        (patterns.popularTaskTypes[assignment.taskType] || 0) + 1;\n      \n      // Track complexity\n      patterns.complexityDistribution[assignment.complexity]++;\n    });\n    \n    // Calculate average team size\n    patterns.averageTeamSize = assignments.length > 0 \n      ? Math.round(assignments.reduce((sum, a) => sum + a.assignedAgents.length, 0) / assignments.length)\n      : 0;\n    \n    return patterns;\n  }\n  \n  adjustWorkloadCapacities() {\n    console.log('⚖️ Adjusting workload capacities based on performance...');\n    \n    this.workloadBalancer.forEach((workload, agentName) => {\n      // Increase capacity for highly efficient agents\n      if (workload.efficiency > 1.3 && workload.currentLoad >= workload.maxCapacity) {\n        workload.maxCapacity = Math.min(workload.maxCapacity + 1, 6); // Cap at 6 tasks\n        console.log(`📈 Increased capacity for ${agentName} to ${workload.maxCapacity}`);\n      }\n      \n      // Decrease capacity for struggling agents\n      if (workload.efficiency < 0.8 && workload.maxCapacity > 1) {\n        workload.maxCapacity = Math.max(workload.maxCapacity - 1, 1); // Minimum 1 task\n        console.log(`📉 Decreased capacity for ${agentName} to ${workload.maxCapacity}`);\n      }\n    });\n  }\n  \n  // TASK COMPLETION TRACKING\n  markTaskCompleted(agentName, taskType, success = true, duration = null) {\n    const workload = this.workloadBalancer.get(agentName);\n    if (!workload) return;\n    \n    // Update workload\n    workload.currentLoad = Math.max(0, workload.currentLoad - 1);\n    \n    // Remove completed task\n    workload.activeTasks = workload.activeTasks.filter(task => \n      task.taskType !== taskType\n    );\n    \n    // Update efficiency based on success and duration\n    if (success) {\n      workload.efficiency = Math.min(2.0, workload.efficiency * 1.05); // Gradual improvement\n    } else {\n      workload.efficiency = Math.max(0.5, workload.efficiency * 0.95); // Gradual decline\n    }\n    \n    // Update average task duration if provided\n    if (duration) {\n      if (workload.averageTaskDuration === 0) {\n        workload.averageTaskDuration = duration;\n      } else {\n        workload.averageTaskDuration = (workload.averageTaskDuration + duration) / 2;\n      }\n    }\n    \n    console.log(`✅ Task completed: ${agentName} - ${taskType} (${success ? 'success' : 'failed'})`);\n    \n    this.emit('task-completed', {\n      agentName,\n      taskType,\n      success,\n      duration,\n      newEfficiency: workload.efficiency\n    });\n  }\n  \n  // PUBLIC API METHODS\n  getAssignmentRecommendation(taskType, complexity = 'medium', constraints = {}) {\n    try {\n      return this.assignOptimalAgents(taskType, 'Task analysis', complexity, constraints);\n    } catch (error) {\n      console.error('Assignment recommendation error:', error);\n      return null;\n    }\n  }\n  \n  getAgentWorkload(agentName) {\n    return this.workloadBalancer.get(agentName) || null;\n  }\n  \n  getAllWorkloads() {\n    return Object.fromEntries(this.workloadBalancer);\n  }\n  \n  getAssignmentHistory(limit = 20) {\n    return this.assignmentHistory.slice(-limit);\n  }\n  \n  getPerformanceMetrics() {\n    const entries = Array.from(this.performanceMetrics.entries());\n    return entries.length > 0 ? entries[entries.length - 1][1] : null;\n  }\n  \n  getAvailableTaskTypes() {\n    return Array.from(this.assignmentRules.keys());\n  }\n  \n  getTaskTypeDetails(taskType) {\n    return this.assignmentRules.get(taskType) || null;\n  }\n  \n  // UTILITY METHODS\n  getSystemLoad() {\n    let totalLoad = 0;\n    let totalCapacity = 0;\n    \n    this.workloadBalancer.forEach(workload => {\n      totalLoad += workload.currentLoad;\n      totalCapacity += workload.maxCapacity;\n    });\n    \n    return {\n      utilization: totalCapacity > 0 ? Math.round((totalLoad / totalCapacity) * 100) : 0,\n      totalLoad,\n      totalCapacity,\n      availableCapacity: totalCapacity - totalLoad\n    };\n  }\n  \n  getAgentRecommendationsForSkills(requiredSkills) {\n    const recommendations = [];\n    \n    this.skillMatrix.forEach((skills, agentName) => {\n      const matchScore = this.calculateSkillMatch(skills, requiredSkills, []);\n      const workload = this.workloadBalancer.get(agentName);\n      \n      if (matchScore > 50) { // Only recommend agents with 50%+ skill match\n        recommendations.push({\n          agentName,\n          skillMatch: Math.round(matchScore),\n          availability: this.calculateAvailabilityScore(workload),\n          skills: skills.primary.filter(skill => requiredSkills.includes(skill))\n        });\n      }\n    });\n    \n    return recommendations.sort((a, b) => b.skillMatch - a.skillMatch);\n  }\n}\n\nmodule.exports = {\n  AgentAssignmentMatrix\n};"}, {"old_string": "      // DEVELOPMENT TASKS\\n      ['frontend-development', {\\n        primaryAgents: ['frontend-developer'],\\n        supportAgents: ['ui-designer', 'whimsy-injector'],\\n        requiredSkills: ['javascript', 'react', 'css', 'html'],\\n        optionalSkills: ['typescript', 'webpack', 'testing'],\\n        complexity: {\\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\\n          medium: { agents: 2, timeEstimate: '1-2 days' },\\n          complex: { agents: 3, timeEstimate: '3-5 days' }\\n        },\\n        dependencies: ['ui-designer'],\\n        handoffTo: ['test-writer-fixer'],\\n        qualityGates: ['code-review', 'testing', 'accessibility-check']\\n      }],", "new_string": "      // DEVELOPMENT TASKS\n      ['frontend-development', {\n        primaryAgents: ['frontend-developer'],\n        supportAgents: ['ui-designer', 'whimsy-injector'],\n        requiredSkills: ['javascript', 'react', 'css', 'html'],\n        optionalSkills: ['typescript', 'webpack', 'testing'],\n        complexity: {\n          simple: { agents: 1, timeEstimate: '2-4 hours' },\n          medium: { agents: 2, timeEstimate: '1-2 days' },\n          complex: { agents: 3, timeEstimate: '3-5 days' }\n        },\n        dependencies: ['ui-designer'],\n        handoffTo: ['test-writer-fixer'],\n        qualityGates: ['code-review', 'testing', 'accessibility-check']\n      }],"}]
+    // Define task types and their optimal agent assignments
+    this.assignmentRules = new Map([
+      // DEVELOPMENT TASKS
+      ['frontend-development', {
+        primaryAgents: ['frontend-developer'],
+        supportAgents: ['ui-designer', 'whimsy-injector'],
+        requiredSkills: ['javascript', 'react', 'css', 'html'],
+        optionalSkills: ['typescript', 'webpack', 'testing'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '2-4 hours' },
+          medium: { agents: 2, timeEstimate: '1-2 days' },
+          complex: { agents: 3, timeEstimate: '3-5 days' }
+        },
+        dependencies: ['ui-designer'],
+        handoffTo: ['test-writer-fixer'],
+        qualityGates: ['code-review', 'testing', 'accessibility-check']
+      }],
+      
+      ['backend-development', {
+        primaryAgents: ['backend-architect'],
+        supportAgents: ['api-tester', 'infrastructure-maintainer'],
+        requiredSkills: ['nodejs', 'databases', 'api-design'],
+        optionalSkills: ['microservices', 'caching', 'security'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '3-6 hours' },
+          medium: { agents: 2, timeEstimate: '1-3 days' },
+          complex: { agents: 3, timeEstimate: '4-7 days' }
+        },
+        dependencies: [],
+        handoffTo: ['api-tester', 'devops-automator'],
+        qualityGates: ['unit-tests', 'integration-tests', 'security-scan']
+      }],
+      
+      ['fullstack-feature', {
+        primaryAgents: ['frontend-developer', 'backend-architect'],
+        supportAgents: ['ui-designer', 'api-tester', 'devops-automator'],
+        requiredSkills: ['fullstack', 'system-design'],
+        optionalSkills: ['performance-optimization', 'security'],
+        complexity: {
+          simple: { agents: 2, timeEstimate: '1-2 days' },
+          medium: { agents: 4, timeEstimate: '3-5 days' },
+          complex: { agents: 6, timeEstimate: '1-2 weeks' }
+        },
+        coordination: 'parallel-with-sync-points',
+        dependencies: ['ui-designer'],
+        handoffTo: ['test-writer-fixer', 'performance-benchmarker'],
+        qualityGates: ['design-review', 'api-documentation', 'e2e-tests']
+      }],
+      
+      // DESIGN TASKS
+      ['ui-design', {
+        primaryAgents: ['ui-designer'],
+        supportAgents: ['brand-guardian', 'ux-researcher'],
+        requiredSkills: ['figma', 'design-systems', 'user-interface'],
+        optionalSkills: ['prototyping', 'animation', 'accessibility'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '2-4 hours' },
+          medium: { agents: 2, timeEstimate: '1-2 days' },
+          complex: { agents: 3, timeEstimate: '3-4 days' }
+        },
+        dependencies: ['ux-researcher'],
+        handoffTo: ['frontend-developer'],
+        qualityGates: ['brand-consistency', 'accessibility-compliance', 'stakeholder-approval']
+      }],
+      
+      ['ux-research', {
+        primaryAgents: ['ux-researcher'],
+        supportAgents: ['analytics-reporter', 'feedback-synthesizer'],
+        requiredSkills: ['user-research', 'data-analysis', 'personas'],
+        optionalSkills: ['a-b-testing', 'surveys', 'interviews'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '1-2 days' },
+          medium: { agents: 2, timeEstimate: '3-5 days' },
+          complex: { agents: 3, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: [],
+        handoffTo: ['ui-designer', 'sprint-prioritizer'],
+        qualityGates: ['sample-size-validation', 'statistical-significance', 'actionable-insights']
+      }],
+      
+      ['brand-design', {
+        primaryAgents: ['brand-guardian'],
+        supportAgents: ['visual-storyteller', 'content-creator'],
+        requiredSkills: ['brand-design', 'visual-identity', 'guidelines'],
+        optionalSkills: ['illustration', 'photography', 'video'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '1-2 days' },
+          medium: { agents: 2, timeEstimate: '3-5 days' },
+          complex: { agents: 3, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: [],
+        handoffTo: ['ui-designer', 'content-creator'],
+        qualityGates: ['brand-guidelines-compliance', 'stakeholder-approval', 'consistency-check']
+      }],
+      
+      // TESTING AND QA
+      ['automated-testing', {
+        primaryAgents: ['test-writer-fixer'],
+        supportAgents: ['api-tester', 'performance-benchmarker'],
+        requiredSkills: ['test-automation', 'testing-frameworks', 'ci-cd'],
+        optionalSkills: ['load-testing', 'security-testing', 'mobile-testing'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '4-8 hours' },
+          medium: { agents: 2, timeEstimate: '1-3 days' },
+          complex: { agents: 3, timeEstimate: '4-6 days' }
+        },
+        dependencies: ['frontend-developer', 'backend-architect'],
+        handoffTo: ['devops-automator'],
+        qualityGates: ['test-coverage', 'test-reliability', 'performance-benchmarks']
+      }],
+      
+      ['performance-optimization', {
+        primaryAgents: ['performance-benchmarker'],
+        supportAgents: ['backend-architect', 'frontend-developer', 'infrastructure-maintainer'],
+        requiredSkills: ['performance-analysis', 'optimization', 'profiling'],
+        optionalSkills: ['caching', 'cdn', 'database-optimization'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '4-8 hours' },
+          medium: { agents: 2, timeEstimate: '2-3 days' },
+          complex: { agents: 4, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: ['test-writer-fixer'],
+        handoffTo: ['infrastructure-maintainer'],
+        qualityGates: ['performance-benchmarks', 'load-testing', 'scalability-tests']
+      }],
+      
+      // DEVOPS AND INFRASTRUCTURE
+      ['deployment-automation', {
+        primaryAgents: ['devops-automator'],
+        supportAgents: ['infrastructure-maintainer', 'backend-architect'],
+        requiredSkills: ['ci-cd', 'docker', 'cloud-platforms'],
+        optionalSkills: ['kubernetes', 'terraform', 'monitoring'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '4-8 hours' },
+          medium: { agents: 2, timeEstimate: '1-2 days' },
+          complex: { agents: 3, timeEstimate: '3-5 days' }
+        },
+        dependencies: ['backend-architect'],
+        handoffTo: ['infrastructure-maintainer'],
+        qualityGates: ['deployment-verification', 'rollback-testing', 'monitoring-setup']
+      }],
+      
+      ['infrastructure-scaling', {
+        primaryAgents: ['infrastructure-maintainer'],
+        supportAgents: ['devops-automator', 'performance-benchmarker'],
+        requiredSkills: ['cloud-infrastructure', 'scaling', 'monitoring'],
+        optionalSkills: ['cost-optimization', 'multi-region', 'disaster-recovery'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '1-2 days' },
+          medium: { agents: 2, timeEstimate: '3-5 days' },
+          complex: { agents: 3, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: ['performance-benchmarker'],
+        handoffTo: ['analytics-reporter'],
+        qualityGates: ['capacity-planning', 'cost-analysis', 'monitoring-alerts']
+      }],
+      
+      // PRODUCT AND PROJECT MANAGEMENT
+      ['feature-planning', {
+        primaryAgents: ['sprint-prioritizer'],
+        supportAgents: ['trend-researcher', 'feedback-synthesizer'],
+        requiredSkills: ['product-management', 'roadmapping', 'prioritization'],
+        optionalSkills: ['market-research', 'competitive-analysis', 'metrics'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '1-2 days' },
+          medium: { agents: 2, timeEstimate: '3-5 days' },
+          complex: { agents: 3, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: ['trend-researcher', 'feedback-synthesizer'],
+        handoffTo: ['rapid-prototyper', 'ui-designer'],
+        qualityGates: ['stakeholder-alignment', 'feasibility-analysis', 'success-metrics']
+      }],
+      
+      ['rapid-prototyping', {
+        primaryAgents: ['rapid-prototyper'],
+        supportAgents: ['ui-designer', 'frontend-developer'],
+        requiredSkills: ['prototyping', 'mvp-development', 'user-validation'],
+        optionalSkills: ['no-code-tools', 'rapid-testing', 'iteration'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '1-2 days' },
+          medium: { agents: 2, timeEstimate: '3-5 days' },
+          complex: { agents: 3, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: ['sprint-prioritizer'],
+        handoffTo: ['frontend-developer', 'backend-architect'],
+        qualityGates: ['user-validation', 'technical-feasibility', 'business-value']
+      }],
+      
+      // MARKETING AND GROWTH
+      ['growth-strategy', {
+        primaryAgents: ['growth-hacker'],
+        supportAgents: ['analytics-reporter', 'content-creator'],
+        requiredSkills: ['growth-marketing', 'analytics', 'experimentation'],
+        optionalSkills: ['seo', 'social-media', 'email-marketing'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '2-3 days' },
+          medium: { agents: 2, timeEstimate: '1-2 weeks' },
+          complex: { agents: 3, timeEstimate: '3-4 weeks' }
+        },
+        dependencies: ['analytics-reporter'],
+        handoffTo: ['content-creator', 'tiktok-strategist'],
+        qualityGates: ['metrics-tracking', 'a-b-testing', 'roi-analysis']
+      }],
+      
+      ['content-creation', {
+        primaryAgents: ['content-creator'],
+        supportAgents: ['brand-guardian', 'visual-storyteller'],
+        requiredSkills: ['content-strategy', 'copywriting', 'storytelling'],
+        optionalSkills: ['video-editing', 'graphic-design', 'seo-writing'],
+        complexity: {
+          simple: { agents: 1, timeEstimate: '1-2 days' },
+          medium: { agents: 2, timeEstimate: '3-5 days' },
+          complex: { agents: 3, timeEstimate: '1-2 weeks' }
+        },
+        dependencies: ['brand-guardian'],
+        handoffTo: ['instagram-curator', 'twitter-engager'],
+        qualityGates: ['brand-alignment', 'audience-relevance', 'engagement-metrics']
+      }]
+    ]);
+    
+    console.log(`✅ Configured ${this.assignmentRules.size} assignment rules`);
+  }
+  
+  initializeSkillMapping() {
+    console.log('🎨 Initializing skill mapping...');
+    
+    // Define skills for each agent type
+    this.skillMatrix = new Map([
+      // Engineering agents
+      ['frontend-developer', {
+        primary: ['javascript', 'react', 'css', 'html', 'typescript'],
+        secondary: ['vue', 'angular', 'webpack', 'testing', 'accessibility'],
+        proficiency: 'expert',
+        specializations: ['responsive-design', 'performance-optimization', 'user-experience']
+      }],
+      
+      ['backend-architect', {
+        primary: ['nodejs', 'databases', 'api-design', 'microservices', 'security'],
+        secondary: ['python', 'java', 'docker', 'redis', 'mongodb'],
+        proficiency: 'expert',
+        specializations: ['system-architecture', 'scalability', 'data-modeling']
+      }],
+      
+      ['devops-automator', {
+        primary: ['ci-cd', 'docker', 'kubernetes', 'cloud-platforms', 'monitoring'],
+        secondary: ['terraform', 'ansible', 'jenkins', 'prometheus', 'grafana'],
+        proficiency: 'expert',
+        specializations: ['automation', 'infrastructure-as-code', 'deployment-strategies']
+      }],
+      
+      ['rapid-prototyper', {
+        primary: ['prototyping', 'mvp-development', 'user-validation', 'iteration'],
+        secondary: ['no-code-tools', 'figma', 'javascript', 'rapid-testing'],
+        proficiency: 'advanced',
+        specializations: ['rapid-development', 'user-feedback', 'market-validation']
+      }],
+      
+      // Design agents
+      ['ui-designer', {
+        primary: ['figma', 'design-systems', 'user-interface', 'prototyping'],
+        secondary: ['sketch', 'adobe-creative', 'animation', 'accessibility'],
+        proficiency: 'expert',
+        specializations: ['visual-design', 'interaction-design', 'design-systems']
+      }],
+      
+      ['ux-researcher', {
+        primary: ['user-research', 'data-analysis', 'personas', 'usability-testing'],
+        secondary: ['a-b-testing', 'surveys', 'interviews', 'analytics'],
+        proficiency: 'expert',
+        specializations: ['user-psychology', 'research-methods', 'data-interpretation']
+      }],
+      
+      ['brand-guardian', {
+        primary: ['brand-design', 'visual-identity', 'guidelines', 'consistency'],
+        secondary: ['illustration', 'photography', 'video', 'brand-strategy'],
+        proficiency: 'expert',
+        specializations: ['brand-identity', 'visual-consistency', 'brand-guidelines']
+      }],
+      
+      ['visual-storyteller', {
+        primary: ['storytelling', 'visual-narrative', 'infographics', 'presentations'],
+        secondary: ['illustration', 'animation', 'video-editing', 'data-visualization'],
+        proficiency: 'advanced',
+        specializations: ['visual-communication', 'narrative-design', 'data-storytelling']
+      }],
+      
+      ['whimsy-injector', {
+        primary: ['user-delight', 'interactive-elements', 'micro-interactions', 'gamification'],
+        secondary: ['animation', 'sound-design', 'easter-eggs', 'personality'],
+        proficiency: 'advanced',
+        specializations: ['user-engagement', 'delight-design', 'personality-injection']
+      }],
+      
+      // Testing agents
+      ['test-writer-fixer', {
+        primary: ['test-automation', 'testing-frameworks', 'quality-assurance', 'debugging'],
+        secondary: ['performance-testing', 'security-testing', 'mobile-testing'],
+        proficiency: 'expert',
+        specializations: ['test-strategy', 'automation-frameworks', 'quality-metrics']
+      }],
+      
+      ['api-tester', {
+        primary: ['api-testing', 'integration-testing', 'postman', 'rest-apis'],
+        secondary: ['graphql', 'performance-testing', 'security-testing'],
+        proficiency: 'expert',
+        specializations: ['api-validation', 'contract-testing', 'load-testing']
+      }],
+      
+      ['performance-benchmarker', {
+        primary: ['performance-analysis', 'optimization', 'profiling', 'benchmarking'],
+        secondary: ['load-testing', 'stress-testing', 'monitoring', 'metrics'],
+        proficiency: 'expert',
+        specializations: ['performance-optimization', 'scalability-testing', 'bottleneck-analysis']
+      }],
+      
+      // Product agents
+      ['sprint-prioritizer', {
+        primary: ['product-management', 'roadmapping', 'prioritization', 'stakeholder-management'],
+        secondary: ['agile', 'scrum', 'metrics', 'user-stories'],
+        proficiency: 'expert',
+        specializations: ['feature-prioritization', 'roadmap-planning', 'stakeholder-alignment']
+      }],
+      
+      ['trend-researcher', {
+        primary: ['market-research', 'trend-analysis', 'competitive-analysis', 'data-analysis'],
+        secondary: ['social-listening', 'consumer-behavior', 'market-validation'],
+        proficiency: 'advanced',
+        specializations: ['trend-identification', 'market-intelligence', 'opportunity-analysis']
+      }],
+      
+      ['feedback-synthesizer', {
+        primary: ['user-feedback', 'data-analysis', 'sentiment-analysis', 'insight-generation'],
+        secondary: ['survey-design', 'interview-analysis', 'categorization'],
+        proficiency: 'advanced',
+        specializations: ['feedback-analysis', 'user-insights', 'actionable-recommendations']
+      }],
+      
+      // Marketing agents
+      ['growth-hacker', {
+        primary: ['growth-marketing', 'analytics', 'experimentation', 'optimization'],
+        secondary: ['seo', 'social-media', 'email-marketing', 'conversion-optimization'],
+        proficiency: 'expert',
+        specializations: ['growth-strategies', 'viral-mechanics', 'user-acquisition']
+      }],
+      
+      ['content-creator', {
+        primary: ['content-strategy', 'copywriting', 'storytelling', 'content-planning'],
+        secondary: ['video-editing', 'graphic-design', 'seo-writing', 'social-media'],
+        proficiency: 'advanced',
+        specializations: ['content-marketing', 'brand-voice', 'engagement-content']
+      }],
+      
+      ['tiktok-strategist', {
+        primary: ['tiktok-marketing', 'viral-content', 'social-trends', 'influencer-collaboration'],
+        secondary: ['video-editing', 'trend-analysis', 'community-management'],
+        proficiency: 'advanced',
+        specializations: ['viral-mechanics', 'platform-optimization', 'trend-leveraging']
+      }],
+      
+      // Operations agents
+      ['analytics-reporter', {
+        primary: ['data-analysis', 'reporting', 'metrics', 'business-intelligence'],
+        secondary: ['sql', 'visualization', 'statistics', 'predictive-analysis'],
+        proficiency: 'expert',
+        specializations: ['data-insights', 'performance-metrics', 'business-analytics']
+      }],
+      
+      ['infrastructure-maintainer', {
+        primary: ['cloud-infrastructure', 'scaling', 'monitoring', 'maintenance'],
+        secondary: ['cost-optimization', 'security', 'backup-recovery', 'performance'],
+        proficiency: 'expert',
+        specializations: ['infrastructure-optimization', 'system-reliability', 'cost-management']
+      }],
+      
+      ['legal-compliance-checker', {
+        primary: ['legal-compliance', 'privacy-laws', 'terms-of-service', 'risk-assessment'],
+        secondary: ['gdpr', 'ccpa', 'data-protection', 'regulatory-compliance'],
+        proficiency: 'expert',
+        specializations: ['regulatory-compliance', 'privacy-protection', 'legal-risk-mitigation']
+      }]
+    ]);
+    
+    console.log(`✅ Configured skills for ${this.skillMatrix.size} agent types`);
+  }
+  
+  configureWorkloadBalancing() {
+    console.log('⚖️ Configuring workload balancing...');
+    
+    // Initialize workload tracking for each agent type
+    this.skillMatrix.forEach((skills, agentName) => {
+      this.workloadBalancer.set(agentName, {
+        currentLoad: 0,
+        maxCapacity: 100,
+        activeAssignments: [],
+        efficiency: 100,
+        availabilityScore: 100,
+        averageTaskDuration: 0,
+        completedTasks: 0,
+        successRate: 100,
+        lastAssigned: null,
+        skillUtilization: new Map(),
+        workloadHistory: []
+      });
+    });
+    
+    console.log(`✅ Configured workload tracking for ${this.workloadBalancer.size} agents`);
+  }
+  
+  startPerformanceTracking() {
+    console.log('📊 Starting performance tracking...');
+    
+    // Track performance metrics every 2 minutes
+    setInterval(() => {
+      this.updatePerformanceMetrics();
+    }, 120000);
+    
+    // Generate assignment analytics every 10 minutes
+    setInterval(() => {
+      this.generateAssignmentAnalytics();
+    }, 600000);
+  }
+  
+  updatePerformanceMetrics() {
+    const metrics = {
+      timestamp: new Date(),
+      totalAssignments: this.assignmentHistory.length,
+      activeAssignments: this.getActiveAssignmentCount(),
+      averageResponseTime: this.calculateAverageResponseTime(),
+      successRate: this.calculateOverallSuccessRate(),
+      workloadDistribution: this.getWorkloadDistribution(),
+      topPerformers: this.getTopPerformers(),
+      bottlenecks: this.identifyBottlenecks(),
+      recommendations: this.generateOptimizationRecommendations()
+    };
+    
+    this.performanceMetrics.set(Date.now(), metrics);
+    
+    // Keep only last 100 entries
+    const entries = Array.from(this.performanceMetrics.entries());
+    if (entries.length > 100) {
+      const recent = entries.slice(-100);
+      this.performanceMetrics.clear();
+      recent.forEach(([key, value]) => this.performanceMetrics.set(key, value));
+    }
+    
+    this.emit('performance-metrics-updated', metrics);
+  }
+  
+  // CORE ASSIGNMENT LOGIC
+  assignOptimalAgents(taskType, taskDescription, complexity = 'medium', constraints = {}) {
+    console.log(`🎯 Finding optimal agents for: ${taskType} (${complexity})`);
+    
+    const rule = this.assignmentRules.get(taskType);
+    if (!rule) {
+      throw new Error(`Unknown task type: ${taskType}`);
+    }
+    
+    const complexityConfig = rule.complexity[complexity];
+    if (!complexityConfig) {
+      throw new Error(`Unknown complexity level: ${complexity} for task type: ${taskType}`);
+    }
+    
+    // Step 1: Get required number of agents
+    const requiredAgentCount = Math.max(complexityConfig.agents, constraints.minAgents || 1);
+    
+    // Step 2: Score and rank available agents
+    const candidateAgents = this.scoreAndRankAgents(rule, constraints);
+    
+    // Step 3: Select optimal combination
+    const selectedAgents = this.selectOptimalCombination(
+      candidateAgents,
+      requiredAgentCount,
+      rule,
+      constraints
+    );
+    
+    // Step 4: Create assignment record
+    const assignment = {
+      id: this.generateAssignmentId(),
+      taskType,
+      taskDescription,
+      complexity,
+      assignedAgents: selectedAgents,
+      timeEstimate: complexityConfig.timeEstimate,
+      qualityGates: rule.qualityGates,
+      handoffTo: rule.handoffTo,
+      dependencies: rule.dependencies,
+      timestamp: new Date(),
+      status: 'assigned'
+    };
+    
+    // Step 5: Update workloads and track assignment
+    this.updateAgentWorkloads(selectedAgents, assignment);
+    this.assignmentHistory.push(assignment);
+    
+    console.log(`✅ Assigned ${selectedAgents.length} agents: ${selectedAgents.map(a => a.name).join(', ')}`);
+    
+    this.emit('agent-assigned', assignment);
+    
+    return assignment;
+  }
+  
+  scoreAndRankAgents(rule, constraints) {
+    const candidates = [];
+    
+    // Consider primary agents first
+    rule.primaryAgents.forEach(agentName => {
+      const score = this.calculateAgentScore(agentName, rule, constraints, 'primary');
+      if (score > 0) {
+        candidates.push({
+          name: agentName,
+          role: 'primary',
+          score,
+          workload: this.workloadBalancer.get(agentName)
+        });
+      }
+    });
+    
+    // Then consider support agents
+    rule.supportAgents.forEach(agentName => {
+      const score = this.calculateAgentScore(agentName, rule, constraints, 'support');
+      if (score > 0) {
+        candidates.push({
+          name: agentName,
+          role: 'support',
+          score,
+          workload: this.workloadBalancer.get(agentName)
+        });
+      }
+    });
+    
+    // Sort by score (highest first)
+    return candidates.sort((a, b) => b.score - a.score);
+  }
+  
+  calculateAgentScore(agentName, rule, constraints, role) {
+    let score = 0;
+    
+    const skills = this.skillMatrix.get(agentName);
+    const workload = this.workloadBalancer.get(agentName);
+    
+    if (!skills || !workload) return 0;
+    
+    // Base score for role
+    score += role === 'primary' ? 100 : 70;
+    
+    // Skill matching (30% of total score)
+    const skillMatch = this.calculateSkillMatch(skills, rule.requiredSkills, rule.optionalSkills || []);
+    score += skillMatch * 0.3;
+    
+    // Availability (25% of total score)
+    const availabilityScore = this.calculateAvailabilityScore(workload);
+    score += availabilityScore * 0.25;
+    
+    // Performance history (20% of total score)
+    const performanceScore = this.calculatePerformanceScore(workload);
+    score += performanceScore * 0.2;
+    
+    // Specialization bonus (15% of total score)
+    const specializationScore = this.calculateSpecializationScore(skills, rule);
+    score += specializationScore * 0.15;
+    
+    // Efficiency (10% of total score)
+    score += workload.efficiency * 0.1;
+    
+    // Apply constraints
+    if (constraints.excludeAgents && constraints.excludeAgents.includes(agentName)) {
+      score = 0;
+    }
+    
+    if (constraints.preferredAgents && constraints.preferredAgents.includes(agentName)) {
+      score *= 1.2; // 20% bonus for preferred agents
+    }
+    
+    // Workload balancing penalty
+    if (workload.currentLoad > 80) {
+      score *= 0.7; // 30% penalty for overloaded agents
+    }
+    
+    return Math.max(0, score);
+  }
+  
+  calculateSkillMatch(agentSkills, requiredSkills, optionalSkills) {
+    let matchScore = 0;
+    const allAgentSkills = [...agentSkills.primary, ...agentSkills.secondary];
+    
+    // Required skills (75% weight)
+    const requiredMatches = requiredSkills.filter(skill => 
+      allAgentSkills.includes(skill)
+    ).length;
+    const requiredScore = (requiredMatches / requiredSkills.length) * 75;
+    
+    // Optional skills (25% weight)
+    const optionalMatches = optionalSkills.filter(skill => 
+      allAgentSkills.includes(skill)
+    ).length;
+    const optionalScore = optionalSkills.length > 0 
+      ? (optionalMatches / optionalSkills.length) * 25 
+      : 25; // Full bonus if no optional skills specified
+    
+    matchScore = requiredScore + optionalScore;
+    
+    // Proficiency bonus
+    if (agentSkills.proficiency === 'expert') {
+      matchScore *= 1.1;
+    } else if (agentSkills.proficiency === 'advanced') {
+      matchScore *= 1.05;
+    }
+    
+    return Math.min(100, matchScore);
+  }
+  
+  calculateAvailabilityScore(workload) {
+    const loadFactor = Math.max(0, 100 - workload.currentLoad);
+    const recentActivityPenalty = workload.lastAssigned 
+      ? Math.max(0, 10 - (Date.now() - new Date(workload.lastAssigned).getTime()) / (1000 * 60 * 60)) // Hours since last assignment
+      : 0;
+    
+    return Math.max(0, loadFactor - recentActivityPenalty);
+  }
+  
+  calculatePerformanceScore(workload) {
+    let score = workload.successRate;
+    
+    // Bonus for completed tasks
+    if (workload.completedTasks > 10) {
+      score *= 1.1;
+    } else if (workload.completedTasks > 5) {
+      score *= 1.05;
+    }
+    
+    // Penalty for poor efficiency
+    if (workload.efficiency < 70) {
+      score *= 0.8;
+    }
+    
+    return Math.min(100, score);
+  }
+  
+  calculateSpecializationScore(skills, rule) {
+    let score = 0;
+    
+    // Check if agent's specializations align with task requirements
+    const taskContext = rule.requiredSkills.concat(rule.optionalSkills || []);
+    
+    skills.specializations.forEach(specialization => {
+      if (taskContext.some(skill => skill.includes(specialization) || specialization.includes(skill))) {
+        score += 20; // Bonus for relevant specialization
+      }
+    });
+    
+    return Math.min(100, score);
+  }
+  
+  selectOptimalCombination(candidates, requiredCount, rule, constraints) {
+    const selected = [];
+    const used = new Set();
+    
+    // First, ensure we have at least one primary agent
+    const primaryCandidates = candidates.filter(c => c.role === 'primary');
+    if (primaryCandidates.length > 0) {
+      const bestPrimary = primaryCandidates[0];
+      selected.push(bestPrimary);
+      used.add(bestPrimary.name);
+    }
+    
+    // Fill remaining slots with best available agents
+    for (const candidate of candidates) {
+      if (selected.length >= requiredCount) break;
+      if (used.has(candidate.name)) continue;
+      
+      // Check for team compatibility
+      if (this.isTeamCompatible(selected, candidate, rule)) {
+        selected.push(candidate);
+        used.add(candidate.name);
+      }
+    }
+    
+    // If we don't have enough agents, relax constraints and try again
+    if (selected.length < requiredCount) {
+      for (const candidate of candidates) {
+        if (selected.length >= requiredCount) break;
+        if (used.has(candidate.name)) continue;
+        
+        selected.push(candidate);
+        used.add(candidate.name);
+      }
+    }
+    
+    return selected;
+  }
+  
+  isTeamCompatible(existingTeam, newCandidate, rule) {
+    // Check for skill overlap and complementarity
+    const existingSkills = new Set();
+    existingTeam.forEach(member => {
+      const skills = this.skillMatrix.get(member.name);
+      if (skills) {
+        skills.primary.forEach(skill => existingSkills.add(skill));
+      }
+    });
+    
+    const candidateSkills = this.skillMatrix.get(newCandidate.name);
+    if (!candidateSkills) return false;
+    
+    // Prefer agents that bring new skills to the team
+    const newSkills = candidateSkills.primary.filter(skill => !existingSkills.has(skill));
+    
+    // Good team compatibility if agent brings at least one new relevant skill
+    return newSkills.length > 0 || existingTeam.length === 0;
+  }
+  
+  updateAgentWorkloads(selectedAgents, assignment) {
+    selectedAgents.forEach(agent => {
+      const workload = this.workloadBalancer.get(agent.name);
+      if (workload) {
+        // Estimate load based on complexity and role
+        const loadIncrease = this.calculateLoadIncrease(assignment.complexity, agent.role);
+        
+        workload.currentLoad = Math.min(100, workload.currentLoad + loadIncrease);
+        workload.activeAssignments.push(assignment.id);
+        workload.lastAssigned = new Date();
+        
+        // Track skill utilization
+        const skills = this.skillMatrix.get(agent.name);
+        if (skills) {
+          const rule = this.assignmentRules.get(assignment.taskType);
+          rule.requiredSkills.forEach(skill => {
+            if (skills.primary.includes(skill) || skills.secondary.includes(skill)) {
+              const current = workload.skillUtilization.get(skill) || 0;
+              workload.skillUtilization.set(skill, current + 1);
+            }
+          });
+        }
+      }
+    });
+  }
+  
+  calculateLoadIncrease(complexity, role) {
+    const baseLoad = {
+      simple: 15,
+      medium: 25,
+      complex: 40
+    };
+    
+    const roleMultiplier = role === 'primary' ? 1.0 : 0.7;
+    return Math.round(baseLoad[complexity] * roleMultiplier);
+  }
+  
+  // ANALYTICS AND OPTIMIZATION
+  generateAssignmentAnalytics() {
+    console.log('📊 Generating assignment analytics...');
+    
+    const analytics = {
+      timestamp: new Date(),
+      totalAssignments: this.assignmentHistory.length,
+      successfulAssignments: this.assignmentHistory.filter(a => a.status === 'completed').length,
+      averageTeamSize: this.calculateAverageTeamSize(),
+      mostRequestedSkills: this.getMostRequestedSkills(),
+      agentUtilization: this.getAgentUtilization(),
+      bottlenecks: this.identifyBottlenecks(),
+      recommendations: this.generateOptimizationRecommendations()
+    };
+    
+    this.performanceMetrics.set('analytics', analytics);
+    this.emit('assignment-analytics', analytics);
+  }
+  
+  calculateAverageTeamSize() {
+    if (this.assignmentHistory.length === 0) return 0;
+    
+    const totalAgents = this.assignmentHistory.reduce((sum, assignment) => 
+      sum + assignment.assignedAgents.length, 0
+    );
+    
+    return (totalAgents / this.assignmentHistory.length).toFixed(2);
+  }
+  
+  getMostRequestedSkills() {
+    const skillCounts = new Map();
+    
+    this.assignmentHistory.forEach(assignment => {
+      const rule = this.assignmentRules.get(assignment.taskType);
+      if (rule) {
+        rule.requiredSkills.forEach(skill => {
+          skillCounts.set(skill, (skillCounts.get(skill) || 0) + 1);
+        });
+      }
+    });
+    
+    return Array.from(skillCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([skill, count]) => ({ skill, count }));
+  }
+  
+  getAgentUtilization() {
+    const utilization = new Map();
+    
+    this.workloadBalancer.forEach((workload, agentName) => {
+      utilization.set(agentName, {
+        currentLoad: workload.currentLoad,
+        completedTasks: workload.completedTasks,
+        successRate: workload.successRate,
+        efficiency: workload.efficiency,
+        averageTaskDuration: workload.averageTaskDuration
+      });
+    });
+    
+    return Object.fromEntries(utilization);
+  }
+  
+  getActiveAssignmentCount() {
+    return this.assignmentHistory.filter(a => a.status === 'assigned' || a.status === 'in-progress').length;
+  }
+  
+  calculateAverageResponseTime() {
+    // In a real implementation, this would track actual response times
+    return Math.floor(Math.random() * 300) + 60; // 1-5 minutes for demo
+  }
+  
+  calculateOverallSuccessRate() {
+    if (this.assignmentHistory.length === 0) return 100;
+    
+    const completedAssignments = this.assignmentHistory.filter(a => 
+      a.status === 'completed' || a.status === 'failed'
+    );
+    
+    if (completedAssignments.length === 0) return 100;
+    
+    const successfulAssignments = completedAssignments.filter(a => a.status === 'completed');
+    return Math.round((successfulAssignments.length / completedAssignments.length) * 100);
+  }
+  
+  getWorkloadDistribution() {
+    const distribution = [];
+    
+    this.workloadBalancer.forEach((workload, agentName) => {
+      distribution.push({
+        agent: agentName,
+        currentLoad: workload.currentLoad,
+        activeAssignments: workload.activeAssignments.length,
+        efficiency: workload.efficiency
+      });
+    });
+    
+    return distribution.sort((a, b) => b.currentLoad - a.currentLoad);
+  }
+  
+  getTopPerformers() {
+    const performers = [];
+    
+    this.workloadBalancer.forEach((workload, agentName) => {
+      performers.push({
+        agent: agentName,
+        score: (workload.successRate * 0.4) + (workload.efficiency * 0.3) + ((100 - workload.currentLoad) * 0.3),
+        successRate: workload.successRate,
+        efficiency: workload.efficiency,
+        completedTasks: workload.completedTasks
+      });
+    });
+    
+    return performers.sort((a, b) => b.score - a.score).slice(0, 5);
+  }
+  
+  identifyBottlenecks() {
+    const bottlenecks = [];
+    
+    // Check for overloaded agents
+    this.workloadBalancer.forEach((workload, agentName) => {
+      if (workload.currentLoad > 85) {
+        bottlenecks.push({
+          type: 'overload',
+          agent: agentName,
+          severity: workload.currentLoad > 95 ? 'critical' : 'high',
+          description: `Agent ${agentName} is overloaded (${workload.currentLoad}% capacity)`
+        });
+      }
+    });
+    
+    // Check for skill gaps
+    const skillDemand = this.getMostRequestedSkills();
+    skillDemand.forEach(({ skill, count }) => {
+      const availableAgents = Array.from(this.skillMatrix.entries())
+        .filter(([agentName, skills]) => 
+          skills.primary.includes(skill) || skills.secondary.includes(skill)
+        ).length;
+      
+      if (availableAgents < 2 && count > 5) {
+        bottlenecks.push({
+          type: 'skill-gap',
+          skill,
+          severity: 'medium',
+          description: `Limited agents available for skill: ${skill} (${availableAgents} agents, ${count} requests)`
+        });
+      }
+    });
+    
+    return bottlenecks;
+  }
+  
+  generateOptimizationRecommendations() {
+    const recommendations = [];
+    const bottlenecks = this.identifyBottlenecks();
+    const utilization = this.getWorkloadDistribution();
+    
+    // Workload balancing recommendations
+    const overloadedAgents = utilization.filter(u => u.currentLoad > 80);
+    const underutilizedAgents = utilization.filter(u => u.currentLoad < 30);
+    
+    if (overloadedAgents.length > 0 && underutilizedAgents.length > 0) {
+      recommendations.push({
+        type: 'workload-rebalancing',
+        priority: 'high',
+        description: 'Consider redistributing tasks from overloaded to underutilized agents',
+        details: {
+          overloaded: overloadedAgents.map(a => a.agent),
+          underutilized: underutilizedAgents.map(a => a.agent)
+        }
+      });
+    }
+    
+    // Skill development recommendations
+    bottlenecks.filter(b => b.type === 'skill-gap').forEach(bottleneck => {
+      recommendations.push({
+        type: 'skill-development',
+        priority: 'medium',
+        description: `Consider training additional agents in: ${bottleneck.skill}`,
+        skill: bottleneck.skill
+      });
+    });
+    
+    // Capacity planning recommendations
+    const totalUtilization = utilization.reduce((sum, u) => sum + u.currentLoad, 0) / utilization.length;
+    if (totalUtilization > 75) {
+      recommendations.push({
+        type: 'capacity-expansion',
+        priority: 'high',
+        description: 'Consider adding more agents to handle increasing workload',
+        currentUtilization: Math.round(totalUtilization)
+      });
+    }
+    
+    return recommendations;
+  }
+  
+  // TASK COMPLETION TRACKING
+  completeTask(agentName, taskType, success = true, duration = null) {
+    const workload = this.workloadBalancer.get(agentName);
+    if (!workload) return;
+    
+    // Update workload
+    workload.completedTasks++;
+    workload.currentLoad = Math.max(0, workload.currentLoad - this.calculateLoadDecrease(taskType));
+    
+    // Update success rate
+    const totalTasks = workload.completedTasks;
+    const previousSuccesses = Math.round((workload.successRate / 100) * (totalTasks - 1));
+    const newSuccesses = previousSuccesses + (success ? 1 : 0);
+    workload.successRate = Math.round((newSuccesses / totalTasks) * 100);
+    
+    // Update efficiency based on duration
+    if (duration && workload.averageTaskDuration > 0) {
+      const expectedDuration = workload.averageTaskDuration;
+      const efficiencyFactor = expectedDuration / Math.max(duration, 1);
+      workload.efficiency = Math.min(100, Math.max(20, workload.efficiency * 0.9 + efficiencyFactor * 10));
+    }
+    
+    // Update average task duration if provided
+    if (duration) {
+      if (workload.averageTaskDuration === 0) {
+        workload.averageTaskDuration = duration;
+      } else {
+        workload.averageTaskDuration = (workload.averageTaskDuration + duration) / 2;
+      }
+    }
+    
+    console.log(`✅ Task completed: ${agentName} - ${taskType} (${success ? 'success' : 'failed'})`);
+    
+    this.emit('task-completed', {
+      agentName,
+      taskType,
+      success,
+      duration,
+      newEfficiency: workload.efficiency
+    });
+  }
+  
+  calculateLoadDecrease(taskType) {
+    const rule = this.assignmentRules.get(taskType);
+    if (!rule) return 20; // Default decrease
+    
+    // Estimate based on typical complexity
+    return 25; // Average load decrease per completed task
+  }
+  
+  // UTILITY METHODS
+  generateAssignmentId() {
+    return `assignment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
+  // PUBLIC API METHODS
+  getAssignmentRecommendation(taskType, complexity = 'medium', constraints = {}) {
+    try {
+      return this.assignOptimalAgents(taskType, 'Task analysis', complexity, constraints);
+    } catch (error) {
+      console.error('Assignment recommendation error:', error);
+      return null;
+    }
+  }
+  
+  getAgentWorkload(agentName) {
+    return this.workloadBalancer.get(agentName) || null;
+  }
+  
+  getAllWorkloads() {
+    return Object.fromEntries(this.workloadBalancer);
+  }
+  
+  getAssignmentHistory(limit = 20) {
+    return this.assignmentHistory.slice(-limit);
+  }
+  
+  getPerformanceMetrics() {
+    const entries = Array.from(this.performanceMetrics.entries());
+    return entries.length > 0 ? entries[entries.length - 1][1] : null;
+  }
+  
+  getAvailableTaskTypes() {
+    return Array.from(this.assignmentRules.keys());
+  }
+  
+  getTaskTypeDetails(taskType) {
+    return this.assignmentRules.get(taskType) || null;
+  }
+  
+  // UTILITY METHODS
+  getSystemLoad() {
+    let totalLoad = 0;
+    let totalCapacity = 0;
+    
+    this.workloadBalancer.forEach(workload => {
+      totalLoad += workload.currentLoad;
+      totalCapacity += workload.maxCapacity;
+    });
+    
+    return {
+      utilization: totalCapacity > 0 ? Math.round((totalLoad / totalCapacity) * 100) : 0,
+      totalLoad,
+      totalCapacity,
+      availableCapacity: totalCapacity - totalLoad
+    };
+  }
+  
+  getAgentRecommendationsForSkills(requiredSkills) {
+    const recommendations = [];
+    
+    this.skillMatrix.forEach((skills, agentName) => {
+      const matchScore = this.calculateSkillMatch(skills, requiredSkills, []);
+      const workload = this.workloadBalancer.get(agentName);
+      
+      if (matchScore > 50) { // Only recommend agents with 50%+ skill match
+        recommendations.push({
+          agentName,
+          skillMatch: Math.round(matchScore),
+          availability: this.calculateAvailabilityScore(workload),
+          skills: skills.primary.filter(skill => requiredSkills.includes(skill))
+        });
+      }
+    });
+    
+    return recommendations.sort((a, b) => b.skillMatch - a.skillMatch);
+  }
+}
+
+module.exports = {
+  AgentAssignmentMatrix
+};
