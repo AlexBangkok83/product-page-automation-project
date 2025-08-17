@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/stores/clipia.fi/$1",
+      "destination": "/stores/old_clipia.fi/$1",
       "has": [
         {
           "type": "host",
@@ -16,7 +16,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/stores/clipia.fi/$1",
+      "destination": "/stores/old_clipia.fi/$1",
       "has": [
         {
           "type": "host",
