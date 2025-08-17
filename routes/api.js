@@ -667,6 +667,24 @@ router.get('/countries', (req, res) => {
   });
 });
 
+// Clean up duplicate subdomains (maintenance endpoint)
+router.post('/cleanup-subdomains', async (req, res) => {
+  try {
+    console.log('💫 Admin: Cleaning up duplicate subdomains...');
+    const result = await Store.cleanupDuplicateSubdomains();
+    
+    res.json({
+      success: true,
+      message: `Cleaned up ${result.fixed} subdomain conflicts from ${result.conflicts} duplicate groups`,
+      fixed: result.fixed,
+      conflicts: result.conflicts
+    });
+  } catch (error) {
+    console.error('Subdomain cleanup error:', error);
+    res.status(500).json({ error: 'Failed to cleanup duplicate subdomains' });
+  }
+});
+
 // Generate store subdomain suggestion
 router.post('/suggest-subdomain', async (req, res) => {
   try {
@@ -694,8 +712,11 @@ router.post('/suggest-subdomain', async (req, res) => {
     const availableSuggestions = [];
     
     for (const suggestion of suggestions) {
-      const existing = await Store.findByDomain(suggestion);
-      if (!existing) {
+      // Check both domain and subdomain conflicts
+      const domainConflict = await Store.findByDomain(suggestion);
+      const subdomainConflict = await Store.findBySubdomain(suggestion);
+      
+      if (!domainConflict && !subdomainConflict) {
         availableSuggestions.push(suggestion);
       }
     }
@@ -703,7 +724,7 @@ router.post('/suggest-subdomain', async (req, res) => {
     res.json({
       success: true,
       suggestions: availableSuggestions.slice(0, 5),
-      primary: availableSuggestions[0] || `${baseSubdomain}-${Date.now()}`
+      primary: availableSuggestions[0] || await Store.generateUniqueSubdomain(storeName)
     });
   } catch (error) {
     console.error('Subdomain suggestion error:', error);

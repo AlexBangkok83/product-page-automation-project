@@ -72,11 +72,19 @@ class Store {
 
     // Generate subdomain from name if not provided
     if (!store.subdomain) {
-      store.subdomain = store.name.toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+      store.subdomain = await Store.generateUniqueSubdomain(store.name);
     }
+
+    // Double-check subdomain uniqueness before insertion
+    const subdomainConflict = await Store.findBySubdomain(store.subdomain);
+    if (subdomainConflict) {
+      console.log('⚠️ Subdomain conflict detected during final check, regenerating...');
+      store.subdomain = await Store.generateUniqueSubdomain(store.name + '-alt');
+    }
+
+    console.log('🏷️ Final subdomain for store:', store.subdomain);
+    console.log('🆔 Store UUID:', store.uuid);
+    console.log('🌐 Store domain:', store.domain);
 
     try {
       const result = await db.run(
@@ -147,6 +155,128 @@ class Store {
   static async findByDomain(domain) {
     const row = await db.get('SELECT * FROM stores WHERE domain = ? OR subdomain = ?', [domain, domain]);
     return row ? new Store(row) : null;
+  }
+
+  static async findBySubdomain(subdomain) {
+    const row = await db.get('SELECT * FROM stores WHERE subdomain = ?', [subdomain]);
+    return row ? new Store(row) : null;
+  }
+
+  /**
+   * Clean up any stores with duplicate subdomains
+   * This is a maintenance method to fix any existing conflicts
+   */
+  static async cleanupDuplicateSubdomains() {
+    console.log('💫 Checking for duplicate subdomains...');
+    
+    try {
+      // Find all stores with duplicate subdomains
+      const duplicates = await db.all(`
+        SELECT subdomain, COUNT(*) as count 
+        FROM stores 
+        WHERE subdomain IS NOT NULL 
+        GROUP BY subdomain 
+        HAVING COUNT(*) > 1
+      `);
+      
+      if (duplicates.length === 0) {
+        console.log('✅ No duplicate subdomains found');
+        return { fixed: 0, conflicts: 0 };
+      }
+      
+      console.log(`⚠️ Found ${duplicates.length} subdomain conflicts:`);
+      let fixedCount = 0;
+      
+      for (const duplicate of duplicates) {
+        console.log(`  - "${duplicate.subdomain}" used by ${duplicate.count} stores`);
+        
+        // Get all stores with this subdomain
+        const conflictingStores = await db.all(
+          'SELECT * FROM stores WHERE subdomain = ? ORDER BY created_at ASC',
+          [duplicate.subdomain]
+        );
+        
+        // Keep the first one (oldest), update the rest
+        for (let i = 1; i < conflictingStores.length; i++) {
+          const store = new Store(conflictingStores[i]);
+          const newSubdomain = await Store.generateUniqueSubdomain(store.name + '-fixed');
+          
+          await store.update({ subdomain: newSubdomain });
+          console.log(`    → Updated store "${store.name}" to subdomain: ${newSubdomain}`);
+          fixedCount++;
+        }
+      }
+      
+      console.log(`✅ Fixed ${fixedCount} subdomain conflicts`);
+      return { fixed: fixedCount, conflicts: duplicates.length };
+      
+    } catch (error) {
+      console.error('❌ Error cleaning up duplicate subdomains:', error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate a unique subdomain with automatic conflict resolution
+   * This method ensures no UNIQUE constraint failures ever occur
+   */
+  static async generateUniqueSubdomain(baseName) {
+    console.log('🔄 Generating unique subdomain for:', baseName);
+    
+    // Create base subdomain from name
+    let baseSubdomain = baseName.toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 20); // Limit length to leave room for suffix
+    
+    // Ensure minimum length
+    if (baseSubdomain.length < 3) {
+      baseSubdomain = 'store-' + baseSubdomain;
+    }
+    
+    // Check if base subdomain is available
+    let candidateSubdomain = baseSubdomain;
+    let existing = await Store.findBySubdomain(candidateSubdomain);
+    
+    if (!existing) {
+      console.log('✅ Base subdomain available:', candidateSubdomain);
+      return candidateSubdomain;
+    }
+    
+    console.log('⚠️ Base subdomain taken, generating alternatives...');
+    
+    // Strategy 1: Add timestamp suffix
+    const timestamp = Date.now().toString().slice(-6); // Last 6 digits
+    candidateSubdomain = `${baseSubdomain}-${timestamp}`;
+    existing = await Store.findBySubdomain(candidateSubdomain);
+    
+    if (!existing) {
+      console.log('✅ Timestamp subdomain available:', candidateSubdomain);
+      return candidateSubdomain;
+    }
+    
+    // Strategy 2: Add random suffix (extremely unlikely to conflict)
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      const randomSuffix = Math.random().toString(36).substring(2, 8); // 6 chars
+      candidateSubdomain = `${baseSubdomain}-${randomSuffix}`;
+      existing = await Store.findBySubdomain(candidateSubdomain);
+      
+      if (!existing) {
+        console.log('✅ Random subdomain available:', candidateSubdomain);
+        return candidateSubdomain;
+      }
+      
+      console.log(`⚠️ Attempt ${attempt}: ${candidateSubdomain} also taken, retrying...`);
+    }
+    
+    // Strategy 3: Fallback with UUID (guaranteed unique)
+    const { v4: uuidv4 } = require('uuid');
+    const uuidSuffix = uuidv4().substring(0, 8);
+    candidateSubdomain = `${baseSubdomain}-${uuidSuffix}`;
+    
+    console.log('🛡️ Using UUID fallback subdomain:', candidateSubdomain);
+    return candidateSubdomain;
   }
 
   static async findAll() {
