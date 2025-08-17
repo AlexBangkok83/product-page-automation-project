@@ -13,64 +13,12 @@
   },
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.fi/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.fi"
-        }
-      ]
+      "source": "/admin/(.*)",
+      "destination": "/server.js"
     },
     {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.fi/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.clipia.fi"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.de/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.de"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.de/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.clipia.de"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.co.uk/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "clipia.co.uk"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.co.uk/$1",
-      "has": [
-        {
-          "type": "host",
-          "value": "www.clipia.co.uk"
-        }
-      ]
+      "source": "/api/(.*)",
+      "destination": "/server.js"
     },
     {
       "source": "/(.*)",
