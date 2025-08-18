@@ -8,40 +8,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/">
-                <i class="bi bi-shop"></i> MultiStore Platform
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/admin">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/site-setup">Site Setup</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/company-profile">Company Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="loadLiveStores()">Live Stores</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/product-template">Template Builder</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<body class="admin-page">
+    <%- include('../partials/admin-nav', { currentPage: 'dashboard' }) %>
 
     <!-- Main Content -->
     <main class="container-fluid py-4">
@@ -126,7 +94,7 @@
                             Your Stores
                         </h5>
                     </div>
-                    <div class="card-body p-0">
+                    <div class="card-body p-0" style="min-height: 400px;">
                         <% if (stores.length === 0) { %>
                             <div class="text-center py-5">
                                 <div class="display-1 text-muted mb-3">
@@ -139,7 +107,7 @@
                                 </a>
                             </div>
                         <% } else { %>
-                            <div class="table-responsive">
+                            <div class="table-responsive" style="min-height: 400px;">
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
                                         <tr>
@@ -148,6 +116,7 @@
                                             <th>Country</th>
                                             <th>Status</th>
                                             <th>Deployment</th>
+                                            <th>Legal Pages</th>
                                             <th>Shopify</th>
                                             <th>Created</th>
                                             <th>Actions</th>
@@ -199,6 +168,16 @@
                                                     </span>
                                                 </td>
                                                 <td>
+                                                    <div class="d-flex flex-column">
+                                                        <small class="text-info">
+                                                            <i class="bi bi-file-earmark-text me-1"></i>Professional
+                                                        </small>
+                                                        <small class="text-muted">
+                                                            T&C, Privacy, Refund
+                                                        </small>
+                                                    </div>
+                                                </td>
+                                                <td>
                                                     <% if (store.shopify_connected) { %>
                                                         <span class="text-success">
                                                             <i class="bi bi-check-circle-fill me-1"></i>Connected
@@ -210,36 +189,60 @@
                                                     <% } %>
                                                 </td>
                                                 <td>
-                                                    <small class="text-muted">
-                                                        <%= new Date(store.created_at).toLocaleDateString() %>
-                                                    </small>
+                                                    <div class="d-flex flex-column">
+                                                        <small class="text-muted">
+                                                            Created: <%= new Date(store.created_at).toLocaleDateString() %>
+                                                        </small>
+                                                        <% if (store.deployed_at) { %>
+                                                            <small class="text-success">
+                                                                Updated: <%= new Date(store.deployed_at).toLocaleDateString() %>
+                                                            </small>
+                                                        <% } %>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <div class="btn-group btn-group-sm">
                                                         <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary" title="View Live Store">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
-                                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <span class="visually-hidden">Toggle Dropdown</span>
                                                         </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item" href="https://<%= store.domain %>" target="_blank">
-                                                                <i class="bi bi-eye me-2"></i>View Live Store
-                                                            </a></li>
+                                                        <ul class="dropdown-menu dropdown-menu-end">
+                                                            <!-- STORE MANAGEMENT -->
+                                                            <li><h6 class="dropdown-header text-muted small">
+                                                                <i class="bi bi-shop me-1"></i>Store Management
+                                                            </h6></li>
                                                             <li><a class="dropdown-item" href="/admin/stores/<%= store.uuid %>">
                                                                 <i class="bi bi-info-circle me-2"></i>View Details
                                                             </a></li>
-                                                            <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
-                                                                <i class="bi bi-pencil me-2"></i>Edit Settings
+                                                            <li><a class="dropdown-item" href="#" onclick="editStore('<%= store.uuid %>')">
+                                                                <i class="bi bi-pencil me-2"></i>Edit Basic Details
                                                             </a></li>
+                                                            <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
+                                                                <i class="bi bi-sliders me-2"></i>Edit Advanced Settings
+                                                            </a></li>
+                                                            
+                                                            <!-- CONTENT & DEPLOYMENT -->
                                                             <li><hr class="dropdown-divider"></li>
-                                                            <li><a class="dropdown-item deployment-action" href="#" onclick="deployStore('<%= store.uuid %>')" data-store-uuid="<%= store.uuid %>">
-                                                                <i class="bi bi-play-fill me-2"></i>Deploy Store
+                                                            <li><h6 class="dropdown-header text-muted small">
+                                                                <i class="bi bi-cloud-upload me-1"></i>Content & Deployment
+                                                            </h6></li>
+                                                            <li><a class="dropdown-item" href="#" onclick="regenerateLegalPages('<%= store.uuid %>')">
+                                                                <i class="bi bi-file-earmark-text me-2"></i>Regenerate Legal Pages
                                                             </a></li>
                                                             <li><a class="dropdown-item" href="#" onclick="regenerateStore('<%= store.uuid %>')">
-                                                                <i class="bi bi-arrow-clockwise me-2"></i>Regenerate Files
+                                                                <i class="bi bi-arrow-clockwise me-2"></i>Regenerate All Content
                                                             </a></li>
+                                                            <li><a class="dropdown-item deployment-action" href="#" onclick="smartDeploy('<%= store.uuid %>')" data-store-uuid="<%= store.uuid %>">
+                                                                <i class="bi bi-rocket me-2"></i><span class="deploy-text">Deploy Changes</span>
+                                                            </a></li>
+                                                            
+                                                            <!-- DANGER ZONE -->
                                                             <li><hr class="dropdown-divider"></li>
+                                                            <li><h6 class="dropdown-header text-danger small">
+                                                                <i class="bi bi-exclamation-triangle me-1"></i>Danger Zone
+                                                            </h6></li>
                                                             <li><a class="dropdown-item text-danger" href="#" onclick="deleteStore('<%= store.uuid %>')">
                                                                 <i class="bi bi-trash me-2"></i>Delete Store
                                                             </a></li>
@@ -256,6 +259,46 @@
                 </div>
             </div>
         </div>
+
+        <!-- Bulk Operations -->
+        <% if (stores.length > 0) { %>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear-wide-connected me-2"></i>
+                            Bulk Operations
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-info w-100" onclick="bulkRegenerateLegal()">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Update Legal Pages (All Stores)
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-secondary w-100" onclick="bulkUpdateConfig()">
+                                    <i class="bi bi-sliders me-2"></i>Advanced Bulk Operations
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning w-100" onclick="bulkRedeploy()">
+                                    <i class="bi bi-rocket me-2"></i>Deploy Changes (All Stores)
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-success w-100" onclick="exportStoreData()">
+                                    <i class="bi bi-download me-2"></i>Export Store Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } %>
 
         <!-- Quick Actions -->
         <div class="row mt-4">
@@ -296,6 +339,54 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Help Section -->
+        <% if (stores.length > 0) { %>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-0 py-3">
+                        <h6 class="mb-0 text-muted">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Store Management Guide
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <div class="text-center p-3">
+                                    <i class="bi bi-pencil text-primary mb-2" style="font-size: 1.5rem;"></i>
+                                    <h6>Edit Details</h6>
+                                    <small class="text-muted">Update store name, domain, colors, and contact information</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3">
+                                    <i class="bi bi-file-earmark-text text-info mb-2" style="font-size: 1.5rem;"></i>
+                                    <h6>Legal Pages</h6>
+                                    <small class="text-muted">Regenerate professional terms, privacy, and refund policies</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3">
+                                    <i class="bi bi-arrow-clockwise text-warning mb-2" style="font-size: 1.5rem;"></i>
+                                    <h6>Redeploy</h6>
+                                    <small class="text-muted">Push changes live or fix deployment issues</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3">
+                                    <i class="bi bi-gear-wide-connected text-success mb-2" style="font-size: 1.5rem;"></i>
+                                    <h6>Bulk Operations</h6>
+                                    <small class="text-muted">Update multiple stores at once for efficiency</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } %>
     </main>
 
     <!-- Footer -->
@@ -349,14 +440,22 @@
                                 </span>
                             `;
                             
-                            // Update deployment action visibility
+                            // Update deployment action text based on status
                             const actionElement = document.querySelector(`[data-store-uuid="${store.uuid}"].deployment-action`);
                             if (actionElement) {
-                                if (store.deployment_status === 'deployed') {
-                                    actionElement.style.display = 'none';
-                                } else if (store.deployment_status === 'deploying') {
-                                    actionElement.innerHTML = '<i class="bi bi-clock me-2"></i>Deploying...';
-                                    actionElement.onclick = null;
+                                const deployText = actionElement.querySelector('.deploy-text');
+                                if (deployText) {
+                                    if (store.deployment_status === 'deployed') {
+                                        deployText.textContent = 'Redeploy Changes';
+                                        actionElement.querySelector('i').className = 'bi bi-arrow-clockwise me-2';
+                                    } else if (store.deployment_status === 'deploying') {
+                                        deployText.textContent = 'Deploying...';
+                                        actionElement.querySelector('i').className = 'bi bi-clock me-2';
+                                        actionElement.onclick = null;
+                                    } else {
+                                        deployText.textContent = 'Deploy Store';
+                                        actionElement.querySelector('i').className = 'bi bi-rocket me-2';
+                                    }
                                 }
                             }
                         }
@@ -475,6 +574,290 @@
                     console.error('Error:', error);
                     alert('Failed to delete store');
                 });
+            }
+        }
+        
+        // Edit store details
+        async function editStore(uuid) {
+            try {
+                const response = await fetch(`/api/stores/${uuid}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    showEditStoreModal(data.store);
+                } else {
+                    alert('Failed to load store details: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error loading store details:', error);
+                alert('Failed to load store details');
+            }
+        }
+        
+        // Show edit store modal
+        function showEditStoreModal(store) {
+            const modalHtml = `
+                <div class="modal fade" id="editStoreModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Store: ${store.name}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editStoreForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Store Name</label>
+                                                <input type="text" class="form-control" name="name" value="${store.name}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Domain</label>
+                                                <input type="text" class="form-control" name="domain" value="${store.domain}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Country</label>
+                                                <input type="text" class="form-control" name="country" value="${store.country}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Currency</label>
+                                                <input type="text" class="form-control" name="currency" value="${store.currency}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label class="form-label">Language</label>
+                                                <input type="text" class="form-control" name="language" value="${store.language}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Support Email</label>
+                                                <input type="email" class="form-control" name="support_email" value="${store.support_email || ''}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Support Phone</label>
+                                                <input type="text" class="form-control" name="support_phone" value="${store.support_phone || ''}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Business Address</label>
+                                        <textarea class="form-control" name="business_address" rows="2">${store.business_address || ''}</textarea>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Primary Color</label>
+                                                <input type="color" class="form-control form-control-color" name="primary_color" value="${store.primary_color || '#007cba'}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Secondary Color</label>
+                                                <input type="color" class="form-control form-control-color" name="secondary_color" value="${store.secondary_color || '#f8f9fa'}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveStoreChanges('${store.uuid}')">Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('editStoreModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editStoreModal'));
+            modal.show();
+        }
+        
+        // Save store changes
+        async function saveStoreChanges(uuid) {
+            const form = document.getElementById('editStoreForm');
+            const formData = new FormData(form);
+            const updateData = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch(`/api/stores/${uuid}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editStoreModal'));
+                    modal.hide();
+                    
+                    // Reload page to show changes
+                    location.reload();
+                } else {
+                    alert('Failed to update store: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error updating store:', error);
+                alert('Failed to update store');
+            }
+        }
+        
+        // Regenerate legal pages for a store
+        async function regenerateLegalPages(uuid) {
+            if (!confirm('Regenerate legal pages for this store? This will update terms, privacy, refund, and delivery pages with professional templates.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/stores/${uuid}/regenerate-legal`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Legal pages regenerated successfully!');
+                } else {
+                    alert('Failed to regenerate legal pages: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error regenerating legal pages:', error);
+                alert('Failed to regenerate legal pages');
+            }
+        }
+        
+        // Smart deployment - context aware
+        async function smartDeploy(uuid) {
+            const statusElement = document.querySelector(`[data-store-uuid="${uuid}"]`);
+            const isDeployed = statusElement && statusElement.textContent.includes('Deployed');
+            
+            const action = isDeployed ? 'redeploy' : 'deploy';
+            const message = isDeployed ? 
+                'Redeploy this store? This will update the live site with any changes.' :
+                'Deploy this store? This will generate all store files and make the store live.';
+            
+            if (!confirm(message)) {
+                return;
+            }
+            
+            if (statusElement) {
+                statusElement.innerHTML = `<span class="badge bg-warning"><i class="bi bi-clock me-1"></i>${isDeployed ? 'Redeploying...' : 'Deploying...'}</span>`;
+            }
+            
+            try {
+                const response = await fetch(`/api/stores/${uuid}/deploy`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Store ${isDeployed ? 'redeployed' : 'deployed'} successfully! It is now live at: https://${data.store.domain}`);
+                    loadDeploymentStatuses();
+                } else {
+                    alert(`${isDeployed ? 'Redeployment' : 'Deployment'} failed: ${data.error}`);
+                    loadDeploymentStatuses();
+                }
+            } catch (error) {
+                console.error(`${action} error:`, error);
+                alert(`${isDeployed ? 'Redeployment' : 'Deployment'} failed. Please try again.`);
+                loadDeploymentStatuses();
+            }
+        }
+        
+        // Bulk operations
+        async function bulkRegenerateLegal() {
+            if (!confirm('Regenerate legal pages for ALL stores? This may take a while.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/stores/bulk/regenerate-legal', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Legal pages regenerated for ${data.updated} stores!`);
+                } else {
+                    alert('Failed to regenerate legal pages: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error in bulk legal regeneration:', error);
+                alert('Failed to regenerate legal pages');
+            }
+        }
+        
+        async function bulkUpdateConfig() {
+            alert('Bulk configuration update feature coming soon!');
+        }
+        
+        async function bulkRedeploy() {
+            if (!confirm('Redeploy ALL stores? This may take a while and cause temporary downtime.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/stores/bulk/redeploy', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Started redeployment for ${data.count} stores!`);
+                    // Refresh page to see updated statuses
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    alert('Failed to start bulk redeployment: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error in bulk redeploy:', error);
+                alert('Failed to start bulk redeployment');
+            }
+        }
+        
+        async function exportStoreData() {
+            try {
+                const response = await fetch('/api/stores/export');
+                const blob = await response.blob();
+                
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `stores-export-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Error exporting store data:', error);
+                alert('Failed to export store data');
             }
         }
         

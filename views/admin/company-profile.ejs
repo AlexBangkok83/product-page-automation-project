@@ -10,7 +10,7 @@
     <style>
         .company-profile-container {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            min-height: 100vh;
+            min-height: calc(100vh - 80px);
             padding: 2rem 0;
         }
         
@@ -354,7 +354,9 @@
         }
     </style>
 </head>
-<body>
+<body class="admin-page">
+    <%- include('../partials/admin-nav', { currentPage: 'company-profile' }) %>
+    
     <div class="company-profile-container">
         <div class="container">
             <!-- Header -->
@@ -365,9 +367,7 @@
                         <p>Manage your Shopify store connections and streamline store creation</p>
                     </div>
                     <div class="col-md-4 text-md-end">
-                        <a href="/admin" class="btn btn-light btn-lg">
-                            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
-                        </a>
+                        <!-- Removed back button as navigation is now in header -->
                     </div>
                 </div>
             </div>

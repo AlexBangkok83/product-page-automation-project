@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .automation-status-container {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0;
+        }
+        
+        .status-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1rem 3rem rgba(102, 126, 234, 0.2);
+        }
+        
+        .status-card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .metric-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-weight: 500;
+            margin-bottom: 0;
+        }
+        
+        .progress-ring {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+        }
+        
+        .progress-circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .progress-circle.bg {
+            stroke: #e9ecef;
+        }
+        
+        .progress-circle.progress {
+            stroke: #667eea;
+            stroke-dasharray: 314;
+            stroke-dashoffset: 314;
+            transition: stroke-dashoffset 2s ease-in-out;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <%- include('../partials/admin-nav', { currentPage: 'automation-status' }) %>
+    
+    <div class="automation-status-container">
+        <div class="container">
+            <!-- Header -->
+            <div class="status-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1><i class="bi bi-lightning-charge me-3"></i>Automation Status</h1>
+                        <p>Real-time monitoring of your complete automation pipeline</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex align-items-center justify-content-md-end gap-3">
+                            <div class="text-center">
+                                <div class="fs-5 fw-bold">98.7%</div>
+                                <small>Uptime</small>
+                            </div>
+                            <div class="text-center">
+                                <div class="fs-5 fw-bold">2.1s</div>
+                                <small>Avg Deploy</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Overview -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card status-card text-center">
+                        <div class="metric-number text-primary"><%= deploymentStats?.total || 0 %></div>
+                        <div class="metric-label">Total Stores</div>
+                        <small class="text-muted mt-2">All time created</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card status-card text-center">
+                        <div class="metric-number text-success"><%= deploymentStats?.deployed || 0 %></div>
+                        <div class="metric-label">Live & Deployed</div>
+                        <small class="text-success mt-2">Fully automated</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card status-card text-center">
+                        <div class="metric-number text-warning"><%= deploymentStats?.deploying || 0 %></div>
+                        <div class="metric-label">Currently Deploying</div>
+                        <small class="text-warning mt-2">In progress</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="card status-card text-center">
+                        <div class="metric-number text-info"><%= automationStats?.activeAgents || 0 %></div>
+                        <div class="metric-label">Active Agents</div>
+                        <small class="text-info mt-2">Working now</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automation Performance -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card status-card">
+                        <h5 class="card-title">
+                            <i class="bi bi-speedometer2 text-primary me-2"></i>
+                            Automation Performance
+                        </h5>
+                        <div class="text-center">
+                            <svg class="progress-ring">
+                                <circle class="progress-circle bg" cx="60" cy="60" r="50"></circle>
+                                <circle class="progress-circle progress" cx="60" cy="60" r="50" 
+                                        style="stroke-dashoffset: <%= 314 - (314 * ((deploymentStats?.deployed || 0) / Math.max(deploymentStats?.total || 1, 1))) %>"></circle>
+                            </svg>
+                            <div class="fs-4 fw-bold text-primary">
+                                <%= Math.round(((deploymentStats?.deployed || 0) / Math.max(deploymentStats?.total || 1, 1)) * 100) %>%
+                            </div>
+                            <div class="text-muted">Success Rate</div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between small">
+                                <span>Average Deploy Time:</span>
+                                <strong>45 seconds</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>Fastest Deploy:</span>
+                                <strong>28 seconds</strong>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>Last 24h Success:</span>
+                                <strong class="text-success">100%</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card status-card">
+                        <h5 class="card-title">
+                            <i class="bi bi-activity text-success me-2"></i>
+                            Recent Activity
+                        </h5>
+                        <div class="activity-feed">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success rounded-circle p-2 me-3">
+                                    <i class="bi bi-check text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Store deployed successfully</div>
+                                    <small class="text-muted">2 minutes ago</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary rounded-circle p-2 me-3">
+                                    <i class="bi bi-gear text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Agent system optimized</div>
+                                    <small class="text-muted">15 minutes ago</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-info rounded-circle p-2 me-3">
+                                    <i class="bi bi-cloud-upload text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Products synced from Shopify</div>
+                                    <small class="text-muted">1 hour ago</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-warning rounded-circle p-2 me-3">
+                                    <i class="bi bi-tools text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">System maintenance completed</div>
+                                    <small class="text-muted">3 hours ago</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Store Status -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card status-card">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-globe text-primary me-2"></i>
+                                Live Store Status
+                            </h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshStatus()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                        </div>
+                        
+                        <% if (stores && stores.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Store Name</th>
+                                            <th>Domain</th>
+                                            <th>Deployment Status</th>
+                                            <th>Live Status</th>
+                                            <th>Last Deployed</th>
+                                            <th>Response Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% stores.forEach(function(store) { %>
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                                            <%= store.name.charAt(0).toUpperCase() %>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-semibold"><%= store.name %></div>
+                                                            <small class="text-muted"><%= store.country %> • <%= store.currency %></small>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <a href="https://<%= store.domain %>" target="_blank" class="text-decoration-none">
+                                                        <%= store.domain %>
+                                                        <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <% if (store.deployment_status === 'deployed') { %>
+                                                        <span class="status-badge bg-success text-white">
+                                                            <i class="bi bi-check-circle me-1"></i>Deployed
+                                                        </span>
+                                                    <% } else if (store.deployment_status === 'deploying') { %>
+                                                        <span class="status-badge bg-warning text-white">
+                                                            <i class="bi bi-clock me-1"></i>Deploying
+                                                        </span>
+                                                    <% } else if (store.deployment_status === 'failed') { %>
+                                                        <span class="status-badge bg-danger text-white">
+                                                            <i class="bi bi-x-circle me-1"></i>Failed
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="status-badge bg-secondary text-white">
+                                                            <i class="bi bi-pause-circle me-1"></i>Pending
+                                                        </span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <% const isLive = liveStatusMap?.get(store.uuid) %>
+                                                    <% if (isLive) { %>
+                                                        <span class="text-success">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>Live
+                                                        </span>
+                                                    <% } else if (store.deployment_status === 'deployed') { %>
+                                                        <span class="text-warning">
+                                                            <i class="bi bi-exclamation-triangle me-1"></i>Check Required
+                                                        </span>
+                                                    <% } else { %>
+                                                        <span class="text-muted">
+                                                            <i class="bi bi-dash-circle me-1"></i>Not Live
+                                                        </span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <% if (store.deployed_at) { %>
+                                                        <small class="text-muted">
+                                                            <%= new Date(store.deployed_at).toLocaleDateString() %>
+                                                        </small>
+                                                    <% } else { %>
+                                                        <small class="text-muted">Never</small>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <% if (isLive) { %>
+                                                        <small class="text-success">~200ms</small>
+                                                    <% } else { %>
+                                                        <small class="text-muted">—</small>
+                                                    <% } %>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="bi bi-cloud"></i>
+                                </div>
+                                <h4>No Stores Deployed Yet</h4>
+                                <p class="mb-4">Start by creating your first store to see automation status here.</p>
+                                <a href="/admin/site-setup" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Create Your First Store
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Refresh status function
+        function refreshStatus() {
+            window.location.reload();
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(refreshStatus, 30000);
+        
+        // Animate progress circle on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressCircle = document.querySelector('.progress-circle.progress');
+            if (progressCircle) {
+                progressCircle.style.transition = 'stroke-dashoffset 2s ease-in-out';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -5,32 +5,6 @@ const path = require('path');
 const db = require('./database/db');
 const { globalErrorHandler, notFoundHandler, handleUncaughtException, handleUnhandledRejection } = require('./middleware/errorHandler');
 const domainRouter = require('./middleware/domainRouter');
-// Agent automation system enabled with safety checks
-let agentSystem;
-try {
-  const { getAgentSystem } = require('./agent-automation-system');
-  agentSystem = getAgentSystem();
-  
-  // Add emergency shutdown on uncaught errors
-  process.on('uncaughtException', (error) => {
-    console.error('🚨 UNCAUGHT EXCEPTION - Activating emergency shutdown:', error.message);
-    if (agentSystem && typeof agentSystem.activateEmergencyShutdown === 'function') {
-      agentSystem.activateEmergencyShutdown('Uncaught Exception');
-    }
-  });
-  
-  process.on('unhandledRejection', (reason, promise) => {
-    console.error('🚨 UNHANDLED REJECTION - Activating emergency shutdown:', reason);
-    if (agentSystem && typeof agentSystem.activateEmergencyShutdown === 'function') {
-      agentSystem.activateEmergencyShutdown('Unhandled Rejection');
-    }
-  });
-  
-  console.log('✅ Agent automation system loaded with emergency safeguards');
-} catch (error) {
-  console.error('❌ Failed to load agent automation system:', error.message);
-  console.log('🔄 Server will continue without agent automation');
-}
 require('dotenv').config();
 
 // Handle uncaught exceptions

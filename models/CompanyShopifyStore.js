@@ -154,25 +154,92 @@ class CompanyShopifyStore {
     try {
       console.log(`🔍 Validating Shopify connection for ${this.shopify_domain}...`);
       
-      // Test Shopify API connection
-      const response = await axios.get(`https://${this.shopify_domain}/admin/api/2023-10/shop.json`, {
-        headers: {
-          'X-Shopify-Access-Token': this.shopify_access_token,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      });
-
-      const shopData = response.data.shop;
+      // Detect token type and test appropriate API
+      let shopData, productCount = 0;
       
-      // Get product count
-      const productCountResponse = await axios.get(`https://${this.shopify_domain}/admin/api/2023-10/products/count.json`, {
-        headers: {
-          'X-Shopify-Access-Token': this.shopify_access_token,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
+      console.log('🔍 Token analysis:', {
+        token: this.shopify_access_token.substring(0, 10) + '...',
+        length: this.shopify_access_token.length,
+        startsWithShpat: this.shopify_access_token.startsWith('shpat_'),
+        startsWithShpca: this.shopify_access_token.startsWith('shpca_')
       });
+      
+      if (this.shopify_access_token.startsWith('shpat_') || this.shopify_access_token.startsWith('shpca_')) {
+        // Admin API token - test with Admin API
+        const response = await axios.get(`https://${this.shopify_domain}/admin/api/2023-10/shop.json`, {
+          headers: {
+            'X-Shopify-Access-Token': this.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+        
+        shopData = response.data.shop;
+        
+        // Get product count
+        const productCountResponse = await axios.get(`https://${this.shopify_domain}/admin/api/2023-10/products/count.json`, {
+          headers: {
+            'X-Shopify-Access-Token': this.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+        
+        productCount = productCountResponse.data.count || 0;
+        
+      } else {
+        // Storefront API token - test with GraphQL
+        console.log('🛒 Testing Storefront API for token:', this.shopify_access_token.substring(0, 8) + '...');
+        
+        const response = await axios.post(`https://${this.shopify_domain}/api/2023-10/graphql.json`, {
+          query: `{
+            shop {
+              name
+              primaryDomain { url }
+              paymentSettings {
+                currencyCode
+              }
+            }
+            products(first: 5) {
+              edges {
+                node {
+                  title
+                  handle
+                  id
+                }
+              }
+            }
+          }`
+        }, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Shopify-Storefront-Access-Token': this.shopify_access_token
+          },
+          timeout: 10000
+        });
+        
+        if (response.data.errors) {
+          throw new Error('Storefront API error: ' + JSON.stringify(response.data.errors));
+        }
+        
+        console.log('✅ Storefront API response received:', response.data);
+        
+        const shop = response.data.data.shop;
+        const products = response.data.data.products.edges;
+        
+        shopData = {
+          name: shop.name,
+          domain: shop.primaryDomain.url.replace('https://', '').replace('http://', ''),
+          myshopify_domain: this.shopify_domain,
+          email: 'N/A (Storefront API)',
+          currency: shop.paymentSettings?.currencyCode || 'N/A',
+          iana_timezone: 'N/A (Storefront API)'
+        };
+        
+        // Count available products through Storefront API
+        productCount = products.length;
+        console.log(`📦 Found ${productCount} products via Storefront API`);
+      }
 
       return {
         success: true,
@@ -183,7 +250,8 @@ class CompanyShopifyStore {
           email: shopData.email,
           currency: shopData.currency,
           timezone: shopData.iana_timezone,
-          productCount: productCountResponse.data.count || 0
+          productCount: productCount,
+          apiType: this.shopify_access_token.startsWith('shpat_') || this.shopify_access_token.startsWith('shpca_') ? 'Admin API' : 'Storefront API'
         }
       };
     } catch (error) {
@@ -197,6 +265,8 @@ class CompanyShopifyStore {
         errorMessage = 'Shopify store not found';
       } else if (error.code === 'ENOTFOUND') {
         errorMessage = 'Invalid Shopify domain';
+      } else if (error.message.includes('Storefront API error')) {
+        errorMessage = 'Storefront API validation failed: ' + error.message;
       }
 
       return {

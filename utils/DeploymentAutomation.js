@@ -357,8 +357,19 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
     
     try {
       // Check if domain exists in Vercel
-      await execAsync(`vercel domains inspect ${domain}`);
-      console.log(`✅ Domain ${domain} exists in Vercel`);
+      try {
+        await execAsync(`vercel domains inspect ${domain}`);
+        console.log(`✅ Domain ${domain} exists in Vercel`);
+      } catch (inspectError) {
+        if (inspectError.message.includes('not found')) {
+          console.log(`📋 Domain ${domain} not found in Vercel, adding it...`);
+          // Add domain to Vercel account first
+          await execAsync(`vercel domains buy ${domain} --confirm || vercel domains add ${domain} --external`);
+          console.log(`✅ Domain ${domain} added to Vercel account`);
+        } else {
+          throw inspectError;
+        }
+      }
       
       // Add domain to current project
       const { stdout } = await execAsync(`vercel domains add ${domain}`);

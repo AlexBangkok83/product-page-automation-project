@@ -2,26 +2,11 @@ const express = require('express');
 const Store = require('../models/Store');
 const CompanyShopifyStore = require('../models/CompanyShopifyStore');
 const { validateSiteSetup, sanitizeInput } = require('../middleware/validation');
-const { getAgentSystem } = require('../agent-automation-system'); // Enabled for full automation
 const router = express.Router();
 
 // Apply input sanitization to all routes
 router.use(sanitizeInput);
 
-// Agent system middleware enabled for full automation
-router.use((req, res, next) => {
-  // Auto-deploy agents for any technical work detected
-  if (req.method === 'POST' && req.path.includes('site-setup')) {
-    // Deploy agents for site setup work
-    const agentSystem = getAgentSystem();
-    agentSystem.autoDeployAgents('Site setup and store creation workflow', {
-      type: 'store-creation',
-      method: req.method,
-      path: req.path
-    }).catch(err => console.warn('Auto-agent deployment failed:', err));
-  }
-  next();
-});
 
 // Homepage - Landing page for the platform
 router.get('/', (req, res) => {
@@ -58,27 +43,44 @@ router.get('/admin/site-setup', async (req, res) => {
     const step = req.query.step || '1';
     const storeId = req.query.store;
     let store = null;
+    let isEditMode = false;
     
-    // If store ID is provided, fetch store data
+    // If store ID is provided, fetch store data for editing
     if (storeId) {
       store = await Store.findByUuid(storeId);
+      if (store) {
+        isEditMode = true;
+        console.log('📝 Loading store for editing:', store.name, 'UUID:', store.uuid);
+      } else {
+        console.warn('⚠️ Store not found for UUID:', storeId);
+      }
     }
     
-    res.render('admin/site-setup', { 
-      title: 'Site Setup - Create Your Store',
+    const templateData = {
+      title: isEditMode ? `Edit Store - ${store.name}` : 'Site Setup - Create Your Store',
       step: step,
       storeId: storeId,
       store: store,
+      isEditMode: isEditMode,
       // Error handling
       error: req.query.error,
       message: req.query.message,
-      // Preserve form data
+      // Preserve form data for new stores
       siteUrl: req.query.siteUrl,
       brandName: req.query.brandName,
       shopifyDomain: req.query.shopifyDomain,
       shippingPolicy: req.query.shippingPolicy,
       returnPolicy: req.query.returnPolicy
+    };
+    
+    console.log('🔄 Rendering site-setup with:', {
+      isEditMode,
+      storeId,
+      storeName: store?.name,
+      step
     });
+    
+    res.render('admin/site-setup', templateData);
   } catch (error) {
     console.error('Site setup page error:', error);
     res.status(500).render('error', { 
@@ -158,7 +160,79 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
     
     console.log('🎯 COMPLETE AUTOMATION ACTIVE: Dashboard → Live Domain in 60 seconds');
     
-    if (step === 'create-store') {
+    if (step === 'create-store' || step === 'update-store') {
+      const isUpdate = step === 'update-store';
+      const storeUuid = req.body.storeId;
+      
+      console.log(`🔄 Processing ${isUpdate ? 'update' : 'create'} for store:`, {
+        isUpdate,
+        storeUuid,
+        brandName: req.body.brandName
+      });
+      
+      if (isUpdate && !storeUuid) {
+        return res.status(400).json({
+          success: false,
+          error: 'Store ID is required for updates'
+        });
+      }
+      
+      // Handle store update
+      if (isUpdate) {
+        try {
+          const existingStore = await Store.findByUuid(storeUuid);
+          if (!existingStore) {
+            return res.status(404).json({
+              success: false,
+              error: 'Store not found'
+            });
+          }
+          
+          // Update store data
+          const updateData = {
+            name: req.body.brandName || req.body.storeName,
+            domain: req.body.siteUrl || req.body.domain,
+            country: req.body.country,
+            language: req.body.language,
+            currency: req.body.currency,
+            shopify_domain: req.body.shopifyDomain,
+            shopify_access_token: req.body.shopifyToken,
+            shopify_connected: !!(req.body.shopifyDomain && req.body.shopifyToken),
+            meta_title: req.body.metaTitle,
+            meta_description: req.body.metaDescription,
+            // Global settings
+            shipping_info: req.body.shippingInfo,
+            return_policy: req.body.returnPolicy,
+            support_email: req.body.supportEmail,
+            support_phone: req.body.supportPhone,
+            business_address: req.body.businessAddress,
+            gdpr_compliant: !!req.body.enableGDPR,
+            cookie_consent: !!req.body.enableCookies,
+            // Selected pages
+            selected_pages: req.body.selectedPages ? 
+              (Array.isArray(req.body.selectedPages) ? req.body.selectedPages.join(',') : req.body.selectedPages) :
+              existingStore.selected_pages
+          };
+          
+          await existingStore.update(updateData);
+          
+          console.log('✅ Store updated successfully:', existingStore.name);
+          
+          return res.json({
+            success: true,
+            store: existingStore.toJSON(),
+            message: 'Store updated successfully',
+            redirectUrl: `/admin/stores/${existingStore.uuid}?updated=true`
+          });
+          
+        } catch (updateError) {
+          console.error('❌ Store update failed:', updateError);
+          return res.status(400).json({
+            success: false,
+            error: updateError.message || 'Failed to update store'
+          });
+        }
+      }
       // Generate unique deployment ID for real-time tracking
       const deploymentId = `deployment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       console.log(`🚀 Starting deployment with ID: ${deploymentId}`);
@@ -406,29 +480,7 @@ router.get('/admin/product-template', (req, res) => {
   });
 });
 
-// Agent Dashboard - Disabled for clean HTTP server
-router.get('/admin/agents', async (req, res) => {
-  try {
-    const agentSystem = getAgentSystem();
-    const systemStatus = agentSystem.getSystemStatus();
-    const activeAgents = agentSystem.getActiveAgents();
-    const taskProgress = agentSystem.getAllTasksProgress();
-    
-    res.render('agent-dashboard', {
-      title: 'Agent Dashboard',
-      systemStatus,
-      activeAgents,
-      taskProgress,
-      totalAgents: agentSystem.agentRegistry?.size || 0
-    });
-  } catch (error) {
-    console.error('Agent dashboard error:', error);
-    res.status(500).render('error', {
-      title: 'Error',
-      message: 'Failed to load agent dashboard'
-    });
-  }
-});
+// Agent system works in Claude Code - no web dashboard needed
 
 // Company Profile - Manage Shopify stores
 router.get('/admin/company-profile', (req, res) => {
@@ -613,40 +665,7 @@ router.post('/admin/deployment/redeploy/:storeId', async (req, res) => {
   }
 });
 
-// Deploy agents for specific task (API endpoint) - Disabled
-router.post('/admin/agents/deploy', async (req, res) => {
-  try {
-    const { taskDescription, context } = req.body;
-    
-    if (!taskDescription) {
-      return res.status(400).json({
-        error: 'Task description is required'
-      });
-    }
-    
-    const agentSystem = getAgentSystem();
-    const deployment = await agentSystem.autoDeployAgents(taskDescription, context || {});
-    
-    res.json({
-      success: true,
-      taskId: deployment.taskId,
-      deployedAgents: deployment.deployedAgents.map(agent => ({
-        id: agent.id,
-        name: agent.name,
-        department: agent.department,
-        priority: agent.priority
-      })),
-      coordination: deployment.coordination,
-      message: `Successfully deployed ${deployment.deployedAgents.length} agents`
-    });
-  } catch (error) {
-    console.error('Agent deployment error:', error);
-    res.status(500).json({
-      error: 'Failed to deploy agents',
-      message: error.message
-    });
-  }
-});
+// Agents work in Claude Code - no manual deployment needed
 
 // Store management - View/edit individual store
 router.get('/admin/stores/:uuid', async (req, res) => {

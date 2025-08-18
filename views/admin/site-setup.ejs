@@ -129,9 +129,6 @@
         }
         
         .page-template-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
             margin: 2rem 0;
         }
         
@@ -358,7 +355,7 @@
             }
             
             .page-template-grid {
-                grid-template-columns: 1fr;
+                margin: 1rem 0;
             }
             
             .global-settings-grid {
@@ -423,12 +420,19 @@
                         
                         <div class="step" data-step="4">
                             <div class="step-circle">
+                                <i class="bi bi-layout-three-columns"></i>
+                            </div>
+                            <div class="step-label">Pre-Footer Content</div>
+                        </div>
+                        
+                        <div class="step" data-step="5">
+                            <div class="step-circle">
                                 <i class="bi bi-gear"></i>
                             </div>
                             <div class="step-label">Global Settings</div>
                         </div>
                         
-                        <div class="step" data-step="5">
+                        <div class="step" data-step="6">
                             <div class="step-circle">
                                 <i class="bi bi-check-circle"></i>
                             </div>
@@ -746,7 +750,7 @@
                                 </div>
                             </div>
 
-                            <div class="page-template-grid" id="pageTemplates">
+                            <div class="page-template-grid w-100" id="pageTemplates">
                                 <!-- Loading state while templates are being loaded dynamically -->
                                 <div class="col-12 text-center py-5" id="pageTemplatesLoading">
                                     <div class="spinner-border text-primary mb-3" role="status">
@@ -757,8 +761,129 @@
                             </div>
                         </div>
 
-                        <!-- Step 4: Global Settings -->
+                        <!-- Step 4: Pre-Footer Content -->
                         <div class="form-step" id="step4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h3 class="mb-4">
+                                        <i class="bi bi-layout-three-columns text-primary me-2"></i>
+                                        Pre-Footer Content
+                                    </h3>
+                                    <p class="text-muted mb-4">Customize the feature cards that appear before your footer. This section is optional and can be skipped.</p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="enablePreFooter" name="prefooter_enabled"
+                                               <%= (typeof store !== 'undefined' && store && store.prefooter_enabled) ? 'checked' : '' %>>
+                                        <label class="form-check-label fw-bold" for="enablePreFooter">
+                                            Enable Pre-Footer Content Section
+                                        </label>
+                                        <div class="form-text">Toggle this on to add customizable feature cards before your footer</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="preFooterContent" style="display: none;">
+                                <!-- Card 1 -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-1-circle me-2"></i>Feature Card 1</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="card1_title" class="form-label fw-bold">Title</label>
+                                                    <input type="text" class="form-control" id="card1_title" name="prefooter_card1_title" placeholder="e.g., About Us"
+                                                           value="<%= (typeof store !== 'undefined' && store) ? (store.prefooter_card1_title || '') : '' %>">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="card1_image" class="form-label fw-bold">Image URL</label>
+                                                    <input type="url" class="form-control" id="card1_image" name="prefooter_card1_image" placeholder="https://example.com/image.jpg"
+                                                           value="<%= (typeof store !== 'undefined' && store) ? (store.prefooter_card1_image || '') : '' %>">
+                                                    <div class="form-text">High-quality image recommended (400x300px or similar ratio)</div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="card1_text" class="form-label fw-bold">Description</label>
+                                                    <textarea class="form-control" id="card1_text" name="prefooter_card1_text" rows="4" placeholder="Describe this feature or benefit..."><%= (typeof store !== 'undefined' && store) ? (store.prefooter_card1_text || '') : '' %></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2 -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-2-circle me-2"></i>Feature Card 2</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="card2_title" class="form-label fw-bold">Title</label>
+                                                    <input type="text" class="form-control" id="card2_title" name="prefooter_card2_title" placeholder="e.g., Perfect Gifts"
+                                                           value="<%= (typeof store !== 'undefined' && store) ? (store.prefooter_card2_title || '') : '' %>">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="card2_image" class="form-label fw-bold">Image URL</label>
+                                                    <input type="url" class="form-control" id="card2_image" name="prefooter_card2_image" placeholder="https://example.com/image.jpg"
+                                                           value="<%= (typeof store !== 'undefined' && store) ? (store.prefooter_card2_image || '') : '' %>">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="card2_text" class="form-label fw-bold">Description</label>
+                                                    <textarea class="form-control" id="card2_text" name="prefooter_card2_text" rows="4" placeholder="Describe this feature or benefit..."><%= (typeof store !== 'undefined' && store) ? (store.prefooter_card2_text || '') : '' %></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card 3 -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-3-circle me-2"></i>Feature Card 3</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="card3_title" class="form-label fw-bold">Title</label>
+                                                    <input type="text" class="form-control" id="card3_title" name="prefooter_card3_title" placeholder="e.g., 30-Day Returns"
+                                                           value="<%= (typeof store !== 'undefined' && store) ? (store.prefooter_card3_title || '') : '' %>">
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="card3_image" class="form-label fw-bold">Image URL</label>
+                                                    <input type="url" class="form-control" id="card3_image" name="prefooter_card3_image" placeholder="https://example.com/image.jpg"
+                                                           value="<%= (typeof store !== 'undefined' && store) ? (store.prefooter_card3_image || '') : '' %>">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="card3_text" class="form-label fw-bold">Description</label>
+                                                    <textarea class="form-control" id="card3_text" name="prefooter_card3_text" rows="4" placeholder="Describe this feature or benefit..."><%= (typeof store !== 'undefined' && store) ? (store.prefooter_card3_text || '') : '' %></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    <strong>Tip:</strong> Only cards with titles will be displayed. You can leave any card empty to skip it.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Global Settings -->
+                        <div class="form-step" id="step5">
                             <div class="row">
                                 <div class="col-12">
                                     <h3 class="mb-4">
@@ -846,8 +971,8 @@
                             </div>
                         </div>
 
-                        <!-- Step 5: Completion -->
-                        <div class="form-step" id="step5">
+                        <!-- Step 6: Completion -->
+                        <div class="form-step" id="step6">
                             <div class="completion-summary">
                                 <div class="completion-icon">
                                     <i class="bi bi-check-circle-fill"></i>
@@ -961,7 +1086,7 @@
         class SiteSetupWizard {
             constructor() {
                 this.currentStep = 1;
-                this.totalSteps = 5;
+                this.totalSteps = 6;
                 this.formData = {};
                 this.selectedShopifyData = null;
                 this.init();
@@ -991,6 +1116,14 @@
                 //     this.prePopulateSelectedPages();
                 // }
                 
+                // Initialize pre-footer content visibility if in edit mode
+                if (this.isEditMode && this.storeData && this.storeData.prefooter_enabled) {
+                    const preFooterContent = document.getElementById('preFooterContent');
+                    if (preFooterContent) {
+                        preFooterContent.style.display = 'block';
+                    }
+                }
+
                 // Initialize with URL step if provided
                 const urlParams = new URLSearchParams(window.location.search);
                 const step = urlParams.get('step');
@@ -1061,12 +1194,12 @@
                     if (categoryTemplates.length === 0) return;
 
                     html += `
-                        <div class="template-category mb-4">
+                        <div class="template-category mb-4 w-100">
                             <h6 class="text-muted text-uppercase fw-bold mb-3">
                                 <i class="bi bi-${this.getCategoryIcon(category)} me-2"></i>
                                 ${categoryNames[category]} (${categoryTemplates.length})
                             </h6>
-                            <div class="row">
+                            <div class="row g-3">
                     `;
 
                     categoryTemplates.forEach(template => {
@@ -1196,6 +1329,17 @@
                 document.querySelectorAll('.page-template-card:not(.required)').forEach(card => {
                     card.addEventListener('click', () => this.togglePageTemplate(card));
                 });
+
+                // Pre-footer toggle functionality
+                const enablePreFooterToggle = document.getElementById('enablePreFooter');
+                if (enablePreFooterToggle) {
+                    enablePreFooterToggle.addEventListener('change', () => {
+                        const preFooterContent = document.getElementById('preFooterContent');
+                        if (preFooterContent) {
+                            preFooterContent.style.display = enablePreFooterToggle.checked ? 'block' : 'none';
+                        }
+                    });
+                }
 
                 // Form validation
                 const form = document.getElementById('siteSetupForm');

@@ -35,6 +35,13 @@ body {
     color: var(--primary) !important;
 }
 
+/* Dropdown styling - let Bootstrap handle positioning */
+.dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+    border-radius: 0.5rem;
+}
+
 /* Progress Steps */
 .progress-steps {
     background: rgba(255, 255, 255, 0.1);
@@ -194,6 +201,28 @@ body {
 }
 
 /* Page Templates */
+.page-template-container {
+    width: 100%;
+    display: block;
+}
+
+.template-category {
+    width: 100% !important;
+    display: block !important;
+    clear: both;
+    margin-bottom: 2rem;
+    flex: none !important;
+}
+
+/* Ensure template categories never get forced into columns */
+.page-template-container .template-category,
+.page-template-grid .template-category {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    display: block !important;
+}
+
 .page-template-card {
     border: 2px solid var(--gray-200);
     border-radius: 0.75rem;
@@ -554,6 +583,23 @@ body {
     }
 }
 
+/* Admin Page Spacing */
+body.admin-page {
+    padding-top: 80px !important;
+}
+
+@media (max-width: 991.98px) {
+    body.admin-page {
+        padding-top: 70px !important;
+    }
+}
+
+/* Ensure admin containers don't overlap with fixed navbar */
+.admin-page .container-fluid,
+.admin-page .container {
+    padding-top: 0;
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .progress-steps .d-flex {
@@ -588,4 +634,15 @@ body {
     .product-browser .btn {
         width: 100%;
     }
+    
+    /* Admin navigation mobile adjustments */
+    body.admin-page {
+        padding-top: 65px !important;
+    }
 }
+
+/* Clean dropdown solution - minimal interference */
+.admin-page .dropdown-menu {
+    z-index: 1070; /* Above Bootstrap modals */
+}
+
