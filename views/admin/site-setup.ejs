@@ -747,140 +747,12 @@
                             </div>
 
                             <div class="page-template-grid" id="pageTemplates">
-                                <!-- Product Pages -->
-                                <div class="page-template-card required" data-template-id="products">
-                                    <div class="required-badge">Required</div>
-                                    <div class="template-icon">
-                                        <i class="bi bi-grid-3x3-gap"></i>
+                                <!-- Loading state while templates are being loaded dynamically -->
+                                <div class="col-12 text-center py-5" id="pageTemplatesLoading">
+                                    <div class="spinner-border text-primary mb-3" role="status">
+                                        <span class="visually-hidden">Loading page templates...</span>
                                     </div>
-                                    <div class="page-template-title">Product Pages</div>
-                                    <div class="page-template-description">Beautiful product galleries with detailed descriptions</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_products" 
-                                               name="selectedPages[]" value="products" checked disabled>
-                                    </div>
-                                </div>
-
-                                <!-- Home Page -->
-                                <div class="page-template-card required" data-template-id="home">
-                                    <div class="required-badge">Required</div>
-                                    <div class="template-icon">
-                                        <i class="bi bi-house-door"></i>
-                                    </div>
-                                    <div class="page-template-title">Homepage</div>
-                                    <div class="page-template-description">Welcome visitors with a stunning landing page</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_home" 
-                                               name="selectedPages[]" value="home" checked disabled>
-                                    </div>
-                                </div>
-
-                                <!-- About Page -->
-                                <div class="page-template-card" data-template-id="about">
-                                    <div class="template-icon">
-                                        <i class="bi bi-info-circle"></i>
-                                    </div>
-                                    <div class="page-template-title">About Us</div>
-                                    <div class="page-template-description">Tell your brand story and build trust</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_about" 
-                                               name="selectedPages[]" value="about">
-                                    </div>
-                                </div>
-
-                                <!-- Contact Page -->
-                                <div class="page-template-card" data-template-id="contact">
-                                    <div class="template-icon">
-                                        <i class="bi bi-envelope"></i>
-                                    </div>
-                                    <div class="page-template-title">Contact</div>
-                                    <div class="page-template-description">Make it easy for customers to reach you</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_contact" 
-                                               name="selectedPages[]" value="contact">
-                                    </div>
-                                </div>
-
-                                <!-- Blog -->
-                                <div class="page-template-card" data-template-id="blog">
-                                    <div class="template-icon">
-                                        <i class="bi bi-journal-text"></i>
-                                    </div>
-                                    <div class="page-template-title">Blog</div>
-                                    <div class="page-template-description">Share updates and engage your audience</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_blog" 
-                                               name="selectedPages[]" value="blog">
-                                    </div>
-                                </div>
-
-                                <!-- FAQ -->
-                                <div class="page-template-card" data-template-id="faq">
-                                    <div class="template-icon">
-                                        <i class="bi bi-question-circle"></i>
-                                    </div>
-                                    <div class="page-template-title">FAQ</div>
-                                    <div class="page-template-description">Answer common customer questions</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_faq" 
-                                               name="selectedPages[]" value="faq">
-                                    </div>
-                                </div>
-
-                                <!-- Terms & Conditions -->
-                                <div class="page-template-card" data-template-id="terms">
-                                    <div class="template-icon">
-                                        <i class="bi bi-file-text"></i>
-                                    </div>
-                                    <div class="page-template-title">Terms & Conditions</div>
-                                    <div class="page-localized-title" data-en="(Terms & Conditions)" data-sv="(Användarvillkor)"></div>
-                                    <div class="page-template-description">Legal protection for your business</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_terms" 
-                                               name="selectedPages[]" value="terms">
-                                    </div>
-                                </div>
-
-                                <!-- Privacy Policy -->
-                                <div class="page-template-card" data-template-id="privacy">
-                                    <div class="template-icon">
-                                        <i class="bi bi-shield-check"></i>
-                                    </div>
-                                    <div class="page-template-title">Privacy Policy</div>
-                                    <div class="page-localized-title" data-en="(Privacy Policy)" data-sv="(Integritetspolicy)"></div>
-                                    <div class="page-template-description">GDPR compliance and data protection</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_privacy" 
-                                               name="selectedPages[]" value="privacy">
-                                    </div>
-                                </div>
-
-                                <!-- Refund Policy -->
-                                <div class="page-template-card" data-template-id="refund">
-                                    <div class="template-icon">
-                                        <i class="bi bi-arrow-return-left"></i>
-                                    </div>
-                                    <div class="page-template-title">Refund Policy</div>
-                                    <div class="page-localized-title" data-en="(Refund Policy)" data-sv="(Returpolicy)"></div>
-                                    <div class="page-template-description">Clear refund and cancellation terms</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_refund" 
-                                               name="selectedPages[]" value="refund">
-                                    </div>
-                                </div>
-
-                                <!-- Delivery Policy -->
-                                <div class="page-template-card" data-template-id="delivery">
-                                    <div class="template-icon">
-                                        <i class="bi bi-truck"></i>
-                                    </div>
-                                    <div class="page-template-title">Delivery Policy</div>
-                                    <div class="page-localized-title" data-en="(Delivery Policy)" data-sv="(Leveranspolicy)"></div>
-                                    <div class="page-template-description">Shipping times and delivery information</div>
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" id="template_delivery" 
-                                               name="selectedPages[]" value="delivery">
-                                    </div>
+                                    <p class="text-muted">Loading available page templates...</p>
                                 </div>
                             </div>
                         </div>
@@ -1166,6 +1038,12 @@
                 const container = document.getElementById('pageTemplates');
                 if (!container) return;
 
+                // Hide loading state
+                const loadingElement = document.getElementById('pageTemplatesLoading');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+
                 // Group templates by category for organized display
                 const categories = ['core', 'business', 'content', 'support', 'legal'];
                 const categoryNames = {
@@ -1247,16 +1125,20 @@
                     { id: 'products', name: 'Products', required: true, description: 'Product catalog', icon: 'grid', category: 'core' },
                     { id: 'about', name: 'About Us', required: false, description: 'Company information', icon: 'info-circle', category: 'business' },
                     { id: 'contact', name: 'Contact', required: false, description: 'Contact information', icon: 'envelope', category: 'business' },
+                    { id: 'blog', name: 'Blog', required: false, description: 'News and updates', icon: 'journal-text', category: 'content' },
+                    { id: 'faq', name: 'FAQ', required: false, description: 'Frequently asked questions', icon: 'question-circle', category: 'support' },
                     { id: 'terms', name: 'Terms of Service', required: false, description: 'Legal terms', icon: 'file-text', category: 'legal' },
-                    { id: 'privacy', name: 'Privacy Policy', required: false, description: 'Privacy policy', icon: 'shield', category: 'legal' }
+                    { id: 'privacy', name: 'Privacy Policy', required: false, description: 'Privacy policy', icon: 'shield-check', category: 'legal' },
+                    { id: 'refund', name: 'Refund Policy', required: false, description: 'Return policy', icon: 'arrow-return-left', category: 'legal' },
+                    { id: 'delivery', name: 'Delivery Policy', required: false, description: 'Shipping policy', icon: 'truck', category: 'legal' }
                 ];
                 
                 const categorized = {
                     core: defaultTemplates.filter(t => t.category === 'core'),
                     business: defaultTemplates.filter(t => t.category === 'business'),
-                    legal: defaultTemplates.filter(t => t.category === 'legal'),
-                    content: [],
-                    support: []
+                    content: defaultTemplates.filter(t => t.category === 'content'),
+                    support: defaultTemplates.filter(t => t.category === 'support'),
+                    legal: defaultTemplates.filter(t => t.category === 'legal')
                 };
                 
                 this.renderPageTemplates(defaultTemplates, categorized);
