@@ -237,6 +237,9 @@
                                                             <li><a class="dropdown-item deployment-action" href="#" onclick="smartDeploy('<%= store.uuid %>')" data-store-uuid="<%= store.uuid %>">
                                                                 <i class="bi bi-rocket me-2"></i><span class="deploy-text">Deploy Changes</span>
                                                             </a></li>
+                                                            <li><a class="dropdown-item text-primary" href="#" onclick="forceDeployToVercel('<%= store.uuid %>')">
+                                                                <i class="bi bi-cloud-upload me-2"></i>Force Deploy to Vercel
+                                                            </a></li>
                                                             
                                                             <!-- DANGER ZONE -->
                                                             <li><hr class="dropdown-divider"></li>
@@ -787,6 +790,45 @@
             } catch (error) {
                 console.error(`${action} error:`, error);
                 alert(`${isDeployed ? 'Redeployment' : 'Deployment'} failed. Please try again.`);
+                loadDeploymentStatuses();
+            }
+        }
+        
+        // Force deploy to Vercel with full automation
+        async function forceDeployToVercel(uuid) {
+            if (!confirm('Force deploy this store to Vercel?\n\nThis will:\n• Regenerate all store files\n• Commit and push to GitHub\n• Trigger Vercel CLI deployment\n• Update live domain\n\nThis may take 2-5 minutes.')) {
+                return;
+            }
+            
+            // Show loading state
+            const button = event.target.closest('a');
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deploying to Vercel...';
+            button.style.pointerEvents = 'none';
+            
+            try {
+                const response = await fetch(`/api/stores/${uuid}/force-deploy`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`🚀 Store successfully deployed to Vercel!\n\n✅ ${data.message}\n🌐 Live at: https://${data.store.domain}\n\nNote: ${data.note}`);
+                    loadDeploymentStatuses();
+                } else {
+                    alert(`❌ Vercel deployment failed:\n\n${data.error}\n\nDetails: ${data.details || 'No additional details'}`);
+                }
+            } catch (error) {
+                console.error('Force deploy error:', error);
+                alert(`❌ Vercel deployment failed:\n\nNetwork error or server timeout.\nPlease check the server logs and try again.`);
+            } finally {
+                // Restore button
+                button.innerHTML = originalText;
+                button.style.pointerEvents = '';
                 loadDeploymentStatuses();
             }
         }

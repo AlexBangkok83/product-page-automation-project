@@ -188,6 +188,14 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
             });
           }
           
+          // Debug: Log form data to see what's being sent
+          console.log('📋 Form data for update:', {
+            selectedPages: req.body.selectedPages,
+            hasSelectedPages: !!req.body.selectedPages,
+            selectedPagesType: typeof req.body.selectedPages,
+            allFormKeys: Object.keys(req.body)
+          });
+          
           // Update store data
           const updateData = {
             name: req.body.brandName || req.body.storeName,
@@ -215,6 +223,23 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
           };
           
           await existingStore.update(updateData);
+          
+          // Auto-regenerate and deploy store files after update (same as API route)
+          console.log('🎯 Starting auto-regeneration and deployment...');
+          try {
+            console.log('📁 Calling regenerateStoreFiles...');
+            await existingStore.regenerateStoreFiles();
+            console.log(`🔄 Store files auto-regenerated for ${existingStore.name} after site-setup update`);
+            
+            console.log('🚀 Calling forceDeploy...');
+            // Trigger GitHub + Vercel deployment
+            await existingStore.forceDeploy();
+            console.log(`🚀 Store deployment triggered for ${existingStore.name} after site-setup update`);
+          } catch (regenError) {
+            console.error(`⚠️ Failed to auto-regenerate/deploy store files for ${existingStore.name}:`, regenError.message);
+            console.error('Full error:', regenError);
+            // Continue without failing the update - user can manually regenerate
+          }
           
           console.log('✅ Store updated successfully:', existingStore.name);
           

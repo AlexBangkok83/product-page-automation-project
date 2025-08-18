@@ -805,6 +805,45 @@ router.post('/stores/:uuid/deploy', async (req, res) => {
   }
 });
 
+// Force deploy to Vercel using DeploymentAutomation
+router.post('/stores/:uuid/force-deploy', async (req, res) => {
+  try {
+    const store = await Store.findByUuid(req.params.uuid);
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
+    }
+    
+    console.log(`🚀 Force deploying ${store.name} to Vercel...`);
+    
+    // Use the store's forceDeploy method which includes DeploymentAutomation
+    await store.forceDeploy();
+    
+    res.json({
+      success: true,
+      store: store.toJSON(),
+      message: 'Store force deployed to Vercel successfully',
+      note: 'Deployment includes Git commit, push, and Vercel CLI deployment'
+    });
+  } catch (error) {
+    console.error('Force deploy error:', error);
+    
+    // Update status to failed
+    try {
+      const store = await Store.findByUuid(req.params.uuid);
+      if (store) {
+        await store.update({ deployment_status: 'failed' });
+      }
+    } catch (updateError) {
+      console.error('Failed to update deployment status:', updateError);
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to force deploy store to Vercel',
+      details: error.message 
+    });
+  }
+});
+
 // === DOMAIN AND VALIDATION ENDPOINTS ===
 
 // Check domain availability
