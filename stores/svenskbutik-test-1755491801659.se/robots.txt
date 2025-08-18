@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://svenskbutik-test-1755491801659.se/sitemap.xml
