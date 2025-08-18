@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipia - Home</title>
-    <meta name="description" content="Visit our home page at Clipia">
+    <title>Clipia - Contact</title>
+    <meta name="description" content="Visit our contact page at Clipia">
     <link rel="icon" href="/favicon.ico">
     
     <style>
@@ -84,97 +84,128 @@
             transition: all 0.3s ease;
         }
         
-        .nav a:hover {
+        .nav a:hover,
+        .nav a.active {
             background: var(--secondary-color);
             color: var(--primary-color);
         }
         
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        /* Main Content */
+        .main {
             padding: var(--spacing-xl) 0;
-            text-align: center;
-            color: white;
         }
         
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-            font-weight: 700;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: var(--spacing-lg);
-            opacity: 0.9;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: var(--primary-color);
-            padding: 1rem 2rem;
-            border-radius: var(--border-radius);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: var(--box-shadow);
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: var(--spacing-xl) 0;
-            background: var(--secondary-color);
-        }
-        
-        .features h2 {
+        .page-title {
             text-align: center;
             margin-bottom: var(--spacing-lg);
+        }
+        
+        .page-title h1 {
             font-size: 2.5rem;
             color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
         }
         
-        .features-grid {
+        .page-title p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+        
+        .contact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--spacing-lg);
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
             margin-top: var(--spacing-lg);
         }
         
-        .feature-card {
+        .contact-form {
             background: white;
             padding: var(--spacing-lg);
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            text-align: center;
-            transition: transform 0.3s ease;
         }
         
-        .feature-card:hover {
-            transform: translateY(-5px);
+        .contact-info {
+            background: var(--secondary-color);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
         }
         
-        .feature-card h3 {
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .submit-button {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .submit-button:hover {
+            background: color-mix(in srgb, var(--primary-color) 85%, black);
+            transform: translateY(-2px);
+        }
+        
+        .contact-info h3 {
             color: var(--primary-color);
-            margin-bottom: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
             font-size: 1.3rem;
         }
         
-        .feature-card p {
+        .contact-info p {
             color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .contact-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
         }
         
         /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .hero h1 {
+            .page-title h1 {
                 font-size: 2rem;
             }
             
@@ -182,7 +213,7 @@
                 display: none;
             }
             
-            .features-grid {
+            .contact-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -198,45 +229,72 @@
                     <a href="/">Home</a>
                     <a href="/products">Products</a>
                     <a href="/about">About</a>
-                    <a href="/contact">Contact</a>
+                    <a href="/contact" class="active">Contact</a>
                 </nav>
             </div>
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
+    <!-- Main Content -->
+    <main class="main">
         <div class="container">
-            <h1>Clipia - Home</h1>
-            <p>Welcome to our home page</p>
-            <a href="/products" class="cta-button">Shop Now</a>
-        </div>
-    </section>
+            <div class="page-title">
+                <h1>Clipia - Contact</h1>
+                <p>Welcome to our contact page</p>
+            </div>
 
-    <!-- Features Section -->
-    <section class="features">
-        <div class="container">
-            <h2>Why Choose Clipia?</h2>
-            <div class="features-grid">
+            <div class="contact-grid">
+                <div class="contact-form">
+                    <form action="#" method="POST">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" id="subject" name="subject" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" required placeholder="Tell us how we can help you..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-button">Send Message</button>
+                    </form>
+                </div>
                 
-                    <div class="feature-card">
-                        <h3>Quality Products</h3>
-                        <p>Carefully curated selection of premium items</p>
-                    </div>
-                
-                    <div class="feature-card">
-                        <h3>Fast Shipping</h3>
-                        <p>Quick and reliable delivery worldwide</p>
-                    </div>
-                
-                    <div class="feature-card">
-                        <h3>Great Support</h3>
-                        <p>24/7 customer service and support</p>
-                    </div>
-                
+                <div class="contact-info">
+                    <h3>Get in Touch</h3>
+                    <p>We're here to help and answer any questions you might have. We look forward to hearing from you!</p>
+                    
+                    
+                        <p><strong>Email:</strong><br>
+                        <a href="mailto:cto@nextsite.io">cto@nextsite.io</a></p>
+                    
+                    
+                    
+                        <p><strong>Phone:</strong><br>
+                        <a href="tel:+66822188449">+66822188449</a></p>
+                    
+                    
+                    
+                        <p><strong>Address:</strong><br>
+                        ARTEMIS CONDO สุขุมวิท 77</p>
+                    
+                    
+                    <p><strong>Response Time:</strong><br>
+                    We typically respond within 24 hours</p>
+                </div>
             </div>
         </div>
-    </section>
+    </main>
 
     <!-- Professional E-commerce Footer System -->
 <footer class="site-footer">
@@ -250,47 +308,19 @@
                     <div class="feature-card">
                         
                         <div class="feature-image">
-                            <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400" alt="Quality Products" class="card-image">
+                            <img src="https://via.placeholder.com/400x300/007cba/ffffff?text=Fast+Shipping" alt="Fast Shipping" class="card-image">
                         </div>
                         
-                        <h3>Quality Products</h3>
+                        <h3>Fast Shipping</h3>
                         
-                        <p>Premium quality items carefully selected for you</p>
+                        <p>Free delivery on orders over 50 EUR</p>
                         
                     </div>
                 </div>
                 
                 
                 
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        
-                        <div class="feature-image">
-                            <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400" alt="Fast Delivery" class="card-image">
-                        </div>
-                        
-                        <h3>Fast Delivery</h3>
-                        
-                        <p>Quick and reliable shipping across Germany</p>
-                        
-                    </div>
-                </div>
                 
-                
-                
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        
-                        <div class="feature-image">
-                            <img src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400" alt="Customer Support" class="card-image">
-                        </div>
-                        
-                        <h3>Customer Support</h3>
-                        
-                        <p>Dedicated support team ready to help</p>
-                        
-                    </div>
-                </div>
                 
             </div>
         </div>
@@ -321,7 +351,6 @@
                             <li><a href="/integritetspolicy">Integritetspolicy</a></li>
                             <li><a href="/returpolicy">Returpolicy</a></li>
                             <li><a href="/anvandarvillkor">Användarvillkor</a></li>
-                            <li><a href="/faq">Clipia - Faq</a></li>
                         </ul>
                     </div>
                 </div>
@@ -331,6 +360,9 @@
                         <ul class="footer-nav">
                             <li><a href="/">Clipia - Home</a></li>
                             <li><a href="/products">Clipia - Products</a></li>
+                            <li><a href="/about">Clipia - About</a></li>
+                            <li><a href="/contact">Clipia - Contact</a></li>
+                            <li><a href="/blog">Clipia - Blog</a></li>
                         </ul>
                     </div>
                 </div>
