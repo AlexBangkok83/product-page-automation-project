@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipia - Home</title>
-    <meta name="description" content="Visit our home page at Clipia">
+    <title>Clipia - Delivery</title>
+    <meta name="description" content="Visit our delivery page at Clipia">
     <link rel="icon" href="/favicon.ico">
     
     <style>
@@ -89,85 +89,40 @@
             color: var(--primary-color);
         }
         
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        /* Main Content */
+        .main {
             padding: var(--spacing-xl) 0;
-            text-align: center;
-            color: white;
         }
         
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-            font-weight: 700;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: var(--spacing-lg);
-            opacity: 0.9;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: var(--primary-color);
-            padding: 1rem 2rem;
-            border-radius: var(--border-radius);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: var(--box-shadow);
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: var(--spacing-xl) 0;
-            background: var(--secondary-color);
-        }
-        
-        .features h2 {
+        .page-title {
             text-align: center;
             margin-bottom: var(--spacing-lg);
+        }
+        
+        .page-title h1 {
             font-size: 2.5rem;
             color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
         }
         
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--spacing-lg);
-            margin-top: var(--spacing-lg);
+        .page-title p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
         }
         
-        .feature-card {
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
             background: white;
             padding: var(--spacing-lg);
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            text-align: center;
-            transition: transform 0.3s ease;
         }
         
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .feature-card h3 {
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-sm);
-            font-size: 1.3rem;
-        }
-        
-        .feature-card p {
+        .content p {
             color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+            font-size: 1.1rem;
         }
         
         /* Footer */
@@ -189,16 +144,12 @@
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .hero h1 {
+            .page-title h1 {
                 font-size: 2rem;
             }
             
             .nav {
                 display: none;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -219,39 +170,21 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
+    <!-- Main Content -->
+    <main class="main">
         <div class="container">
-            <h1>Clipia - Home</h1>
-            <p>Welcome to our home page</p>
-            <a href="/products" class="cta-button">Shop Now</a>
-        </div>
-    </section>
+            <div class="page-title">
+                <h1>Clipia - Delivery</h1>
+                <p>Welcome to our delivery page</p>
+            </div>
 
-    <!-- Features Section -->
-    <section class="features">
-        <div class="container">
-            <h2>Why Choose Clipia?</h2>
-            <div class="features-grid">
+            <div class="content">
                 
-                    <div class="feature-card">
-                        <h3>Quality Products</h3>
-                        <p>Carefully curated selection of premium items</p>
-                    </div>
-                
-                    <div class="feature-card">
-                        <h3>Fast Shipping</h3>
-                        <p>Quick and reliable delivery worldwide</p>
-                    </div>
-                
-                    <div class="feature-card">
-                        <h3>Great Support</h3>
-                        <p>24/7 customer service and support</p>
-                    </div>
+                    <p>Welcome to the delivery page of Clipia. This page is being built automatically.</p>
                 
             </div>
         </div>
-    </section>
+    </main>
 
     <!-- Footer -->
     <footer class="footer">

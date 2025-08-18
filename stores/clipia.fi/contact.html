@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipia - Products</title>
-    <meta name="description" content="Visit our products page at Clipia">
+    <title>Clipia - Contact</title>
+    <meta name="description" content="Visit our contact page at Clipia">
     <link rel="icon" href="/favicon.ico">
     
     <style>
@@ -111,75 +111,94 @@
             color: var(--text-secondary);
         }
         
-        /* Products Grid */
-        .products-grid {
+        .contact-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: var(--spacing-lg);
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
         }
         
-        .product-card {
+        .contact-form {
             background: white;
+            padding: var(--spacing-lg);
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            overflow: hidden;
-            transition: transform 0.3s ease;
         }
         
-        .product-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .product-image {
-            width: 100%;
-            height: 250px;
+        .contact-info {
             background: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
         }
         
-        .product-info {
-            padding: var(--spacing-md);
+        .form-group {
+            margin-bottom: var(--spacing-md);
         }
         
-        .product-title {
-            font-size: 1.2rem;
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
             font-weight: 600;
-            margin-bottom: var(--spacing-sm);
             color: var(--text-primary);
         }
         
-        .product-description {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-sm);
-            font-size: 0.9rem;
-        }
-        
-        .product-price {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        /* Coming Soon Message */
-        .coming-soon {
-            text-align: center;
-            padding: var(--spacing-xl);
-            background: var(--secondary-color);
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
             border-radius: var(--border-radius);
-            margin: var(--spacing-lg) 0;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
         }
         
-        .coming-soon h2 {
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .submit-button {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .submit-button:hover {
+            background: color-mix(in srgb, var(--primary-color) 85%, black);
+            transform: translateY(-2px);
+        }
+        
+        .contact-info h3 {
             color: var(--primary-color);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.3rem;
+        }
+        
+        .contact-info p {
+            color: var(--text-secondary);
             margin-bottom: var(--spacing-sm);
         }
         
-        .coming-soon p {
-            color: var(--text-secondary);
+        .contact-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
         }
         
         /* Footer */
@@ -209,8 +228,8 @@
                 display: none;
             }
             
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            .contact-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -223,9 +242,9 @@
                 <a href="/" class="logo">Clipia</a>
                 <nav class="nav">
                     <a href="/">Home</a>
-                    <a href="/products" class="active">Products</a>
+                    <a href="/products">Products</a>
                     <a href="/about">About</a>
-                    <a href="/contact">Contact</a>
+                    <a href="/contact" class="active">Contact</a>
                 </nav>
             </div>
         </div>
@@ -235,17 +254,51 @@
     <main class="main">
         <div class="container">
             <div class="page-title">
-                <h1>Clipia - Products</h1>
-                <p>Welcome to our products page</p>
+                <h1>Clipia - Contact</h1>
+                <p>Welcome to our contact page</p>
             </div>
 
-            
-                <div class="coming-soon">
-                    <h2>Products Loading</h2>
-                    <p>Our products are being synced from Shopify. They will appear here soon!</p>
-                    <p><strong>Store:</strong> ecominter.myshopify.com</p>
+            <div class="contact-grid">
+                <div class="contact-form">
+                    <form action="#" method="POST">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" id="subject" name="subject" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" required placeholder="Tell us how we can help you..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-button">Send Message</button>
+                    </form>
                 </div>
-            
+                
+                <div class="contact-info">
+                    <h3>Get in Touch</h3>
+                    <p>We're here to help and answer any questions you might have. We look forward to hearing from you!</p>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <p><strong>Response Time:</strong><br>
+                    We typically respond within 24 hours</p>
+                </div>
+            </div>
         </div>
     </main>
 
