@@ -233,6 +233,61 @@
             margin-bottom: 2rem;
         }
 
+        /* Form Validation Styles */
+        .required-indicator {
+            color: #dc3545;
+            font-weight: bold;
+            margin-left: 2px;
+        }
+        
+        .required-text {
+            color: #6c757d;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .field-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .form-floating.has-error .form-control {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .form-floating.has-error label {
+            color: #dc3545;
+        }
+        
+        .form-floating.has-success .form-control {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+        
+        .form-floating.has-success label {
+            color: #198754;
+        }
+        
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            font-size: 1.2rem;
+        }
+        
+        .validation-icon.success {
+            color: #198754;
+        }
+        
+        .validation-icon.error {
+            color: #dc3545;
+        }
+
         .store-info-card {
             background: linear-gradient(135deg, rgba(25, 135, 84, 0.1) 0%, rgba(34, 197, 94, 0.1) 100%);
             border-left: 4px solid var(--success-color);
@@ -369,10 +424,12 @@
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" class="form-control form-control-lg" id="siteUrl" name="domain" 
-                                               placeholder="https://mystore.com" data-required="true">
+                                               placeholder="https://mystore.com" data-required="true" required>
                                         <label for="siteUrl">
-                                            <i class="bi bi-globe me-2"></i>Website URL
+                                            <i class="bi bi-globe me-2"></i>Website URL<span class="required-indicator">*</span>
                                         </label>
+                                        <div class="required-text">Required</div>
+                                        <div class="field-error" id="siteUrl-error"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -380,8 +437,10 @@
                                         <input type="text" class="form-control form-control-lg" id="storeName" name="storeName" 
                                                placeholder="My Awesome Store" required>
                                         <label for="storeName">
-                                            <i class="bi bi-shop me-2"></i>Brand Name
+                                            <i class="bi bi-shop me-2"></i>Brand Name<span class="required-indicator">*</span>
                                         </label>
+                                        <div class="required-text">Required</div>
+                                        <div class="field-error" id="storeName-error"></div>
                                     </div>
                                 </div>
                             </div>
@@ -422,8 +481,10 @@
                                             <option value="NZ">New Zealand</option>
                                         </select>
                                         <label for="country">
-                                            <i class="bi bi-flag me-2"></i>Country
+                                            <i class="bi bi-flag me-2"></i>Country<span class="required-indicator">*</span>
                                         </label>
+                                        <div class="required-text">Required</div>
+                                        <div class="field-error" id="country-error"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -439,8 +500,10 @@
                                             <option value="NZD">NZD - New Zealand Dollar</option>
                                         </select>
                                         <label for="currency">
-                                            <i class="bi bi-currency-dollar me-2"></i>Currency
+                                            <i class="bi bi-currency-dollar me-2"></i>Currency<span class="required-indicator">*</span>
                                         </label>
+                                        <div class="required-text">Required</div>
+                                        <div class="field-error" id="currency-error"></div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -455,8 +518,10 @@
                                             <option value="es">Spanish</option>
                                         </select>
                                         <label for="language">
-                                            <i class="bi bi-translate me-2"></i>Language
+                                            <i class="bi bi-translate me-2"></i>Language<span class="required-indicator">*</span>
                                         </label>
+                                        <div class="required-text">Required</div>
+                                        <div class="field-error" id="language-error"></div>
                                     </div>
                                 </div>
                             </div>
@@ -988,10 +1053,11 @@
                     form.addEventListener('submit', (e) => this.handleFormSubmit(e));
                 }
 
-                // Input validation
+                // Input validation with real-time feedback
                 document.querySelectorAll('input[required], select[required]').forEach(input => {
-                    input.addEventListener('blur', () => this.validateField(input));
-                    input.addEventListener('input', () => this.clearValidation(input));
+                    input.addEventListener('blur', () => this.validateFieldWithFeedback(input));
+                    input.addEventListener('input', () => this.clearValidationFeedback(input));
+                    input.addEventListener('focus', () => this.clearValidationFeedback(input));
                 });
             }
 
@@ -1310,8 +1376,89 @@
                 return isValid;
             }
 
+            validateFieldWithFeedback(field) {
+                const isValid = field.checkValidity();
+                const fieldContainer = field.closest('.form-floating');
+                const errorDiv = fieldContainer.querySelector('.field-error');
+                
+                // Remove existing validation classes and icons
+                fieldContainer.classList.remove('has-error', 'has-success');
+                const existingIcon = fieldContainer.querySelector('.validation-icon');
+                if (existingIcon) {
+                    existingIcon.remove();
+                }
+                
+                if (!isValid && field.value.trim() !== '') {
+                    // Show error state
+                    fieldContainer.classList.add('has-error');
+                    
+                    // Add error icon
+                    const errorIcon = document.createElement('i');
+                    errorIcon.className = 'bi bi-x-circle validation-icon error';
+                    fieldContainer.appendChild(errorIcon);
+                    
+                    // Show error message
+                    if (errorDiv) {
+                        let errorMessage = 'This field is required';
+                        
+                        if (field.type === 'email' && field.value.trim() !== '') {
+                            errorMessage = 'Please enter a valid email address';
+                        } else if (field.type === 'url' && field.value.trim() !== '') {
+                            errorMessage = 'Please enter a valid URL';
+                        } else if (field.id === 'storeName' && field.value.trim() === '') {
+                            errorMessage = 'Brand name is required';
+                        } else if (field.id === 'siteUrl' && field.value.trim() === '') {
+                            errorMessage = 'Website URL is required';
+                        }
+                        
+                        errorDiv.textContent = errorMessage;
+                        errorDiv.style.display = 'block';
+                    }
+                    
+                } else if (isValid && field.value.trim() !== '') {
+                    // Show success state
+                    fieldContainer.classList.add('has-success');
+                    
+                    // Add success icon
+                    const successIcon = document.createElement('i');
+                    successIcon.className = 'bi bi-check-circle validation-icon success';
+                    fieldContainer.appendChild(successIcon);
+                    
+                    // Hide error message
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                    }
+                } else {
+                    // Neutral state (empty field)
+                    if (errorDiv) {
+                        errorDiv.style.display = 'none';
+                    }
+                }
+                
+                return isValid;
+            }
+
             clearValidation(field) {
                 field.classList.remove('is-invalid', 'is-valid');
+            }
+            
+            clearValidationFeedback(field) {
+                const fieldContainer = field.closest('.form-floating');
+                const errorDiv = fieldContainer.querySelector('.field-error');
+                const existingIcon = fieldContainer.querySelector('.validation-icon');
+                
+                // Remove validation classes
+                fieldContainer.classList.remove('has-error', 'has-success');
+                
+                // Remove validation icon
+                if (existingIcon) {
+                    existingIcon.remove();
+                }
+                
+                // Hide error message
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
             }
 
             validateStep(stepNumber) {
@@ -1320,7 +1467,7 @@
                 let isValid = true;
 
                 requiredFields.forEach(field => {
-                    if (!this.validateField(field)) {
+                    if (!this.validateFieldWithFeedback(field)) {
                         isValid = false;
                     }
                 });
