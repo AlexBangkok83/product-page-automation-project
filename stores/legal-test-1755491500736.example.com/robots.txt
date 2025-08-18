@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://legal-test-1755491500736.example.com/sitemap.xml
