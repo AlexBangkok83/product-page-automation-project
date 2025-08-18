@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="/css/style.css">
     <style>
         .site-setup-container {
-            min-height: 100vh;
+            min-height: calc(100vh - 80px);
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 2rem 0;
         }
@@ -130,8 +130,8 @@
         
         .page-template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
             margin: 2rem 0;
         }
         
@@ -174,6 +174,34 @@
         
         .page-template-card.required .template-icon {
             color: var(--success-color);
+        }
+        
+        .page-template-card.has-content {
+            border-color: #28a745;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(40, 167, 69, 0.1) 100%);
+        }
+        
+        .page-template-card.has-content:hover {
+            border-color: #1e7e34;
+            box-shadow: 0 1rem 2rem rgba(40, 167, 69, 0.15);
+        }
+        
+        .template-category {
+            margin-bottom: 2rem;
+        }
+        
+        .template-category h6 {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 0.5rem;
+            color: #495057;
+        }
+        
+        .page-localized-title {
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 0.25rem;
+            margin-bottom: 0.5rem;
         }
         
         .global-settings-grid {
@@ -348,14 +376,21 @@
         }
     </style>
 </head>
-<body>
+<body class="admin-page">
+    <%- include('../partials/admin-nav', { currentPage: 'site-setup' }) %>
+    
     <div class="site-setup-container">
         <div class="container">
             <div class="card setup-card">
                 <!-- Header -->
                 <div class="setup-header">
-                    <h1><i class="bi bi-rocket-takeoff me-3"></i>Create Your Store</h1>
-                    <p>Launch your e-commerce empire in just a few simple steps</p>
+                    <% if (typeof isEditMode !== 'undefined' && isEditMode && typeof store !== 'undefined' && store) { %>
+                        <h1><i class="bi bi-pencil-square me-3"></i>Edit Store Settings</h1>
+                        <p>Update your store configuration and settings</p>
+                    <% } else { %>
+                        <h1><i class="bi bi-rocket-takeoff me-3"></i>Create Your Store</h1>
+                        <p>Launch your e-commerce empire in just a few simple steps</p>
+                    <% } %>
                 </div>
 
                 <!-- Progress Indicator -->
@@ -405,8 +440,13 @@
                 <!-- Form Content -->
                 <div class="form-section">
                     <form id="siteSetupForm" method="POST" action="/admin/site-setup">
-                        <input type="hidden" name="step" value="create-store">
-                        <input type="hidden" name="storeId" value="<%= storeId || '' %>">
+                        <% if (typeof isEditMode !== 'undefined' && isEditMode) { %>
+                            <input type="hidden" name="step" value="update-store">
+                            <input type="hidden" name="storeId" value="<%= store.uuid %>">
+                        <% } else { %>
+                            <input type="hidden" name="step" value="create-store">
+                            <input type="hidden" name="storeId" value="<%= storeId || '' %>">
+                        <% } %>
 
                         <!-- Step 1: Basic Information -->
                         <div class="form-step active" id="step1">
@@ -424,7 +464,8 @@
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" class="form-control form-control-lg" id="siteUrl" name="domain" 
-                                               placeholder="https://mystore.com" data-required="true" required>
+                                               placeholder="https://mystore.com" data-required="true" required
+                                               value="<%= (typeof store !== 'undefined' && store) ? store.domain : (siteUrl || '') %>">
                                         <label for="siteUrl">
                                             <i class="bi bi-globe me-2"></i>Website URL<span class="required-indicator">*</span>
                                         </label>
@@ -435,7 +476,8 @@
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" class="form-control form-control-lg" id="storeName" name="storeName" 
-                                               placeholder="My Awesome Store" required>
+                                               placeholder="My Awesome Store" required
+                                               value="<%= (typeof store !== 'undefined' && store) ? store.name : (brandName || '') %>">
                                         <label for="storeName">
                                             <i class="bi bi-shop me-2"></i>Brand Name<span class="required-indicator">*</span>
                                         </label>
@@ -470,15 +512,15 @@
                                     <div class="form-floating">
                                         <select class="form-select form-control-lg" id="country" name="country" required>
                                             <option value="">Select Country</option>
-                                            <option value="US">United States</option>
-                                            <option value="CA">Canada</option>
-                                            <option value="GB">United Kingdom</option>
-                                            <option value="DE">Germany</option>
-                                            <option value="FR">France</option>
-                                            <option value="SE">Sweden</option>
-                                            <option value="FI">Finland</option>
-                                            <option value="AU">Australia</option>
-                                            <option value="NZ">New Zealand</option>
+                                            <option value="US" <%= (typeof store !== 'undefined' && store && store.country === 'US') ? 'selected' : '' %>>United States</option>
+                                            <option value="CA" <%= (typeof store !== 'undefined' && store && store.country === 'CA') ? 'selected' : '' %>>Canada</option>
+                                            <option value="GB" <%= (typeof store !== 'undefined' && store && store.country === 'GB') ? 'selected' : '' %>>United Kingdom</option>
+                                            <option value="DE" <%= (typeof store !== 'undefined' && store && store.country === 'DE') ? 'selected' : '' %>>Germany</option>
+                                            <option value="FR" <%= (typeof store !== 'undefined' && store && store.country === 'FR') ? 'selected' : '' %>>France</option>
+                                            <option value="SE" <%= (typeof store !== 'undefined' && store && store.country === 'SE') ? 'selected' : '' %>>Sweden</option>
+                                            <option value="FI" <%= (typeof store !== 'undefined' && store && store.country === 'FI') ? 'selected' : '' %>>Finland</option>
+                                            <option value="AU" <%= (typeof store !== 'undefined' && store && store.country === 'AU') ? 'selected' : '' %>>Australia</option>
+                                            <option value="NZ" <%= (typeof store !== 'undefined' && store && store.country === 'NZ') ? 'selected' : '' %>>New Zealand</option>
                                         </select>
                                         <label for="country">
                                             <i class="bi bi-flag me-2"></i>Country<span class="required-indicator">*</span>
@@ -491,13 +533,13 @@
                                     <div class="form-floating">
                                         <select class="form-select form-control-lg" id="currency" name="currency" required>
                                             <option value="">Select Currency</option>
-                                            <option value="USD">USD - US Dollar</option>
-                                            <option value="CAD">CAD - Canadian Dollar</option>
-                                            <option value="GBP">GBP - British Pound</option>
-                                            <option value="EUR">EUR - Euro</option>
-                                            <option value="SEK">SEK - Swedish Krona</option>
-                                            <option value="AUD">AUD - Australian Dollar</option>
-                                            <option value="NZD">NZD - New Zealand Dollar</option>
+                                            <option value="USD" <%= (typeof store !== 'undefined' && store && store.currency === 'USD') ? 'selected' : '' %>>USD - US Dollar</option>
+                                            <option value="CAD" <%= (typeof store !== 'undefined' && store && store.currency === 'CAD') ? 'selected' : '' %>>CAD - Canadian Dollar</option>
+                                            <option value="GBP" <%= (typeof store !== 'undefined' && store && store.currency === 'GBP') ? 'selected' : '' %>>GBP - British Pound</option>
+                                            <option value="EUR" <%= (typeof store !== 'undefined' && store && store.currency === 'EUR') ? 'selected' : '' %>>EUR - Euro</option>
+                                            <option value="SEK" <%= (typeof store !== 'undefined' && store && store.currency === 'SEK') ? 'selected' : '' %>>SEK - Swedish Krona</option>
+                                            <option value="AUD" <%= (typeof store !== 'undefined' && store && store.currency === 'AUD') ? 'selected' : '' %>>AUD - Australian Dollar</option>
+                                            <option value="NZD" <%= (typeof store !== 'undefined' && store && store.currency === 'NZD') ? 'selected' : '' %>>NZD - New Zealand Dollar</option>
                                         </select>
                                         <label for="currency">
                                             <i class="bi bi-currency-dollar me-2"></i>Currency<span class="required-indicator">*</span>
@@ -510,12 +552,12 @@
                                     <div class="form-floating">
                                         <select class="form-select form-control-lg" id="language" name="language" required>
                                             <option value="">Select Language</option>
-                                            <option value="en">English</option>
-                                            <option value="fr">French</option>
-                                            <option value="de">German</option>
-                                            <option value="sv">Swedish</option>
-                                            <option value="fi">Finnish</option>
-                                            <option value="es">Spanish</option>
+                                            <option value="en" <%= (typeof store !== 'undefined' && store && store.language === 'en') ? 'selected' : '' %>>English</option>
+                                            <option value="fr" <%= (typeof store !== 'undefined' && store && store.language === 'fr') ? 'selected' : '' %>>French</option>
+                                            <option value="de" <%= (typeof store !== 'undefined' && store && store.language === 'de') ? 'selected' : '' %>>German</option>
+                                            <option value="sv" <%= (typeof store !== 'undefined' && store && store.language === 'sv') ? 'selected' : '' %>>Swedish</option>
+                                            <option value="fi" <%= (typeof store !== 'undefined' && store && store.language === 'fi') ? 'selected' : '' %>>Finnish</option>
+                                            <option value="es" <%= (typeof store !== 'undefined' && store && store.language === 'es') ? 'selected' : '' %>>Spanish</option>
                                         </select>
                                         <label for="language">
                                             <i class="bi bi-translate me-2"></i>Language<span class="required-indicator">*</span>
@@ -530,7 +572,8 @@
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <input type="text" class="form-control" id="metaTitle" name="metaTitle" 
-                                               placeholder="SEO title for your store" maxlength="60">
+                                               placeholder="SEO title for your store" maxlength="60"
+                                               value="<%= (typeof store !== 'undefined' && store) ? (store.meta_title || '') : '' %>">
                                         <label for="metaTitle">
                                             <i class="bi bi-search me-2"></i>SEO Title (Optional)
                                         </label>
@@ -540,7 +583,7 @@
                                 <div class="col-md-6">
                                     <div class="form-floating">
                                         <textarea class="form-control" id="metaDescription" name="metaDescription" 
-                                                  placeholder="Brief description of your store" maxlength="160" style="height: 100px;"></textarea>
+                                                  placeholder="Brief description of your store" maxlength="160" style="height: 100px;"><%= (typeof store !== 'undefined' && store) ? (store.meta_description || '') : '' %></textarea>
                                         <label for="metaDescription">
                                             <i class="bi bi-card-text me-2"></i>SEO Description (Optional)
                                         </label>
@@ -629,7 +672,8 @@
                                     <div class="col-md-6">
                                         <div class="form-floating">
                                             <input type="text" class="form-control form-control-lg" id="shopifyDomain" name="shopifyDomain" 
-                                                   placeholder="mystore.myshopify.com" value="ecominter.myshopify.com">
+                                                   placeholder="mystore.myshopify.com" 
+                                                   value="<%= (typeof store !== 'undefined' && store && store.shopify_domain) ? store.shopify_domain : 'ecominter.myshopify.com' %>">
                                             <label for="shopifyDomain">
                                                 <i class="bi bi-shop me-2"></i>Shopify Domain
                                             </label>
@@ -639,11 +683,15 @@
                                     <div class="col-md-6">
                                         <div class="form-floating">
                                             <input type="password" class="form-control form-control-lg" id="shopifyToken" name="shopifyToken" 
-                                                   placeholder="shpat_xxxxxxxxxxxxx" value="fake-token-for-testing">
+                                                   placeholder="shpat_xxxxxxxxxxxxx" 
+                                                   value="<%= (typeof store !== 'undefined' && store && store.shopify_access_token) ? '••••••••••••••••' : 'fake-token-for-testing' %>">
                                             <label for="shopifyToken">
                                                 <i class="bi bi-key me-2"></i>Access Token
                                             </label>
                                             <div class="form-text">Create a private app in your Shopify admin to get this token</div>
+                                            <% if (typeof store !== 'undefined' && store && store.shopify_access_token) { %>
+                                                <small class="text-muted">Current token is hidden for security. Enter new token to change.</small>
+                                            <% } %>
                                         </div>
                                     </div>
                                 </div>
@@ -785,6 +833,7 @@
                                         <i class="bi bi-file-text"></i>
                                     </div>
                                     <div class="page-template-title">Terms & Conditions</div>
+                                    <div class="page-localized-title" data-en="(Terms & Conditions)" data-sv="(Användarvillkor)"></div>
                                     <div class="page-template-description">Legal protection for your business</div>
                                     <div class="form-check mt-3">
                                         <input class="form-check-input" type="checkbox" id="template_terms" 
@@ -798,10 +847,39 @@
                                         <i class="bi bi-shield-check"></i>
                                     </div>
                                     <div class="page-template-title">Privacy Policy</div>
+                                    <div class="page-localized-title" data-en="(Privacy Policy)" data-sv="(Integritetspolicy)"></div>
                                     <div class="page-template-description">GDPR compliance and data protection</div>
                                     <div class="form-check mt-3">
                                         <input class="form-check-input" type="checkbox" id="template_privacy" 
                                                name="selectedPages[]" value="privacy">
+                                    </div>
+                                </div>
+
+                                <!-- Refund Policy -->
+                                <div class="page-template-card" data-template-id="refund">
+                                    <div class="template-icon">
+                                        <i class="bi bi-arrow-return-left"></i>
+                                    </div>
+                                    <div class="page-template-title">Refund Policy</div>
+                                    <div class="page-localized-title" data-en="(Refund Policy)" data-sv="(Returpolicy)"></div>
+                                    <div class="page-template-description">Clear refund and cancellation terms</div>
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" id="template_refund" 
+                                               name="selectedPages[]" value="refund">
+                                    </div>
+                                </div>
+
+                                <!-- Delivery Policy -->
+                                <div class="page-template-card" data-template-id="delivery">
+                                    <div class="template-icon">
+                                        <i class="bi bi-truck"></i>
+                                    </div>
+                                    <div class="page-template-title">Delivery Policy</div>
+                                    <div class="page-localized-title" data-en="(Delivery Policy)" data-sv="(Leveranspolicy)"></div>
+                                    <div class="page-template-description">Shipping times and delivery information</div>
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" id="template_delivery" 
+                                               name="selectedPages[]" value="delivery">
                                     </div>
                                 </div>
                             </div>
@@ -825,12 +903,13 @@
                                     <h5><i class="bi bi-truck me-2"></i>Shipping Information</h5>
                                     <div class="form-floating mb-3">
                                         <textarea class="form-control" id="shippingInfo" name="shippingInfo" 
-                                                  placeholder="Free shipping on orders over $50..." style="height: 100px;"></textarea>
+                                                  placeholder="Free shipping on orders over $50..." style="height: 100px;"><%= (typeof store !== 'undefined' && store) ? (store.shipping_info || '') : '' %></textarea>
                                         <label for="shippingInfo">Shipping Policy</label>
                                     </div>
                                     <div class="form-floating">
                                         <input type="text" class="form-control" id="shippingTime" name="shippingTime" 
-                                               placeholder="3-5 business days">
+                                               placeholder="3-5 business days"
+                                               value="<%= (typeof store !== 'undefined' && store) ? (store.shipping_time || '') : '' %>">
                                         <label for="shippingTime">Delivery Time</label>
                                     </div>
                                 </div>
@@ -840,12 +919,13 @@
                                     <h5><i class="bi bi-arrow-return-left me-2"></i>Return Policy</h5>
                                     <div class="form-floating mb-3">
                                         <textarea class="form-control" id="returnPolicy" name="returnPolicy" 
-                                                  placeholder="30-day hassle-free returns..." style="height: 100px;"></textarea>
+                                                  placeholder="30-day hassle-free returns..." style="height: 100px;"><%= (typeof store !== 'undefined' && store) ? (store.return_policy || '') : '' %></textarea>
                                         <label for="returnPolicy">Return Policy</label>
                                     </div>
                                     <div class="form-floating">
                                         <input type="text" class="form-control" id="returnPeriod" name="returnPeriod" 
-                                               placeholder="30 days">
+                                               placeholder="30 days"
+                                               value="<%= (typeof store !== 'undefined' && store) ? (store.return_period || '') : '' %>">
                                         <label for="returnPeriod">Return Period</label>
                                     </div>
                                 </div>
@@ -855,12 +935,14 @@
                                     <h5><i class="bi bi-headset me-2"></i>Customer Support</h5>
                                     <div class="form-floating mb-3">
                                         <input type="email" class="form-control" id="supportEmail" name="supportEmail" 
-                                               placeholder="support@mystore.com">
+                                               placeholder="support@mystore.com"
+                                               value="<%= (typeof store !== 'undefined' && store) ? (store.support_email || '') : '' %>">
                                         <label for="supportEmail">Support Email</label>
                                     </div>
                                     <div class="form-floating">
                                         <input type="tel" class="form-control" id="supportPhone" name="supportPhone" 
-                                               placeholder="+1 (555) 123-4567">
+                                               placeholder="+1 (555) 123-4567"
+                                               value="<%= (typeof store !== 'undefined' && store) ? (store.support_phone || '') : '' %>">
                                         <label for="supportPhone">Support Phone</label>
                                     </div>
                                 </div>
@@ -869,20 +951,23 @@
                                 <div class="settings-section">
                                     <h5><i class="bi bi-shield-check me-2"></i>Legal Compliance</h5>
                                     <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="gdprCompliant" name="gdprCompliant">
+                                        <input class="form-check-input" type="checkbox" id="gdprCompliant" name="gdprCompliant"
+                                               <%= (typeof store !== 'undefined' && store && store.gdpr_compliant) ? 'checked' : '' %>>
                                         <label class="form-check-label" for="gdprCompliant">
                                             Enable GDPR compliance features
                                         </label>
                                     </div>
                                     <div class="form-check mb-3">
-                                        <input class="form-check-input" type="checkbox" id="cookieConsent" name="cookieConsent">
+                                        <input class="form-check-input" type="checkbox" id="cookieConsent" name="cookieConsent"
+                                               <%= (typeof store !== 'undefined' && store && store.cookie_consent) ? 'checked' : '' %>>
                                         <label class="form-check-label" for="cookieConsent">
                                             Show cookie consent banner
                                         </label>
                                     </div>
                                     <div class="form-floating">
                                         <input type="text" class="form-control" id="businessAddress" name="businessAddress" 
-                                               placeholder="123 Business St, City, Country">
+                                               placeholder="123 Business St, City, Country"
+                                               value="<%= (typeof store !== 'undefined' && store) ? (store.business_address || '') : '' %>">
                                         <label for="businessAddress">Business Address</label>
                                     </div>
                                 </div>
@@ -896,7 +981,9 @@
                                     <i class="bi bi-check-circle-fill"></i>
                                 </div>
                                 <h2 class="mb-4">
-                                    <% if (typeof store !== 'undefined' && store) { %>
+                                    <% if (typeof isEditMode !== 'undefined' && isEditMode && typeof store !== 'undefined' && store) { %>
+                                        Store Updated Successfully!
+                                    <% } else if (typeof store !== 'undefined' && store) { %>
                                         Store Created Successfully!
                                     <% } else { %>
                                         Congratulations!
@@ -904,7 +991,11 @@
                                 </h2>
                                 
                                 <% if (typeof store !== 'undefined' && store) { %>
-                                    <p class="lead mb-4">Your store "<%= store.name %>" has been created and is ready to launch!</p>
+                                    <% if (typeof isEditMode !== 'undefined' && isEditMode) { %>
+                                        <p class="lead mb-4">Your store "<%= store.name %>" has been updated successfully!</p>
+                                    <% } else { %>
+                                        <p class="lead mb-4">Your store "<%= store.name %>" has been created and is ready to launch!</p>
+                                    <% } %>
                                     
                                     <div class="store-info-card">
                                         <h5><i class="bi bi-info-circle me-2"></i>Store Information</h5>
@@ -979,7 +1070,11 @@
                                     Next <i class="bi bi-arrow-right ms-2"></i>
                                 </button>
                                 <button type="submit" class="btn btn-success btn-step" id="submitBtn" style="display: none;">
-                                    <i class="bi bi-rocket-takeoff me-2"></i>Launch Store!
+                                    <% if (typeof isEditMode !== 'undefined' && isEditMode) { %>
+                                        <i class="bi bi-save me-2"></i>Update Store
+                                    <% } else { %>
+                                        <i class="bi bi-rocket-takeoff me-2"></i>Launch Store!
+                                    <% } %>
                                 </button>
                             </div>
                         </div>
@@ -1004,8 +1099,25 @@
                 this.setupEventListeners();
                 this.updateProgress();
                 
+                // Check if we're in edit mode
+                this.isEditMode = <% if (typeof isEditMode !== 'undefined' && isEditMode) { %>true<% } else { %>false<% } %>;
+                this.storeData = <% if (typeof store !== 'undefined' && store) { %><%- JSON.stringify(store) %><% } else { %>null<% } %>;
+                
+                console.log('🔧 Site setup wizard initialized:', {
+                    isEditMode: this.isEditMode,
+                    storeName: this.storeData?.name
+                });
+                
                 // Load saved Shopify stores
                 await this.loadSavedShopifyStores();
+                
+                // Load page templates from database
+                await this.loadPageTemplates();
+                
+                // Pre-populate selected pages if editing - this will be handled in renderPageTemplates
+                // if (this.isEditMode && this.storeData) {
+                //     this.prePopulateSelectedPages();
+                // }
                 
                 // Initialize with URL step if provided
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1014,13 +1126,169 @@
                     this.goToStep(parseInt(step));
                 }
 
-                // Show success message if redirected after successful creation
+                // Show success message if redirected after successful updates
+                if (urlParams.get('updated') === 'true') {
+                    this.showAlert('Store updated successfully! ✅', 'success');
+                }
                 if (urlParams.get('success') === 'true') {
                     this.showAlert('Store created successfully! 🎉', 'success');
                 }
                 if (urlParams.get('configured') === 'true') {
                     this.showAlert('Store configured successfully! ⚙️', 'success');
                 }
+
+                // Initialize localized titles
+                this.updateLocalizedTitles();
+            }
+
+            async loadPageTemplates() {
+                try {
+                    const selectedLanguage = document.getElementById('language')?.value || 'en';
+                    const response = await fetch(`/api/page-templates?language=${selectedLanguage}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.renderPageTemplates(data.templates, data.categorized);
+                        console.log(`✅ Loaded ${data.templates.length} page templates (${data.summary.database_templates} from database)`);
+                    } else {
+                        console.error('Failed to load page templates:', data.error);
+                        this.showAlert('Failed to load page templates. Using default templates.', 'warning');
+                        this.renderDefaultTemplates();
+                    }
+                } catch (error) {
+                    console.error('Error loading page templates:', error);
+                    this.showAlert('Error loading page templates. Using default templates.', 'warning');
+                    this.renderDefaultTemplates();
+                }
+            }
+
+            renderPageTemplates(templates, categorized) {
+                const container = document.getElementById('pageTemplates');
+                if (!container) return;
+
+                // Group templates by category for organized display
+                const categories = ['core', 'business', 'content', 'support', 'legal'];
+                const categoryNames = {
+                    core: 'Essential Pages',
+                    business: 'Business Pages',
+                    content: 'Content Pages', 
+                    support: 'Support Pages',
+                    legal: 'Legal Pages'
+                };
+
+                let html = '';
+                
+                categories.forEach(category => {
+                    const categoryTemplates = categorized[category] || [];
+                    if (categoryTemplates.length === 0) return;
+
+                    html += `
+                        <div class="template-category mb-4">
+                            <h6 class="text-muted text-uppercase fw-bold mb-3">
+                                <i class="bi bi-${this.getCategoryIcon(category)} me-2"></i>
+                                ${categoryNames[category]} (${categoryTemplates.length})
+                            </h6>
+                            <div class="row">
+                    `;
+
+                    categoryTemplates.forEach(template => {
+                        const isRequired = template.required;
+                        const hasContent = template.has_content !== false;
+                        const contentIndicator = category === 'legal' && hasContent ? 
+                            '<span class="badge bg-success ms-2">Professional Content</span>' : '';
+                        
+                        // Check if this template is selected in edit mode
+                        const isSelected = this.isTemplateSelected(template.id);
+                        
+                        html += `
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="page-template-card ${isRequired ? 'required' : ''} ${hasContent ? 'has-content' : ''} ${isSelected ? 'selected' : ''}" 
+                                     data-template="${template.id}" 
+                                     data-category="${template.category}"
+                                     data-has-content="${hasContent}">
+                                    <div class="template-icon">
+                                        <i class="bi bi-${template.icon}"></i>
+                                    </div>
+                                    <h6 class="template-title">${template.name}${contentIndicator}</h6>
+                                    <p class="template-description text-muted small">${template.description}</p>
+                                    ${isRequired ? 
+                                        '<span class="badge bg-success position-absolute top-0 end-0 m-2">Required</span>' : 
+                                        '<div class="form-check position-absolute top-0 end-0 m-2"><input class="form-check-input" type="checkbox" name="selectedPages[]" value="' + template.id + '" ' + (isSelected ? 'checked' : '') + '></div>'
+                                    }
+                                    ${category === 'legal' && hasContent ? 
+                                        '<small class="text-success"><i class="bi bi-check-circle me-1"></i>Ready to use</small>' : ''
+                                    }
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+                
+                // Re-attach event listeners for new template cards
+                this.attachTemplateEventListeners();
+                
+                // Pre-populate selected pages if in edit mode
+                if (this.isEditMode && this.storeData) {
+                    this.prePopulateSelectedPages();
+                }
+            }
+
+            renderDefaultTemplates() {
+                // Fallback to hardcoded templates if API fails
+                const defaultTemplates = [
+                    { id: 'home', name: 'Homepage', required: true, description: 'Main landing page', icon: 'house-door', category: 'core' },
+                    { id: 'products', name: 'Products', required: true, description: 'Product catalog', icon: 'grid', category: 'core' },
+                    { id: 'about', name: 'About Us', required: false, description: 'Company information', icon: 'info-circle', category: 'business' },
+                    { id: 'contact', name: 'Contact', required: false, description: 'Contact information', icon: 'envelope', category: 'business' },
+                    { id: 'terms', name: 'Terms of Service', required: false, description: 'Legal terms', icon: 'file-text', category: 'legal' },
+                    { id: 'privacy', name: 'Privacy Policy', required: false, description: 'Privacy policy', icon: 'shield', category: 'legal' }
+                ];
+                
+                const categorized = {
+                    core: defaultTemplates.filter(t => t.category === 'core'),
+                    business: defaultTemplates.filter(t => t.category === 'business'),
+                    legal: defaultTemplates.filter(t => t.category === 'legal'),
+                    content: [],
+                    support: []
+                };
+                
+                this.renderPageTemplates(defaultTemplates, categorized);
+            }
+
+            getCategoryIcon(category) {
+                const icons = {
+                    core: 'star-fill',
+                    business: 'building',
+                    content: 'journal-text',
+                    support: 'life-preserver',
+                    legal: 'shield-check'
+                };
+                return icons[category] || 'folder';
+            }
+
+            attachTemplateEventListeners() {
+                // Re-attach click listeners for template cards
+                document.querySelectorAll('.page-template-card:not(.required)').forEach(card => {
+                    card.addEventListener('click', () => this.togglePageTemplate(card));
+                });
+                
+                // Also attach click listeners to checkboxes to prevent event bubbling
+                document.querySelectorAll('.page-template-card input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const card = checkbox.closest('.page-template-card');
+                        if (card) {
+                            card.classList.toggle('selected', checkbox.checked);
+                        }
+                    });
+                });
             }
 
             setupEventListeners() {
@@ -1059,6 +1327,15 @@
                     input.addEventListener('input', () => this.clearValidationFeedback(input));
                     input.addEventListener('focus', () => this.clearValidationFeedback(input));
                 });
+
+                // Language change listener for localized titles and templates
+                const languageSelect = document.getElementById('language');
+                if (languageSelect) {
+                    languageSelect.addEventListener('change', async () => {
+                        this.updateLocalizedTitles();
+                        await this.loadPageTemplates(); // Reload templates for new language
+                    });
+                }
             }
 
             async detectDomainInfo() {
@@ -1114,7 +1391,20 @@
                     document.getElementById('country').value = detected.country;
                     document.getElementById('currency').value = detected.currency;
                     document.getElementById('language').value = detected.language;
+                    
+                    // Update localized titles
+                    this.updateLocalizedTitles();
                 }
+            }
+
+            updateLocalizedTitles() {
+                const selectedLanguage = document.getElementById('language')?.value || 'en';
+                const localizedTitles = document.querySelectorAll('.page-localized-title');
+                
+                localizedTitles.forEach(titleElement => {
+                    const localizedText = titleElement.dataset[selectedLanguage] || titleElement.dataset['en'];
+                    titleElement.textContent = localizedText;
+                });
             }
 
             async loadSavedShopifyStores() {
@@ -1568,7 +1858,12 @@
                 const submitBtn = document.getElementById('submitBtn');
                 const originalText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Store...';
+                
+                if (this.isEditMode) {
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating Store...';
+                } else {
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Store...';
+                }
 
                 // Submit form after showing loading state
                 setTimeout(() => {
@@ -1628,6 +1923,44 @@
                         alertDiv.remove();
                     }
                 }, 5000);
+            }
+            
+            isTemplateSelected(templateId) {
+                if (!this.isEditMode || !this.storeData || !this.storeData.selected_pages) {
+                    return false;
+                }
+                
+                const selectedPages = this.storeData.selected_pages.split(',').map(p => p.trim());
+                return selectedPages.includes(templateId);
+            }
+            
+            prePopulateSelectedPages() {
+                if (!this.storeData || !this.storeData.selected_pages) {
+                    console.log('📝 No store data or selected pages to pre-populate');
+                    return;
+                }
+                
+                const selectedPages = this.storeData.selected_pages.split(',').map(p => p.trim()).filter(p => p);
+                console.log('🔄 Pre-populating selected pages:', selectedPages);
+                
+                selectedPages.forEach(pageId => {
+                    // Try both possible checkbox name formats
+                    let checkbox = document.querySelector(`input[name="selectedPages[]"][value="${pageId}"]`);
+                    if (!checkbox) {
+                        checkbox = document.querySelector(`input[name="selectedPages"][value="${pageId}"]`);
+                    }
+                    
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        const card = checkbox.closest('.page-template-card');
+                        if (card) {
+                            card.classList.add('selected');
+                        }
+                        console.log(`✅ Pre-selected page: ${pageId}`);
+                    } else {
+                        console.warn(`⚠️ Checkbox not found for page: ${pageId}`);
+                    }
+                });
             }
         }
 
