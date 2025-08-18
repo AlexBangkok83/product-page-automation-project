@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>clipia - Contact</title>
+    <meta name="description" content="Visit our contact page at clipia">
+    <link rel="icon" href="/favicon.ico">
+    
+    <style>
+        :root {
+            --primary-color: #007cba;
+            --secondary-color: #f8f9fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --background: #ffffff;
+            --border-light: #e1e1e1;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            --container-max: 1200px;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--background);
+        }
+        
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 var(--spacing-sm);
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm) 0;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .nav {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+        
+        .nav a {
+            color: var(--text-primary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            transition: all 0.3s ease;
+        }
+        
+        .nav a:hover,
+        .nav a.active {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+        }
+        
+        /* Main Content */
+        .main {
+            padding: var(--spacing-xl) 0;
+        }
+        
+        .page-title {
+            text-align: center;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .page-title h1 {
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .page-title p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+        
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .contact-form {
+            background: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .contact-info {
+            background: var(--secondary-color);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .submit-button {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .submit-button:hover {
+            background: color-mix(in srgb, var(--primary-color) 85%, black);
+            transform: translateY(-2px);
+        }
+        
+        .contact-info h3 {
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.3rem;
+        }
+        
+        .contact-info p {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .contact-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Footer */
+        .footer {
+            background: var(--text-primary);
+            color: white;
+            text-align: center;
+            padding: var(--spacing-lg) 0;
+        }
+        
+        .footer p {
+            opacity: 0.8;
+        }
+        
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .page-title h1 {
+                font-size: 2rem;
+            }
+            
+            .nav {
+                display: none;
+            }
+            
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">clipia</a>
+                <nav class="nav">
+                    <a href="/">Home</a>
+                    <a href="/products">Products</a>
+                    <a href="/about">About</a>
+                    <a href="/contact" class="active">Contact</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="page-title">
+                <h1>clipia - Contact</h1>
+                <p>Welcome to our contact page</p>
+            </div>
+
+            <div class="contact-grid">
+                <div class="contact-form">
+                    <form action="#" method="POST">
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="subject">Subject</label>
+                            <input type="text" id="subject" name="subject" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="message">Message</label>
+                            <textarea id="message" name="message" required placeholder="Tell us how we can help you..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="submit-button">Send Message</button>
+                    </form>
+                </div>
+                
+                <div class="contact-info">
+                    <h3>Get in Touch</h3>
+                    <p>We're here to help and answer any questions you might have. We look forward to hearing from you!</p>
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    <p><strong>Response Time:</strong><br>
+                    We typically respond within 24 hours</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 clipia. All rights reserved.</p>
+            
+        </div>
+    </footer>
+</body>
+</html>
