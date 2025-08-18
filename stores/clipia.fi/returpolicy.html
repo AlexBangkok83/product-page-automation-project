@@ -220,61 +220,33 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
     <!-- Professional E-commerce Footer System -->
 <footer class="site-footer">
     <!-- Pre-Footer Section (only show if enabled and has content) -->
-    {{#if PREFOOTER_ENABLED}}
+    
     <section class="pre-footer">
         <div class="container">
             <div class="row">
-                {{#if PREFOOTER_CARD1_TITLE}}
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        {{#if PREFOOTER_CARD1_IMAGE}}
-                        <div class="feature-image">
-                            <img src="{{PREFOOTER_CARD1_IMAGE}}" alt="{{PREFOOTER_CARD1_TITLE}}" class="card-image">
-                        </div>
-                        {{/if}}
-                        <h3>{{PREFOOTER_CARD1_TITLE}}</h3>
-                        {{#if PREFOOTER_CARD1_TEXT}}
-                        <p>{{PREFOOTER_CARD1_TEXT}}</p>
-                        {{/if}}
-                    </div>
-                </div>
-                {{/if}}
                 
-                {{#if PREFOOTER_CARD2_TITLE}}
                 <div class="col-md-4">
                     <div class="feature-card">
-                        {{#if PREFOOTER_CARD2_IMAGE}}
+                        
                         <div class="feature-image">
-                            <img src="{{PREFOOTER_CARD2_IMAGE}}" alt="{{PREFOOTER_CARD2_TITLE}}" class="card-image">
+                            <img src="https://via.placeholder.com/400x300/007cba/ffffff?text=Fast+Shipping" alt="Fast Shipping" class="card-image">
                         </div>
-                        {{/if}}
-                        <h3>{{PREFOOTER_CARD2_TITLE}}</h3>
-                        {{#if PREFOOTER_CARD2_TEXT}}
-                        <p>{{PREFOOTER_CARD2_TEXT}}</p>
-                        {{/if}}
+                        
+                        <h3>Fast Shipping</h3>
+                        
+                        <p>Free delivery on orders over 50 EUR</p>
+                        
                     </div>
                 </div>
-                {{/if}}
                 
-                {{#if PREFOOTER_CARD3_TITLE}}
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        {{#if PREFOOTER_CARD3_IMAGE}}
-                        <div class="feature-image">
-                            <img src="{{PREFOOTER_CARD3_IMAGE}}" alt="{{PREFOOTER_CARD3_TITLE}}" class="card-image">
-                        </div>
-                        {{/if}}
-                        <h3>{{PREFOOTER_CARD3_TITLE}}</h3>
-                        {{#if PREFOOTER_CARD3_TEXT}}
-                        <p>{{PREFOOTER_CARD3_TEXT}}</p>
-                        {{/if}}
-                    </div>
-                </div>
-                {{/if}}
+                
+                
+                
+                
             </div>
         </div>
     </section>
-    {{/if}}
+    
 
     <!-- Main Footer Section -->
     <section class="main-footer">
@@ -296,12 +268,7 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
                     <div class="footer-links">
                         <h4>Information</h4>
                         <ul class="footer-nav">
-                            <li><a href="/leveranspolicy">Leveranspolicy</a></li>
-                            <li><a href="/integritetspolicy">Integritetspolicy</a></li>
-                            <li><a href="/returpolicy">Returpolicy</a></li>
-                            <li><a href="/anvandarvillkor">Användarvillkor</a></li>
-                            <li><a href="/shipping">Shipping Information</a></li>
-                            <li><a href="/faq">FAQ</a></li>
+                            {{INFORMATION_PAGES}}
                         </ul>
                     </div>
                 </div>
@@ -309,11 +276,7 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
                     <div class="footer-links">
                         <h4>Quick Links</h4>
                         <ul class="footer-nav">
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/products">Products</a></li>
-                            <li><a href="/about">About Us</a></li>
-                            <li><a href="/contact">Contact</a></li>
-                            <li><a href="/blog">Blog</a></li>
+                            {{QUICK_LINKS}}
                         </ul>
                     </div>
                 </div>
