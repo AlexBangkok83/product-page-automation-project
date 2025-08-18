@@ -2,6 +2,7 @@ const db = require('../database/db');
 const { v4: uuidv4 } = require('uuid');
 const TemplateRenderer = require('../utils/TemplateRenderer');
 const DeploymentAutomation = require('../utils/DeploymentAutomation');
+const { PageTemplate } = require('./PageTemplate');
 const fs = require('fs');
 const path = require('path');
 
@@ -35,9 +36,23 @@ class Store {
     this.support_email = data.support_email;
     this.support_phone = data.support_phone;
     this.business_address = data.business_address;
+    this.business_orgnr = data.business_orgnr;
     this.gdpr_compliant = data.gdpr_compliant || false;
     this.cookie_consent = data.cookie_consent || false;
     this.selected_pages = data.selected_pages;
+    
+    // Pre-footer content
+    this.prefooter_enabled = data.prefooter_enabled || false;
+    this.prefooter_card1_image = data.prefooter_card1_image;
+    this.prefooter_card1_title = data.prefooter_card1_title;
+    this.prefooter_card1_text = data.prefooter_card1_text;
+    this.prefooter_card2_image = data.prefooter_card2_image;
+    this.prefooter_card2_title = data.prefooter_card2_title;
+    this.prefooter_card2_text = data.prefooter_card2_text;
+    this.prefooter_card3_image = data.prefooter_card3_image;
+    this.prefooter_card3_title = data.prefooter_card3_title;
+    this.prefooter_card3_text = data.prefooter_card3_text;
+    
     this.status = data.status || 'setup';
     this.deployment_status = data.deployment_status || 'pending';
     this.deployment_url = data.deployment_url;
@@ -93,14 +108,20 @@ class Store {
           shopify_domain, shopify_access_token, shopify_shop_name, shopify_connected,
           theme_id, logo_url, primary_color, secondary_color,
           meta_title, meta_description, favicon_url,
+          business_address, business_orgnr, support_email, support_phone,
+          shipping_info, shipping_time, return_policy, return_period,
+          gdpr_compliant, cookie_consent, selected_pages,
           status, deployment_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           store.uuid, store.name, store.domain, store.subdomain,
           store.country, store.language, store.currency, store.timezone,
           store.shopify_domain, store.shopify_access_token, store.shopify_shop_name, store.shopify_connected ? 1 : 0,
           store.theme_id, store.logo_url, store.primary_color, store.secondary_color,
           store.meta_title, store.meta_description, store.favicon_url,
+          store.business_address, store.business_orgnr, store.support_email, store.support_phone,
+          store.shipping_info, store.shipping_time, store.return_policy, store.return_period,
+          store.gdpr_compliant ? 1 : 0, store.cookie_consent ? 1 : 0, store.selected_pages,
           store.status, store.deployment_status
         ]
       );
@@ -291,8 +312,12 @@ class Store {
       'theme_id', 'logo_url', 'primary_color', 'secondary_color',
       'meta_title', 'meta_description', 'favicon_url',
       'shipping_info', 'shipping_time', 'return_policy', 'return_period',
-      'support_email', 'support_phone', 'business_address',
+      'support_email', 'support_phone', 'business_address', 'business_orgnr',
       'gdpr_compliant', 'cookie_consent', 'selected_pages',
+      // Pre-footer content fields
+      'prefooter_enabled', 'prefooter_card1_image', 'prefooter_card1_title', 'prefooter_card1_text',
+      'prefooter_card2_image', 'prefooter_card2_title', 'prefooter_card2_text',
+      'prefooter_card3_image', 'prefooter_card3_title', 'prefooter_card3_text',
       'status', 'deployment_status', 'deployment_url'
     ];
 
@@ -351,71 +376,92 @@ class Store {
       // Add any additional selected pages
       pagesToCreate = [...new Set([...pagesToCreate, ...selectedArray])];
     } else {
-      // Default set if no selection
-      pagesToCreate = ['home', 'products', 'about', 'contact'];
+      // Default set including legal pages
+      pagesToCreate = ['home', 'products', 'about', 'contact', 'terms', 'privacy', 'refund', 'delivery'];
     }
     
     console.log('📋 Pages to create:', pagesToCreate);
     
+    // Define legal page types that should use professional templates
+    const legalPages = ['terms', 'privacy', 'refund', 'delivery'];
+    
     for (const pageType of pagesToCreate) {
       try {
-        // Get default content for this page type and language
-        const defaultContent = await db.get(
-          'SELECT * FROM content_defaults WHERE page_type = ? AND language = ?',
-          [pageType, this.language]
-        );
-
-        if (defaultContent) {
-          // Replace placeholders in content
-          const processedContent = this.replaceContentPlaceholders(defaultContent);
-          
-          await db.run(
-            `INSERT OR REPLACE INTO store_pages (
-              store_id, page_type, slug, title, subtitle, content,
-              meta_title, meta_description, template_data, is_enabled
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              this.id,
-              pageType,
-              pageType === 'home' ? '' : pageType,
-              processedContent.title,
-              processedContent.subtitle,
-              processedContent.content_blocks,
-              processedContent.meta_title,
-              processedContent.meta_description,
-              processedContent.template_config,
-              1
-            ]
+        let pageContent = null;
+        let isLegalPage = legalPages.includes(pageType);
+        
+        if (isLegalPage) {
+          // Use professional legal page templates
+          try {
+            console.log(`🏛️ Using professional template for ${pageType}`);
+            const template = await PageTemplate.getTranslatedContent(pageType, this.language);
+            
+            // Replace template variables with store data
+            const processedContent = this.replaceTemplateVariables(template.content);
+            
+            pageContent = {
+              title: template.title,
+              subtitle: '',
+              content: processedContent,
+              meta_title: this.replaceTemplateVariables(template.meta_title || template.title),
+              meta_description: this.replaceTemplateVariables(template.meta_description || ''),
+              slug: template.slug
+            };
+            
+          } catch (templateError) {
+            console.warn(`⚠️ Could not load professional template for ${pageType}:`, templateError.message);
+            isLegalPage = false; // Fall back to basic content
+          }
+        }
+        
+        if (!isLegalPage) {
+          // Try to get content from content_defaults for non-legal pages
+          const defaultContent = await db.get(
+            'SELECT * FROM content_defaults WHERE page_type = ? AND language = ?',
+            [pageType, this.language]
           );
-          
-          console.log(`✅ Created page: ${pageType}`);
-        } else {
-          // Create a basic page if no template exists
-          console.log(`⚠️ No template found for ${pageType}, creating basic page`);
-          
-          await db.run(
-            `INSERT OR REPLACE INTO store_pages (
-              store_id, page_type, slug, title, subtitle, content,
-              meta_title, meta_description, template_data, is_enabled
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              this.id,
-              pageType,
-              pageType === 'home' ? '' : pageType,
-              this.name + ' - ' + pageType.charAt(0).toUpperCase() + pageType.slice(1),
-              'Welcome to our ' + pageType + ' page',
-              JSON.stringify([{
+
+          if (defaultContent) {
+            // Replace placeholders in content
+            pageContent = this.replaceContentPlaceholders(defaultContent);
+          } else {
+            // Create basic page content
+            console.log(`⚠️ No template found for ${pageType}, creating basic page`);
+            pageContent = {
+              title: this.name + ' - ' + pageType.charAt(0).toUpperCase() + pageType.slice(1),
+              subtitle: 'Welcome to our ' + pageType + ' page',
+              content: JSON.stringify([{
                 type: 'text',
                 content: `Welcome to the ${pageType} page of ${this.name}. This page is being built automatically.`
               }]),
-              `${this.name} - ${pageType.charAt(0).toUpperCase() + pageType.slice(1)}`,
-              `Visit our ${pageType} page at ${this.name}`,
-              JSON.stringify({ layout: 'basic' }),
+              meta_title: `${this.name} - ${pageType.charAt(0).toUpperCase() + pageType.slice(1)}`,
+              meta_description: `Visit our ${pageType} page at ${this.name}`,
+              slug: pageType
+            };
+          }
+        }
+        
+        if (pageContent) {
+          await db.run(
+            `INSERT OR REPLACE INTO store_pages (
+              store_id, page_type, slug, title, subtitle, content,
+              meta_title, meta_description, template_data, is_enabled
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              this.id,
+              pageType,
+              pageType === 'home' ? '' : (pageContent.slug || pageType),
+              pageContent.title,
+              pageContent.subtitle || '',
+              pageContent.content,
+              pageContent.meta_title,
+              pageContent.meta_description,
+              pageContent.template_config || JSON.stringify({ layout: 'basic' }),
               1
             ]
           );
           
-          console.log(`✅ Created basic page: ${pageType}`);
+          console.log(`✅ Created ${isLegalPage ? 'professional legal' : 'standard'} page: ${pageType}`);
         }
       } catch (pageError) {
         console.error(`❌ Error creating page ${pageType}:`, pageError.message);
@@ -469,6 +515,37 @@ class Store {
     }
 
     return processed;
+  }
+
+  /**
+   * Replace template variables in professional legal content
+   * Variables use $variable_name format
+   */
+  replaceTemplateVariables(content) {
+    if (!content) return content;
+    
+    // Define variable mappings
+    const variables = {
+      '$domain': this.domain,
+      '$company_name': this.name,
+      '$contact_email': this.support_email || `support@${this.domain}`,
+      '$country': this.country,
+      '$currency': this.currency,
+      '$company_orgnr': this.business_orgnr || 'TBD',
+      '$company_address': this.business_address || 'TBD'
+    };
+    
+    let result = content;
+    
+    // Replace each variable with its corresponding value
+    for (const [variable, value] of Object.entries(variables)) {
+      // Escape the $ character for regex and create global regex
+      const escapedVariable = variable.replace(/\$/g, '\\$');
+      const regex = new RegExp(escapedVariable, 'g');
+      result = result.replace(regex, value || 'TBD');
+    }
+    
+    return result;
   }
 
   async getPages() {
@@ -535,6 +612,78 @@ class Store {
       
       // Update deployment status to failed
       await this.update({ deployment_status: 'failed' });
+      throw error;
+    }
+  }
+
+  /**
+   * Regenerate legal pages with professional templates
+   */
+  async regenerateLegalPages() {
+    try {
+      console.log(`🏛️ Regenerating legal pages for ${this.name}...`);
+      
+      const legalPages = ['terms', 'privacy', 'refund', 'delivery'];
+      let updatedCount = 0;
+      
+      for (const pageType of legalPages) {
+        try {
+          // Get professional template for this page type
+          const template = await PageTemplate.getTranslatedContent(pageType, this.language);
+          
+          // Replace template variables with store data
+          const processedContent = this.replaceTemplateVariables(template.content);
+          
+          const pageContent = {
+            title: template.title,
+            subtitle: '',
+            content: processedContent,
+            meta_title: this.replaceTemplateVariables(template.meta_title || template.title),
+            meta_description: this.replaceTemplateVariables(template.meta_description || ''),
+            slug: template.slug
+          };
+          
+          // Update or create the page
+          await db.run(
+            `INSERT OR REPLACE INTO store_pages (
+              store_id, page_type, slug, title, subtitle, content,
+              meta_title, meta_description, template_data, is_enabled, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            [
+              this.id,
+              pageType,
+              pageType === 'home' ? '' : (pageContent.slug || pageType),
+              pageContent.title,
+              pageContent.subtitle || '',
+              pageContent.content,
+              pageContent.meta_title,
+              pageContent.meta_description,
+              JSON.stringify({ layout: 'legal', professional: true }),
+              1
+            ]
+          );
+          
+          updatedCount++;
+          console.log(`✅ Regenerated professional legal page: ${pageType}`);
+          
+        } catch (pageError) {
+          console.warn(`⚠️ Could not regenerate ${pageType} page:`, pageError.message);
+          // Continue with other pages
+        }
+      }
+      
+      if (updatedCount > 0) {
+        // Regenerate store files to reflect the changes
+        await this.regenerateStoreFiles();
+        console.log(`✅ Regenerated ${updatedCount} legal pages for ${this.name}`);
+      } else {
+        console.warn(`⚠️ No legal pages were regenerated for ${this.name}`);
+      }
+      
+      return updatedCount;
+      
+    } catch (error) {
+      console.error(`❌ Error regenerating legal pages for ${this.name}:`, error);
       throw error;
     }
   }
@@ -781,9 +930,21 @@ class Store {
       support_email: this.support_email,
       support_phone: this.support_phone,
       business_address: this.business_address,
+      business_orgnr: this.business_orgnr,
       gdpr_compliant: this.gdpr_compliant,
       cookie_consent: this.cookie_consent,
       selected_pages: this.selected_pages,
+      // Pre-footer fields
+      prefooter_enabled: this.prefooter_enabled,
+      prefooter_card1_image: this.prefooter_card1_image,
+      prefooter_card1_title: this.prefooter_card1_title,
+      prefooter_card1_text: this.prefooter_card1_text,
+      prefooter_card2_image: this.prefooter_card2_image,
+      prefooter_card2_title: this.prefooter_card2_title,
+      prefooter_card2_text: this.prefooter_card2_text,
+      prefooter_card3_image: this.prefooter_card3_image,
+      prefooter_card3_title: this.prefooter_card3_title,
+      prefooter_card3_text: this.prefooter_card3_text,
       status: this.status,
       deployment_status: this.deployment_status,
       deployment_url: this.deployment_url,

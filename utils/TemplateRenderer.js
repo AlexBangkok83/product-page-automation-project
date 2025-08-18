@@ -6,6 +6,7 @@ class TemplateRenderer {
   constructor() {
     this.templatesPath = path.join(__dirname, '../templates');
     this.storesPath = path.join(process.cwd(), 'stores');
+    this.footerTemplate = null;
   }
 
   /**
@@ -25,7 +26,7 @@ class TemplateRenderer {
 
       // Generate each page
       for (const page of pages) {
-        await this.generatePage(store, page, storePath);
+        await this.generatePage(store, page, storePath, pages);
       }
 
       // Generate additional assets
@@ -45,9 +46,223 @@ class TemplateRenderer {
   }
 
   /**
+   * Load the footer component template
+   */
+  loadFooterTemplate() {
+    if (this.footerTemplate) {
+      return this.footerTemplate;
+    }
+    
+    try {
+      const footerPath = path.join(this.templatesPath, 'ecommerce/components/footer.html');
+      this.footerTemplate = fs.readFileSync(footerPath, 'utf8');
+      return this.footerTemplate;
+    } catch (error) {
+      console.warn('⚠️ Footer template not found, using basic footer');
+      return this.getBasicFooter();
+    }
+  }
+
+  /**
+   * Generate footer HTML with store data
+   */
+  async generateFooter(store, pages) {
+    const footerTemplate = this.loadFooterTemplate();
+    
+    // Generate dynamic navigation based on existing pages
+    const pageMap = new Map(pages.map(page => [page.page_type, page]));
+    
+    // Information pages (legal/policy pages + FAQ + shipping)
+    const informationPageTypes = [
+      { type: 'delivery', fallbackTitle: 'Leveranspolicy' },
+      { type: 'privacy', fallbackTitle: 'Integritetspolicy' },
+      { type: 'refund', fallbackTitle: 'Returpolicy' },
+      { type: 'terms', fallbackTitle: 'Användarvillkor' },
+      { type: 'shipping', fallbackTitle: 'Shipping Information' },
+      { type: 'faq', fallbackTitle: 'FAQ' }
+    ];
+    
+    const informationPages = informationPageTypes
+      .filter(({ type }) => pageMap.has(type))
+      .map(({ type }) => {
+        const page = pageMap.get(type);
+        return {
+          title: page.title,
+          slug: page.slug || page.page_type
+        };
+      });
+    
+    // Quick Links (main navigation pages)
+    const quickLinkTypes = [
+      { type: 'home', fallbackTitle: 'Home', slug: '' },
+      { type: 'products', fallbackTitle: 'Products' },
+      { type: 'about', fallbackTitle: 'About Us' },
+      { type: 'contact', fallbackTitle: 'Contact' },
+      { type: 'blog', fallbackTitle: 'Blog' }
+    ];
+    
+    const quickLinks = quickLinkTypes
+      .filter(({ type }) => pageMap.has(type))
+      .map(({ type, slug: fallbackSlug }) => {
+        const page = pageMap.get(type);
+        return {
+          title: page.title,
+          slug: fallbackSlug !== undefined ? fallbackSlug : (page.slug || page.page_type)
+        };
+      });
+
+    // Generate about text from store info
+    const aboutText = store.meta_description || 
+      `${store.name} is your trusted e-commerce destination offering quality products with exceptional customer service. Based in ${store.country}, we serve customers with dedication and reliability.`;
+
+    // Generate store description
+    const storeDescription = store.meta_description || 
+      `Welcome to ${store.name} - your premier destination for quality products and exceptional service.`;
+
+    // Generate navigation HTML
+    const informationPagesHtml = informationPages.length > 0 
+      ? informationPages.map(page => 
+          `<li><a href="/${page.slug}">${page.title}</a></li>`
+        ).join('\n                            ')
+      : '<li><em>No information pages available</em></li>';
+    
+    const quickLinksHtml = quickLinks.length > 0
+      ? quickLinks.map(page => 
+          `<li><a href="/${page.slug}">${page.title}</a></li>`
+        ).join('\n                            ')
+      : '<li><a href="/">Home</a></li>';
+
+    // Replace template variables
+    let footerHtml = footerTemplate
+      .replace(/{{STORE_NAME}}/g, store.name || 'Store')
+      .replace(/{{STORE_LOGO_URL}}/g, store.logo_url || '')
+      .replace(/{{STORE_DESCRIPTION}}/g, storeDescription)
+      .replace(/{{SUPPORT_EMAIL}}/g, store.support_email || '')
+      .replace(/{{SUPPORT_PHONE}}/g, store.support_phone || '')
+      .replace(/{{BUSINESS_ADDRESS}}/g, store.business_address || '')
+      .replace(/{{ABOUT_TEXT}}/g, aboutText)
+      .replace(/{{CURRENT_YEAR}}/g, new Date().getFullYear().toString())
+      .replace(/{{COUNTRY}}/g, store.country || '')
+      // Dynamic navigation
+      .replace(/{{INFORMATION_PAGES}}/g, informationPagesHtml)
+      .replace(/{{QUICK_LINKS}}/g, quickLinksHtml)
+      // Pre-footer content variables
+      .replace(/{{PREFOOTER_ENABLED}}/g, store.prefooter_enabled ? 'true' : '')
+      .replace(/{{PREFOOTER_CARD1_IMAGE}}/g, store.prefooter_card1_image || '')
+      .replace(/{{PREFOOTER_CARD1_TITLE}}/g, store.prefooter_card1_title || '')
+      .replace(/{{PREFOOTER_CARD1_TEXT}}/g, store.prefooter_card1_text || '')
+      .replace(/{{PREFOOTER_CARD2_IMAGE}}/g, store.prefooter_card2_image || '')
+      .replace(/{{PREFOOTER_CARD2_TITLE}}/g, store.prefooter_card2_title || '')
+      .replace(/{{PREFOOTER_CARD2_TEXT}}/g, store.prefooter_card2_text || '')
+      .replace(/{{PREFOOTER_CARD3_IMAGE}}/g, store.prefooter_card3_image || '')
+      .replace(/{{PREFOOTER_CARD3_TITLE}}/g, store.prefooter_card3_title || '')
+      .replace(/{{PREFOOTER_CARD3_TEXT}}/g, store.prefooter_card3_text || '')
+      .replace(/{{BUSINESS_ORGNR}}/g, store.business_orgnr || '');
+
+    // Handle conditional blocks for logo
+    if (store.logo_url) {
+      footerHtml = footerHtml.replace(
+        /\{\{#if STORE_LOGO_URL\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, 
+        '$1'
+      );
+    } else {
+      footerHtml = footerHtml.replace(
+        /\{\{#if STORE_LOGO_URL\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, 
+        '$2'
+      );
+    }
+
+    // Process conditional fields in a specific order to handle nested conditions
+    // First process the most specific/nested conditions, then broader ones
+    const orderedFields = [
+      // Process nested prefooter card conditions first
+      { field: 'PREFOOTER_CARD1_IMAGE', value: store.prefooter_card1_image },
+      { field: 'PREFOOTER_CARD1_TEXT', value: store.prefooter_card1_text },
+      { field: 'PREFOOTER_CARD2_IMAGE', value: store.prefooter_card2_image },
+      { field: 'PREFOOTER_CARD2_TEXT', value: store.prefooter_card2_text },
+      { field: 'PREFOOTER_CARD3_IMAGE', value: store.prefooter_card3_image },
+      { field: 'PREFOOTER_CARD3_TEXT', value: store.prefooter_card3_text },
+      // Then process the card title conditions (which contain the nested conditions)
+      { field: 'PREFOOTER_CARD1_TITLE', value: store.prefooter_card1_title },
+      { field: 'PREFOOTER_CARD2_TITLE', value: store.prefooter_card2_title },
+      { field: 'PREFOOTER_CARD3_TITLE', value: store.prefooter_card3_title },
+      // Then the broader prefooter condition
+      { field: 'PREFOOTER_ENABLED', value: store.prefooter_enabled },
+      // Finally other conditions
+      { field: 'SUPPORT_EMAIL', value: store.support_email },
+      { field: 'SUPPORT_PHONE', value: store.support_phone },
+      { field: 'BUSINESS_ADDRESS', value: store.business_address },
+      { field: 'BUSINESS_ORGNR', value: store.business_orgnr }
+    ];
+
+    orderedFields.forEach(({ field, value }) => {
+      const regex = new RegExp(`{{#if ${field}}}([\\s\\S]*?){{/if}}`, 'g');
+      if (value) {
+        footerHtml = footerHtml.replace(regex, '$1');
+      } else {
+        footerHtml = footerHtml.replace(regex, '');
+      }
+    });
+
+    // Dynamic navigation is now handled above via {{INFORMATION_PAGES}} and {{QUICK_LINKS}}
+
+    return footerHtml;
+  }
+
+  /**
+   * Basic fallback footer if template is not available
+   */
+  getBasicFooter() {
+    return `
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>{{STORE_NAME}}</h3>
+                    <p>{{STORE_DESCRIPTION}}</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Information</h4>
+                    <ul>
+                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="/privacy">Privacy Policy</a></li>
+                        <li><a href="/refund">Refund Policy</a></li>
+                        <li><a href="/delivery">Delivery Info</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/products">Products</a></li>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; {{CURRENT_YEAR}} {{STORE_NAME}}. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <style>
+    .footer { background: #1a1a1a; color: white; padding: 40px 0 20px; }
+    .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 30px; }
+    .footer-section h3, .footer-section h4 { color: var(--primary-color, #007cba); margin-bottom: 15px; }
+    .footer-section ul { list-style: none; padding: 0; }
+    .footer-section ul li { margin-bottom: 8px; }
+    .footer-section ul li a { color: rgba(255,255,255,0.7); text-decoration: none; }
+    .footer-section ul li a:hover { color: var(--primary-color, #007cba); }
+    .footer-bottom { border-top: 1px solid #333; padding-top: 20px; text-align: center; color: rgba(255,255,255,0.6); }
+    </style>
+    `;
+  }
+
+  /**
    * Generate a single page HTML file
    */
-  async generatePage(store, page, storePath) {
+  async generatePage(store, page, storePath, allPages) {
     try {
       console.log(`📄 Generating page: ${page.page_type}`);
       
@@ -59,8 +274,8 @@ class TemplateRenderer {
         fileName = `${page.slug || page.page_type}.html`;
       }
 
-      // Generate HTML content
-      const htmlContent = await this.renderPageHTML(store, page);
+      // Generate HTML content with all pages for footer
+      const htmlContent = await this.renderPageHTML(store, page, allPages);
       
       // Write file
       const filePath = path.join(storePath, fileName);
@@ -77,7 +292,7 @@ class TemplateRenderer {
   /**
    * Render HTML content for a page
    */
-  async renderPageHTML(store, page) {
+  async renderPageHTML(store, page, allPages = []) {
     try {
       // Parse content blocks
       let contentBlocks = [];
@@ -103,15 +318,15 @@ class TemplateRenderer {
       // Generate page based on page type
       switch (page.page_type) {
         case 'home':
-          return this.renderHomePage(store, page, contentBlocks, templateData);
+          return await this.renderHomePage(store, page, contentBlocks, templateData, allPages);
         case 'products':
-          return this.renderProductsPage(store, page, contentBlocks, templateData);
+          return await this.renderProductsPage(store, page, contentBlocks, templateData, allPages);
         case 'about':
-          return this.renderAboutPage(store, page, contentBlocks, templateData);
+          return await this.renderAboutPage(store, page, contentBlocks, templateData, allPages);
         case 'contact':
-          return this.renderContactPage(store, page, contentBlocks, templateData);
+          return await this.renderContactPage(store, page, contentBlocks, templateData, allPages);
         default:
-          return this.renderGenericPage(store, page, contentBlocks, templateData);
+          return await this.renderGenericPage(store, page, contentBlocks, templateData, allPages);
       }
       
     } catch (error) {
@@ -123,7 +338,7 @@ class TemplateRenderer {
   /**
    * Render homepage HTML
    */
-  renderHomePage(store, page, contentBlocks, templateData) {
+  async renderHomePage(store, page, contentBlocks, templateData, allPages = []) {
     const heroSection = contentBlocks.find(block => block.type === 'hero') || {};
     const featuresSection = contentBlocks.find(block => block.type === 'features') || {};
     
@@ -299,22 +514,7 @@ class TemplateRenderer {
             color: var(--text-secondary);
         }
         
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            text-align: center;
-            padding: var(--spacing-lg) 0;
-        }
-        
-        .footer p {
-            opacity: 0.8;
-        }
-        
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
+        /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -379,13 +579,7 @@ class TemplateRenderer {
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; ${new Date().getFullYear()} ${store.name}. All rights reserved.</p>
-            ${store.support_email ? `<p>Contact us: <a href="mailto:${store.support_email}">${store.support_email}</a></p>` : ''}
-        </div>
-    </footer>
+    ${await this.generateFooter(store, allPages)}
 </body>
 </html>`;
   }
@@ -393,7 +587,7 @@ class TemplateRenderer {
   /**
    * Render products page HTML
    */
-  renderProductsPage(store, page, contentBlocks, templateData) {
+  async renderProductsPage(store, page, contentBlocks, templateData, allPages = []) {
     return `<!DOCTYPE html>
 <html lang="${store.language || 'en'}">
 <head>
@@ -578,22 +772,7 @@ class TemplateRenderer {
             color: var(--text-secondary);
         }
         
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            text-align: center;
-            padding: var(--spacing-lg) 0;
-        }
-        
-        .footer p {
-            opacity: 0.8;
-        }
-        
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
+        /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -654,13 +833,7 @@ class TemplateRenderer {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; ${new Date().getFullYear()} ${store.name}. All rights reserved.</p>
-            ${store.support_email ? `<p>Contact us: <a href="mailto:${store.support_email}">${store.support_email}</a></p>` : ''}
-        </div>
-    </footer>
+    ${await this.generateFooter(store, allPages)}
 </body>
 </html>`;
   }
@@ -668,7 +841,7 @@ class TemplateRenderer {
   /**
    * Render about page HTML
    */
-  renderAboutPage(store, page, contentBlocks, templateData) {
+  async renderAboutPage(store, page, contentBlocks, templateData, allPages = []) {
     const textBlocks = contentBlocks.filter(block => block.type === 'text');
     
     return `<!DOCTYPE html>
@@ -809,22 +982,7 @@ class TemplateRenderer {
             font-size: 1.1rem;
         }
         
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            text-align: center;
-            padding: var(--spacing-lg) 0;
-        }
-        
-        .footer p {
-            opacity: 0.8;
-        }
-        
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
+        /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -882,13 +1040,7 @@ class TemplateRenderer {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; ${new Date().getFullYear()} ${store.name}. All rights reserved.</p>
-            ${store.support_email ? `<p>Contact us: <a href="mailto:${store.support_email}">${store.support_email}</a></p>` : ''}
-        </div>
-    </footer>
+    ${await this.generateFooter(store, allPages)}
 </body>
 </html>`;
   }
@@ -896,7 +1048,7 @@ class TemplateRenderer {
   /**
    * Render contact page HTML
    */
-  renderContactPage(store, page, contentBlocks, templateData) {
+  async renderContactPage(store, page, contentBlocks, templateData, allPages = []) {
     return `<!DOCTYPE html>
 <html lang="${store.language || 'en'}">
 <head>
@@ -1100,22 +1252,7 @@ class TemplateRenderer {
             text-decoration: underline;
         }
         
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            text-align: center;
-            padding: var(--spacing-lg) 0;
-        }
-        
-        .footer p {
-            opacity: 0.8;
-        }
-        
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
+        /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -1213,13 +1350,7 @@ class TemplateRenderer {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; ${new Date().getFullYear()} ${store.name}. All rights reserved.</p>
-            ${store.support_email ? `<p>Contact us: <a href="mailto:${store.support_email}">${store.support_email}</a></p>` : ''}
-        </div>
-    </footer>
+    ${await this.generateFooter(store, allPages)}
 </body>
 </html>`;
   }
@@ -1227,7 +1358,7 @@ class TemplateRenderer {
   /**
    * Render generic page HTML
    */
-  renderGenericPage(store, page, contentBlocks, templateData) {
+  async renderGenericPage(store, page, contentBlocks, templateData, allPages = []) {
     return `<!DOCTYPE html>
 <html lang="${store.language || 'en'}">
 <head>
@@ -1355,22 +1486,7 @@ class TemplateRenderer {
             font-size: 1.1rem;
         }
         
-        /* Footer */
-        .footer {
-            background: var(--text-primary);
-            color: white;
-            text-align: center;
-            padding: var(--spacing-lg) 0;
-        }
-        
-        .footer p {
-            opacity: 0.8;
-        }
-        
-        .footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
+        /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -1422,13 +1538,7 @@ class TemplateRenderer {
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; ${new Date().getFullYear()} ${store.name}. All rights reserved.</p>
-            ${store.support_email ? `<p>Contact us: <a href="mailto:${store.support_email}">${store.support_email}</a></p>` : ''}
-        </div>
-    </footer>
+    ${await this.generateFooter(store, allPages)}
 </body>
 </html>`;
   }
