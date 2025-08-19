@@ -16,6 +16,12 @@ class TemplateRenderer {
     try {
       console.log(`🎨 Generating store files for ${store.name} (${store.domain})`);
       
+      // Ensure main stores directory exists
+      if (!fs.existsSync(this.storesPath)) {
+        fs.mkdirSync(this.storesPath, { recursive: true });
+        console.log(`✅ Created stores directory: ${this.storesPath}`);
+      }
+      
       const storePath = path.join(this.storesPath, store.domain);
       
       // Create store directory if it doesn't exist

@@ -138,12 +138,12 @@ class Store {
         await store.generateStoreFiles();
         console.log('✅ Store files generated for:', store.name);
         
-        // Update deployment status
+        // Update status to indicate files are ready for deployment
         await store.update({ 
-          deployment_status: 'deployed',
-          deployed_at: new Date().toISOString()
+          deployment_status: 'pending',
+          files_generated_at: new Date().toISOString()
         });
-        console.log('✅ Store deployment completed:', store.name);
+        console.log('✅ Store files generated:', store.name);
         
       } catch (pageError) {
         console.error('⚠️ Error creating pages/files:', pageError.message);
