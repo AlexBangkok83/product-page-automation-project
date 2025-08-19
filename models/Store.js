@@ -914,11 +914,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       console.log(`📁 Generating store files for ${this.name}...`);
       await this.generateStoreFiles();
       
-      // Update deployment status to success (files are auto-deployed via Git automation)
+      // Update status to indicate files are ready for deployment (Git automation only)
       await this.update({ 
-        deployment_status: 'deployed',
-        deployed_at: new Date().toISOString(),
-        deployment_url: `https://${this.domain}`
+        deployment_status: 'pending',
+        files_generated_at: new Date().toISOString()
       });
       
       console.log(`⚡ ${this.name} deployed successfully (fast mode): https://${this.domain}`);

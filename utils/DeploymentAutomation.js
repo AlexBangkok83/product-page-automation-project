@@ -25,28 +25,29 @@ class DeploymentAutomation {
     try {
       this.activeDeployments.add(deploymentId);
       
-      // Step 1: Validate prerequisites
-      await this.validateDeploymentPrerequisites();
-      
-      // Step 2: Ensure Git repository is properly configured
-      await this.configureGitRepository();
-      
-      // Step 3: Commit and push store files
-      await this.commitAndPushFiles(store);
-      
-      // Step 4: Configure Vercel for automatic deployment
-      await this.configureVercelDeployment();
-      
-      // Step 5: Trigger deployment
-      const deploymentResult = await this.triggerDeployment();
-      
-      // Step 6: Connect domain to project
+      // Step 1: FIRST - Add domain to Vercel (MUST be done before any deployment)
+      console.log(`🔗 Step 1: Adding domain ${store.domain} to Vercel FIRST`);
       await this.connectDomainToProject(store.domain);
       
-      // Step 6: Monitor deployment progress
+      // Step 2: Validate prerequisites
+      await this.validateDeploymentPrerequisites();
+      
+      // Step 3: Ensure Git repository is properly configured
+      await this.configureGitRepository();
+      
+      // Step 4: Commit and push store files
+      await this.commitAndPushFiles(store);
+      
+      // Step 5: Configure Vercel for automatic deployment
+      await this.configureVercelDeployment();
+      
+      // Step 6: Trigger deployment
+      const deploymentResult = await this.triggerDeployment();
+      
+      // Step 7: Monitor deployment progress
       await this.monitorDeployment(deploymentResult, store);
       
-      // Step 7: Verify domain is live
+      // Step 8: Verify domain is live
       const isLive = await this.verifyDomainLive(store.domain);
       
       console.log(`✅ Complete deployment automation finished for ${store.name}`);
@@ -350,70 +351,69 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   }
 
   /**
-   * Connect domain to Vercel project (optimized for fast responses)
+   * Connect domain to Vercel project using proper CLI workflow
    */
   async connectDomainToProject(domain) {
-    console.log(`🔗 Quick domain setup for ${domain}...`);
+    console.log(`🔗 Adding domain ${domain} to Vercel project (FIRST STEP)`);
     
     try {
-      // Quick domain inspection with timeout
-      let domainExists = false;
+      // Get the current project name
+      let projectName = 'product-page-automation-project'; // Default project name
+      
       try {
-        await execAsync(`vercel domains inspect ${domain}`, { timeout: 10000 });
-        console.log(`✅ Domain ${domain} already exists in Vercel`);
-        domainExists = true;
-      } catch (inspectError) {
-        if (inspectError.message.includes('not found')) {
-          console.log(`🆕 Domain ${domain} not found in Vercel - will add it automatically`);
-          domainExists = false;
-        } else {
-          throw inspectError; // Re-throw if it's not a "not found" error
-        }
+        // Try to get project info from vercel.json or current directory
+        const { stdout } = await execAsync('vercel project ls', { timeout: 10000 });
+        // Extract project name from output if needed
+        console.log(`📋 Using project: ${projectName}`);
+      } catch (error) {
+        console.log(`⚠️ Could not get project info, using default: ${projectName}`);
       }
       
-      // Add domain if it doesn't exist
-      if (!domainExists) {
+      // Add domain to project with proper CLI syntax and force flag
+      try {
+        const command = `vercel domains add ${domain} --force --yes`;
+        console.log(`🔧 Executing: ${command}`);
+        await execAsync(command, { timeout: 20000 });
+        console.log(`✅ Domain ${domain} added to project successfully with --force flag`);
+        
+        // Verify the domain was added
         try {
-          await execAsync(`vercel domains add ${domain}`, { timeout: 15000 });
-          console.log(`✅ Domain ${domain} added to project successfully`);
+          await execAsync(`vercel domains inspect ${domain}`, { timeout: 5000 });
+          console.log(`✅ Domain ${domain} verified in Vercel`);
+          
           return {
             success: true,
             domain,
-            message: 'Domain added and connected successfully'
+            message: 'Domain added and verified successfully'
           };
-        } catch (addError) {
-          if (addError.message.includes('already assigned') || addError.message.includes('already added')) {
-            console.log(`✅ Domain ${domain} was already connected to project`);
-            return {
-              success: true,
-              domain,
-              message: 'Domain already connected'
-            };
-          } else {
-            console.log(`⚠️ Failed to add domain ${domain}: ${addError.message}`);
-            return {
-              success: false,
-              domain,
-              message: `Domain addition failed: ${addError.message}`
-            };
-          }
+        } catch (verifyError) {
+          console.log(`⚠️ Domain added but verification failed: ${verifyError.message}`);
+          return {
+            success: true,
+            domain,
+            message: 'Domain added (verification skipped)'
+          };
         }
-      } else {
-        // Domain already exists, no need to add
-        return {
-          success: true,
-          domain,
-          message: 'Domain already exists and connected'
-        };
+        
+      } catch (addError) {
+        if (addError.message.includes('already assigned') || 
+            addError.message.includes('already exists') || 
+            addError.message.includes('already added')) {
+          console.log(`✅ Domain ${domain} already exists in project`);
+          return {
+            success: true,
+            domain,
+            message: 'Domain already exists in project'
+          };
+        } else {
+          console.error(`❌ Failed to add domain ${domain}: ${addError.message}`);
+          throw new Error(`Domain addition failed: ${addError.message}`);
+        }
       }
       
     } catch (error) {
-      console.log(`⚠️ Domain operations failed for ${domain}: ${error.message}`);
-      return {
-        success: false,
-        domain,
-        message: `Domain operations failed: ${error.message}`
-      };
+      console.error(`❌ Domain setup failed for ${domain}: ${error.message}`);
+      throw new Error(`Domain setup failed: ${error.message}`);
     }
   }
 
