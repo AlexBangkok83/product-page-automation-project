@@ -834,58 +834,27 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       const execAsync = promisify(exec);
       console.log(`🔧 Attempting to remove Vercel project for ${this.domain}...`);
       
-      // STEP 1: Remove domain and old deployments (keep project structure)
-      console.log(`🗑️ Removing domain and clearing old deployments...`);
-      
-      // First, get list of deployments and remove old ones
+      // STEP 1: Remove aliases FIRST (this is what keeps sites live)
+      console.log(`🗑️ Removing aliases for ${this.domain}...`);
       try {
-        console.log('🔍 Getting list of deployments to clean up...');
-        const { stdout } = await execAsync('vercel list', { timeout: 10000 });
-        
-        // Parse deployment URLs from the output
-        const deploymentUrls = [];
-        const lines = stdout.split('\n');
-        for (const line of lines) {
-          const urlMatch = line.match(/https:\/\/product-page-automation-project-[a-z0-9]+-trampolin1\.vercel\.app/);
-          if (urlMatch) {
-            deploymentUrls.push(urlMatch[0]);
-          }
-        }
-        
-        if (deploymentUrls.length > 0) {
-          console.log(`🗑️ Found ${deploymentUrls.length} old deployments to remove`);
-          
-          // Remove old deployments but keep the latest one initially 
-          // We'll clean it up after creating the new deployment
-          for (let i = 1; i < deploymentUrls.length; i++) {
-            try {
-              const deploymentId = deploymentUrls[i].split('-').slice(-2).join('-');
-              console.log(`🗑️ Removing old deployment: ${deploymentId}`);
-              await execAsync(`echo "y" | vercel remove ${deploymentId}`, { timeout: 15000 });
-              console.log(`✅ Removed old deployment: ${deploymentId}`);
-            } catch (removeError) {
-              console.log(`⚠️ Could not remove deployment: ${removeError.message}`);
-            }
-          }
-          
-          console.log('✅ Old deployments cleaned up');
-        } else {
-          console.log('ℹ️ No old deployments found to clean up');
-        }
-        
-      } catch (listError) {
-        console.log(`⚠️ Could not list deployments: ${listError.message}`);
+        await execAsync(`echo "y" | vercel alias rm ${this.domain}`, { timeout: 15000 });
+        console.log(`✅ Removed alias for ${this.domain}`);
+      } catch (aliasError) {
+        console.log(`ℹ️ No alias found for ${this.domain} or already removed`);
       }
       
-      // STEP 2: Remove domain from Vercel
+      // STEP 2: Skip deployment cleanup (this was causing issues)
+      console.log(`ℹ️ Skipping deployment cleanup - aliases and domain removal are sufficient`);
+      
+      // STEP 3: Remove domain from Vercel
       try {
-        await execAsync(`vercel domains rm ${this.domain}`);
+        await execAsync(`echo "y" | vercel domains rm ${this.domain}`, { timeout: 15000 });
         console.log(`✅ Removed domain ${this.domain} from Vercel`);
       } catch (domainError) {
         console.log(`ℹ️ Domain ${this.domain} not found in Vercel or already removed`);
       }
       
-      // STEP 3: Clear ALL caches (final step to prevent any cached content)
+      // STEP 4: Clear ALL caches (final step to prevent any cached content)
       try {
         console.log(`🧹 Clearing ALL caches for ${this.domain} (final step)...`);
         
