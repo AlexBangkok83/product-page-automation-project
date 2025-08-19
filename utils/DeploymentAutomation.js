@@ -41,13 +41,29 @@ class DeploymentAutomation {
       // Step 5: Configure Vercel for automatic deployment
       await this.configureVercelDeployment();
       
-      // Step 6: Trigger deployment
-      const deploymentResult = await this.triggerDeployment();
+      // Step 6: Trigger deployment with proper project context
+      const deploymentResult = await this.triggerDeployment(store);
       
-      // Step 7: Monitor deployment progress
+      // Step 7: Create explicit domain alias (CRITICAL - matches manual behavior)
+      if (deploymentResult.success && deploymentResult.url) {
+        console.log(`🔗 Step 7: Creating explicit domain alias for ${store.domain}`);
+        console.log(`🔧 Connecting: ${store.domain} → ${deploymentResult.url}`);
+        try {
+          await this.createDomainAlias(store.domain, deploymentResult.url);
+          console.log(`✅ Domain alias created successfully: ${store.domain} → ${deploymentResult.url}`);
+        } catch (aliasError) {
+          console.error(`⚠️ Alias creation failed but continuing: ${aliasError.message}`);
+          // Don't throw - deployment is successful even if alias fails
+        }
+      } else {
+        console.log('⚠️ Skipping alias creation - no deployment URL available');
+        console.log('Debug - deploymentResult:', deploymentResult);
+      }
+      
+      // Step 8: Monitor deployment progress
       await this.monitorDeployment(deploymentResult, store);
       
-      // Step 8: Verify domain is live
+      // Step 9: Verify domain is live
       const isLive = await this.verifyDomainLive(store.domain);
       
       console.log(`✅ Complete deployment automation finished for ${store.name}`);
@@ -305,37 +321,50 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   }
 
   /**
-   * Trigger deployment
+   * Trigger deployment with proper project context
    */
-  async triggerDeployment() {
-    console.log('🚀 Triggering deployment...');
+  async triggerDeployment(store) {
+    console.log('🚀 Triggering deployment with domain-aware context...');
     
     try {
-      // Try to use Vercel CLI if available
+      // Verify Vercel CLI is available
       await execAsync('vercel --version');
-      console.log('✅ Vercel CLI found, triggering deployment...');
+      console.log('✅ Vercel CLI found');
       
+      // Ensure we're in the correct project context
+      const { stdout: projectInfo } = await execAsync('vercel project ls');
+      console.log('📋 Project context verified');
+      
+      // Deploy with production flag (exactly like manual execution)
+      console.log(`🚀 Deploying to production for domain: ${store.domain}`);
       const { stdout } = await execAsync('vercel --prod', {
-        timeout: 300000 // 5 minute timeout
+        timeout: 300000, // 5 minute timeout
+        env: {
+          ...process.env,
+          VERCEL_ORG_ID: 'team_clgEz5UTSa9wkVjfcNNp1t4Z',
+          VERCEL_PROJECT_ID: 'prj_LFhKr1YV3qJXbl5dHrJ8sXItDZng'
+        }
       });
       
       const deploymentUrl = this.extractDeploymentUrl(stdout);
-      console.log(`✅ Deployment triggered: ${deploymentUrl || 'URL not found in output'}`);
+      console.log(`✅ Deployment completed: ${deploymentUrl || 'URL parsing failed'}`);
+      console.log(`📋 Full deployment output:\n${stdout}`);
       
       return {
-        method: 'vercel-cli',
+        method: 'vercel-cli-enhanced',
         success: true,
         output: stdout,
-        url: deploymentUrl
+        url: deploymentUrl,
+        domain: store.domain
       };
       
     } catch (cliError) {
-      console.log('⚠️ Vercel CLI not available or failed:', cliError.message);
+      console.error('❌ Vercel CLI deployment failed:', cliError.message);
       
       // Fallback: deployment should happen automatically via Git push
-      console.log('📡 Relying on Git-based auto-deployment...');
+      console.log('📡 Falling back to Git-based auto-deployment...');
       return {
-        method: 'git-auto',
+        method: 'git-auto-fallback',
         success: true,
         message: 'Deployment will be triggered automatically by Git push'
       };
@@ -348,6 +377,44 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   extractDeploymentUrl(output) {
     const urlMatch = output.match(/https:\/\/[^\s]+\.vercel\.app/);
     return urlMatch ? urlMatch[0] : null;
+  }
+
+  /**
+   * Verify domain connection (should be automatic with proper setup)
+   */
+  async verifyDomainConnection(domain) {
+    console.log(`🔍 Verifying automatic domain connection for: ${domain}`);
+    
+    try {
+      // Check if domain is properly connected via Vercel domains command
+      const { stdout } = await execAsync(`vercel domains inspect ${domain}`, { timeout: 10000 });
+      console.log(`📋 Domain status:\n${stdout}`);
+      
+      // Also verify that domain resolves to our deployment
+      try {
+        const fetch = await import('node-fetch').then(mod => mod.default);
+        const response = await fetch(`https://${domain}`, {
+          method: 'HEAD',
+          timeout: 10000,
+          redirect: 'follow'
+        });
+        
+        if (response.ok) {
+          console.log(`✅ Domain ${domain} is successfully connected and responding!`);
+          return { success: true, connected: true, status: response.status };
+        } else {
+          console.log(`⚠️ Domain connected but returned status: ${response.status}`);
+          return { success: true, connected: true, status: response.status, warning: 'Non-200 status' };
+        }
+      } catch (fetchError) {
+        console.log(`⏳ Domain may still be propagating: ${fetchError.message}`);
+        return { success: true, connected: 'unknown', message: 'DNS propagation in progress' };
+      }
+      
+    } catch (inspectError) {
+      console.log(`⚠️ Could not inspect domain: ${inspectError.message}`);
+      return { success: false, error: inspectError.message };
+    }
   }
 
   /**

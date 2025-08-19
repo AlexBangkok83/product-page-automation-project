@@ -397,13 +397,27 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
             
             // Deploy first to create the deployment
             console.log('🔧 Deploying to Vercel...');
-            await execAsync('vercel --prod', { timeout: 120000 });
+            const { stdout: deployOutput } = await execAsync('vercel --prod', { timeout: 120000 });
             console.log('✅ Deployment completed');
+            
+            // Extract deployment URL
+            const deploymentUrl = deployOutput.match(/https:\/\/[^\s]+\.vercel\.app/);
+            const deploymentUrlStr = deploymentUrl ? deploymentUrl[0] : null;
+            console.log(`🌐 Deployment URL: ${deploymentUrlStr}`);
             
             // Now add domain to the deployed project
             console.log(`🔗 Adding domain ${domain} to Vercel project...`);
             await execAsync(`vercel domains add ${domain} --force`, { timeout: 30000 });
             console.log(`✅ Domain ${domain} added to Vercel successfully`);
+            
+            // CRITICAL: Create alias to connect domain to deployment
+            if (deploymentUrlStr) {
+              console.log(`🔗 Creating alias: ${domain} → ${deploymentUrlStr}`);
+              await execAsync(`vercel alias ${deploymentUrlStr} ${domain}`, { timeout: 30000 });
+              console.log(`✅ Alias created: ${domain} now points to deployment`);
+            } else {
+              console.log('⚠️ Could not extract deployment URL for alias creation');
+            }
             
             sendDeploymentUpdate(deploymentId, {
               type: 'progress',
