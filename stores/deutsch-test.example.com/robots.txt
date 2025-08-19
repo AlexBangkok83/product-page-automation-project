@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://deutsch-test.example.com/sitemap.xml
