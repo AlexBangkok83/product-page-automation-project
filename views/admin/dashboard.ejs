@@ -234,6 +234,9 @@
                                                             <li><h6 class="dropdown-header text-danger small">
                                                                 <i class="bi bi-exclamation-triangle me-1"></i>Danger Zone
                                                             </h6></li>
+                                                            <li><a class="dropdown-item text-warning" href="#" onclick="deleteFromVercel('<%= store.uuid %>', '<%= store.domain %>')">
+                                                                <i class="bi bi-cloud-slash me-2"></i>Delete from Vercel Only
+                                                            </a></li>
                                                             <li><a class="dropdown-item text-danger" href="#" onclick="deleteStore('<%= store.uuid %>')">
                                                                 <i class="bi bi-trash me-2"></i>Delete Store
                                                             </a></li>
@@ -621,6 +624,32 @@
             } catch (error) {
                 console.error('Error exporting store data:', error);
                 alert('Failed to export store data');
+            }
+        }
+        
+        // Delete from Vercel only
+        async function deleteFromVercel(storeUuid, domain) {
+            if (!confirm(`🔧 Delete from Vercel Only\n\nThis will remove the domain "${domain}" from Vercel only.\n\n⚠️ The store will remain in database and local files.\nOnly Vercel domain will be removed.\n\nProceed?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/stores/${storeUuid}/vercel-cleanup`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`✅ Vercel cleanup completed!\n\n${data.message}\n\nDomain "${domain}" removed from Vercel.`);
+                } else {
+                    alert(`⚠️ Vercel cleanup issue:\n\n${data.message}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Failed to delete from Vercel');
             }
         }
         

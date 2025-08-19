@@ -350,27 +350,50 @@ class Store {
   async delete() {
     try {
       console.log(`🗑️ Starting comprehensive deletion of store: ${this.name} (${this.domain})`);
+      console.log(`📋 Correct order: Git → Vercel → Local Files → Database`);
       
-      // 1. Delete store files first
-      await this.deleteStoreFiles();
-      
-      // 2. Clean up Git repository (remove from version control)
+      // 1. Clean up Git repository FIRST (while files still exist locally)
+      console.log(`🔄 Step 1: Cleaning up Git repository (while files exist)...`);
       await this.cleanupGitRepository();
+      console.log(`✅ Step 1 completed: Git cleanup done`);
       
-      // 3. Clean up orphaned database records
-      await this.cleanupOrphanedRecords();
-      
-      // 4. Clean up Vercel project and domain
+      // 2. Clean up Vercel project and domain
+      console.log(`🔄 Step 2: Cleaning up Vercel project and domain...`);
       await this.cleanupVercelProject();
+      console.log(`✅ Step 2 completed: Vercel cleanup done`);
       
-      // 5. Delete main store record from database
+      // 3. Delete store files (now that Git and Vercel are cleaned)
+      console.log(`🔄 Step 3: Deleting local store files...`);
+      await this.deleteStoreFiles();
+      console.log(`✅ Step 3 completed: Local files deleted`);
+      
+      // 4. Clean up orphaned database records
+      console.log(`🔄 Step 4: Cleaning up orphaned database records...`);
+      await this.cleanupOrphanedRecords();
+      console.log(`✅ Step 4 completed: Database cleanup done`);
+      
+      // 5. Delete main store record from database (last step)
+      console.log(`🔄 Step 5: Deleting main store record from database...`);
       await db.run('DELETE FROM stores WHERE id = ?', [this.id]);
+      console.log(`✅ Step 5 completed: Store record deleted`);
       
       console.log(`✅ Store ${this.name} deleted successfully with COMPLETE automation cleanup`);
       console.log(`🎉 Full cleanup completed: Local files, Git, Database, and Vercel!`);
     } catch (error) {
-      console.error(`❌ Error deleting store ${this.name}:`, error);
-      throw error;
+      console.error(`❌ Error in comprehensive delete for store ${this.name}:`, error);
+      console.error(`❌ Error details:`, error.message);
+      console.error(`❌ Stack trace:`, error.stack);
+      
+      // Fall back to basic deletion if comprehensive fails
+      console.log(`⚠️ Falling back to basic deletion (files + database only)...`);
+      try {
+        await this.deleteStoreFiles();
+        await db.run('DELETE FROM stores WHERE id = ?', [this.id]);
+        console.log(`✅ Store ${this.name} deleted successfully (basic cleanup only)`);
+      } catch (basicError) {
+        console.error(`❌ Even basic deletion failed:`, basicError);
+        throw basicError;
+      }
     }
   }
 

@@ -678,6 +678,33 @@ router.delete('/stores/:uuid', async (req, res) => {
   }
 });
 
+// Delete from Vercel only (isolated test)
+router.delete('/stores/:uuid/vercel-cleanup', async (req, res) => {
+  try {
+    const store = await Store.findByUuid(req.params.uuid);
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
+    }
+    
+    console.log(`🔧 Testing Vercel cleanup for store: ${store.name} (${store.domain})`);
+    
+    // Call only the Vercel cleanup method
+    await store.cleanupVercelProject();
+    
+    console.log(`✅ Vercel cleanup test completed for: ${store.name}`);
+    
+    res.json({
+      success: true,
+      message: `Vercel cleanup completed for ${store.domain}. Domain should be removed from Vercel.`
+    });
+  } catch (error) {
+    console.error('Vercel cleanup test error:', error);
+    res.status(500).json({ 
+      error: 'Vercel cleanup failed',
+      message: error.message 
+    });
+  }
+});
 
 // Get store deployment status
 router.get('/stores/:uuid/deployment', async (req, res) => {
