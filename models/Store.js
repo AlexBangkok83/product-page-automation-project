@@ -834,10 +834,50 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       const execAsync = promisify(exec);
       console.log(`🔧 Attempting to remove Vercel project for ${this.domain}...`);
       
-      // STEP 1: Remove only the domain and clear caches (don't delete entire project)
-      console.log(`🗑️ Removing domain and clearing caches (keeping Vercel project intact)...`);
+      // STEP 1: Remove domain and old deployments (keep project structure)
+      console.log(`🗑️ Removing domain and clearing old deployments...`);
       
-      // STEP 2: Remove domain from Vercel (now that deployments are gone)
+      // First, get list of deployments and remove old ones
+      try {
+        console.log('🔍 Getting list of deployments to clean up...');
+        const { stdout } = await execAsync('vercel list', { timeout: 10000 });
+        
+        // Parse deployment URLs from the output
+        const deploymentUrls = [];
+        const lines = stdout.split('\n');
+        for (const line of lines) {
+          const urlMatch = line.match(/https:\/\/product-page-automation-project-[a-z0-9]+-trampolin1\.vercel\.app/);
+          if (urlMatch) {
+            deploymentUrls.push(urlMatch[0]);
+          }
+        }
+        
+        if (deploymentUrls.length > 0) {
+          console.log(`🗑️ Found ${deploymentUrls.length} old deployments to remove`);
+          
+          // Remove old deployments but keep the latest one initially 
+          // We'll clean it up after creating the new deployment
+          for (let i = 1; i < deploymentUrls.length; i++) {
+            try {
+              const deploymentId = deploymentUrls[i].split('-').slice(-2).join('-');
+              console.log(`🗑️ Removing old deployment: ${deploymentId}`);
+              await execAsync(`echo "y" | vercel remove ${deploymentId}`, { timeout: 15000 });
+              console.log(`✅ Removed old deployment: ${deploymentId}`);
+            } catch (removeError) {
+              console.log(`⚠️ Could not remove deployment: ${removeError.message}`);
+            }
+          }
+          
+          console.log('✅ Old deployments cleaned up');
+        } else {
+          console.log('ℹ️ No old deployments found to clean up');
+        }
+        
+      } catch (listError) {
+        console.log(`⚠️ Could not list deployments: ${listError.message}`);
+      }
+      
+      // STEP 2: Remove domain from Vercel
       try {
         await execAsync(`vercel domains rm ${this.domain}`);
         console.log(`✅ Removed domain ${this.domain} from Vercel`);
@@ -863,6 +903,35 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
         console.log(`✅ ALL caches cleared for ${this.domain} - no stale content should remain`);
       } catch (cacheError) {
         console.log(`⚠️ Cache clearing failed for ${this.domain}: ${cacheError.message}`);
+      }
+      
+      // STEP 4: Remove any remaining deployments
+      try {
+        console.log('🧹 Final cleanup: removing any remaining deployments...');
+        const { stdout } = await execAsync('vercel list', { timeout: 10000 });
+        
+        const deploymentUrls = [];
+        const lines = stdout.split('\n');
+        for (const line of lines) {
+          const urlMatch = line.match(/https:\/\/product-page-automation-project-[a-z0-9]+-trampolin1\.vercel\.app/);
+          if (urlMatch) {
+            deploymentUrls.push(urlMatch[0]);
+          }
+        }
+        
+        for (const url of deploymentUrls) {
+          try {
+            const deploymentId = url.split('-').slice(-2).join('-');
+            console.log(`🗑️ Removing remaining deployment: ${deploymentId}`);
+            await execAsync(`echo "y" | vercel remove ${deploymentId}`, { timeout: 15000 });
+            console.log(`✅ Removed remaining deployment: ${deploymentId}`);
+          } catch (removeError) {
+            console.log(`⚠️ Could not remove remaining deployment: ${removeError.message}`);
+          }
+        }
+        
+      } catch (finalCleanupError) {
+        console.log(`⚠️ Final deployment cleanup failed: ${finalCleanupError.message}`);
       }
       
       console.log(`✅ Vercel cleanup completed: ALL deployments removed, domain removed, caches cleared`);
