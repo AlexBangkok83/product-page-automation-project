@@ -315,7 +315,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
       await execAsync('vercel --version');
       console.log('✅ Vercel CLI found, triggering deployment...');
       
-      const { stdout } = await execAsync('vercel --prod --yes', {
+      const { stdout } = await execAsync('vercel --prod', {
         timeout: 300000 // 5 minute timeout
       });
       
@@ -371,7 +371,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
       
       // Add domain to project with proper CLI syntax and force flag
       try {
-        const command = `vercel domains add ${domain} --force --yes`;
+        const command = `vercel domains add ${domain} --force`;
         console.log(`🔧 Executing: ${command}`);
         await execAsync(command, { timeout: 20000 });
         console.log(`✅ Domain ${domain} added to project successfully with --force flag`);

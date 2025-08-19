@@ -339,14 +339,30 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
           
           console.log('🏪 Creating store with data:', storeData);
           
-          // Create store with COMPLETE deployment automation
+          // STEP 1: Create store in database first
           console.log('🚀 EXECUTING COMPLETE AUTOMATION PIPELINE');
-          console.log('📋 Pipeline: Database → Files → Git → Vercel → Live Domain');
+          console.log('📋 UPDATED Pipeline: Database → Files → Git → Deploy → Domain');
+          console.log('🔗 STEP 1: Creating store in database...');
           
-          // Create store first
+          const domain = storeData.domain;
+          sendDeploymentUpdate(deploymentId, {
+            type: 'progress',
+            step: 'database-creation',
+            message: 'Creating store in database...',
+            progress: 15
+          });
+          
           const store = await Store.create(storeData);
+          console.log(`✅ Store created in database: ${store.name} (${store.uuid})`);
           
-          // Then deploy it
+          // STEP 2: Deploy the store (files, Git, etc.)
+          console.log('🚀 STEP 2: Deploying store files and pushing to Git...');
+          sendDeploymentUpdate(deploymentId, {
+            type: 'progress',
+            step: 'store-deployment',
+            message: 'Generating files and pushing to Git...',
+            progress: 45
+          });
           await store.deploy((update) => {
             // Enhanced progress updates with automation context
             const enhancedUpdate = {
@@ -364,6 +380,47 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
           
           console.log('✅ COMPLETE AUTOMATION FINISHED:', store.uuid);
           console.log(`🌍 LIVE URL: https://${store.domain}`);
+          
+          // STEP 3: Deploy to Vercel and add domain
+          console.log('🚀 STEP 3: Deploying to Vercel and adding domain...');
+          sendDeploymentUpdate(deploymentId, {
+            type: 'progress',
+            step: 'vercel-deployment',
+            message: 'Deploying to Vercel...',
+            progress: 70
+          });
+          
+          try {
+            const { exec } = require('child_process');
+            const { promisify } = require('util');
+            const execAsync = promisify(exec);
+            
+            // Deploy first to create the deployment
+            console.log('🔧 Deploying to Vercel...');
+            await execAsync('vercel --prod', { timeout: 120000 });
+            console.log('✅ Deployment completed');
+            
+            // Now add domain to the deployed project
+            console.log(`🔗 Adding domain ${domain} to Vercel project...`);
+            await execAsync(`vercel domains add ${domain} --force`, { timeout: 30000 });
+            console.log(`✅ Domain ${domain} added to Vercel successfully`);
+            
+            sendDeploymentUpdate(deploymentId, {
+              type: 'progress',
+              step: 'vercel-deployment',
+              message: 'Deployment and domain setup completed!',
+              progress: 95
+            });
+            
+          } catch (deployError) {
+            console.error('⚠️ Vercel deployment had issues:', deployError.message);
+            sendDeploymentUpdate(deploymentId, {
+              type: 'warning',
+              step: 'vercel-deployment',
+              message: 'Deployment had issues but continuing...',
+              progress: 85
+            });
+          }
           
           // Send final success update with verification
           sendDeploymentUpdate(deploymentId, {

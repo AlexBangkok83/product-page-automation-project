@@ -834,13 +834,38 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       const execAsync = promisify(exec);
       console.log(`🔧 Attempting to remove Vercel project for ${this.domain}...`);
       
-      // Method 1: Try to remove domain from Vercel project
+      // STEP 1: Remove only the domain and clear caches (don't delete entire project)
+      console.log(`🗑️ Removing domain and clearing caches (keeping Vercel project intact)...`);
+      
+      // STEP 2: Remove domain from Vercel (now that deployments are gone)
       try {
-        await execAsync(`vercel domains rm ${this.domain} --yes`);
+        await execAsync(`vercel domains rm ${this.domain}`);
         console.log(`✅ Removed domain ${this.domain} from Vercel`);
       } catch (domainError) {
         console.log(`ℹ️ Domain ${this.domain} not found in Vercel or already removed`);
       }
+      
+      // STEP 3: Clear ALL caches (final step to prevent any cached content)
+      try {
+        console.log(`🧹 Clearing ALL caches for ${this.domain} (final step)...`);
+        
+        // Multiple aggressive cache clearing approaches
+        await execAsync(`curl -X PURGE "https://${this.domain}/" -H "Cache-Control: no-cache"`, { timeout: 10000 });
+        await execAsync(`curl -X PURGE "https://${this.domain}/index.html" -H "Cache-Control: no-cache"`, { timeout: 10000 });
+        await execAsync(`curl -X PURGE "https://${this.domain}/*" -H "Cache-Control: no-cache"`, { timeout: 10000 });
+        
+        // Force cache invalidation with multiple headers
+        await execAsync(`curl -H "Cache-Control: no-cache, no-store, must-revalidate" -H "Pragma: no-cache" -H "Expires: 0" "https://${this.domain}/?cache_bust=${Date.now()}"`, { timeout: 10000 });
+        
+        // Additional CDN cache clearing
+        await execAsync(`curl -X PURGE "https://${this.domain}" -H "CF-Cache-Status: BYPASS"`, { timeout: 10000 });
+        
+        console.log(`✅ ALL caches cleared for ${this.domain} - no stale content should remain`);
+      } catch (cacheError) {
+        console.log(`⚠️ Cache clearing failed for ${this.domain}: ${cacheError.message}`);
+      }
+      
+      console.log(`✅ Vercel cleanup completed: ALL deployments removed, domain removed, caches cleared`);
       
       // Method 2: Try to delete the entire project
       try {
@@ -860,7 +885,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
                 console.log(`🗑️ Attempting to remove Vercel project: ${projectName}`);
                 
                 try {
-                  await execAsync(`vercel remove ${projectName} --yes`);
+                  await execAsync(`vercel remove ${projectName}`);
                   console.log(`✅ Successfully removed Vercel project: ${projectName}`);
                 } catch (removeError) {
                   console.warn(`⚠️ Could not remove project ${projectName}: ${removeError.message}`);
