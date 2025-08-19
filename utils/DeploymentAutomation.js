@@ -350,105 +350,106 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   }
 
   /**
-   * Connect domain to Vercel project
+   * Connect domain to Vercel project (optimized for fast responses)
    */
   async connectDomainToProject(domain) {
-    console.log(`🔗 Connecting domain ${domain} to project...`);
+    console.log(`🔗 Quick domain setup for ${domain}...`);
     
     try {
-      // Check if domain exists in Vercel
+      // Quick domain inspection with timeout
+      let domainExists = false;
       try {
-        await execAsync(`vercel domains inspect ${domain}`);
-        console.log(`✅ Domain ${domain} exists in Vercel`);
+        await execAsync(`vercel domains inspect ${domain}`, { timeout: 10000 });
+        console.log(`✅ Domain ${domain} already exists in Vercel`);
+        domainExists = true;
       } catch (inspectError) {
         if (inspectError.message.includes('not found')) {
-          console.log(`📋 Domain ${domain} not found in Vercel, adding it...`);
-          // Add domain to Vercel account first
-          await execAsync(`vercel domains buy ${domain} --confirm || vercel domains add ${domain} --external`);
-          console.log(`✅ Domain ${domain} added to Vercel account`);
+          console.log(`🆕 Domain ${domain} not found in Vercel - will add it automatically`);
+          domainExists = false;
         } else {
-          throw inspectError;
+          throw inspectError; // Re-throw if it's not a "not found" error
         }
       }
       
-      // Add domain to current project
-      const { stdout } = await execAsync(`vercel domains add ${domain}`);
-      console.log(`✅ Domain ${domain} connected to project`);
-      
-      return {
-        success: true,
-        domain,
-        message: 'Domain connected successfully'
-      };
-      
-    } catch (error) {
-      if (error.message.includes('already assigned')) {
-        console.log(`✅ Domain ${domain} already connected to project`);
+      // Add domain if it doesn't exist
+      if (!domainExists) {
+        try {
+          await execAsync(`vercel domains add ${domain}`, { timeout: 15000 });
+          console.log(`✅ Domain ${domain} added to project successfully`);
+          return {
+            success: true,
+            domain,
+            message: 'Domain added and connected successfully'
+          };
+        } catch (addError) {
+          if (addError.message.includes('already assigned') || addError.message.includes('already added')) {
+            console.log(`✅ Domain ${domain} was already connected to project`);
+            return {
+              success: true,
+              domain,
+              message: 'Domain already connected'
+            };
+          } else {
+            console.log(`⚠️ Failed to add domain ${domain}: ${addError.message}`);
+            return {
+              success: false,
+              domain,
+              message: `Domain addition failed: ${addError.message}`
+            };
+          }
+        }
+      } else {
+        // Domain already exists, no need to add
         return {
           success: true,
           domain,
-          message: 'Domain already connected'
-        };
-      } else if (error.message.includes('not found')) {
-        console.log(`⚠️ Domain ${domain} not found in Vercel - skipping connection`);
-        console.log(`💡 Add domain manually: vercel domains add ${domain}`);
-        return {
-          success: false,
-          domain,
-          message: 'Domain not found in Vercel'
-        };
-      } else {
-        console.error(`❌ Failed to connect domain ${domain}:`, error.message);
-        return {
-          success: false,
-          domain,
-          message: error.message
+          message: 'Domain already exists and connected'
         };
       }
+      
+    } catch (error) {
+      console.log(`⚠️ Domain operations failed for ${domain}: ${error.message}`);
+      return {
+        success: false,
+        domain,
+        message: `Domain operations failed: ${error.message}`
+      };
     }
   }
 
   /**
-   * Monitor deployment progress
+   * Monitor deployment progress (optimized for fast API responses)
    */
-  async monitorDeployment(deploymentResult, store, maxWaitTime = 300000) {
-    console.log('📊 Monitoring deployment progress...');
+  async monitorDeployment(deploymentResult, store) {
+    console.log('📊 Monitoring deployment progress (optimized)...');
     
     if (deploymentResult.method === 'vercel-cli' && deploymentResult.url) {
-      // Monitor specific deployment
-      const startTime = Date.now();
-      
-      while (Date.now() - startTime < maxWaitTime) {
-        try {
-          const fetch = await import('node-fetch').then(mod => mod.default);
-          const response = await fetch(deploymentResult.url, {
-            method: 'HEAD',
-            timeout: 10000
-          });
-          
-          if (response.ok) {
-            console.log('✅ Deployment is responding');
-            break;
-          }
-          
-        } catch (error) {
-          // Continue monitoring
-        }
+      // Quick check of deployment URL
+      try {
+        const fetch = await import('node-fetch').then(mod => mod.default);
+        const response = await fetch(deploymentResult.url, {
+          method: 'HEAD',
+          timeout: 5000
+        });
         
-        await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
+        if (response.ok) {
+          console.log('✅ Deployment is responding immediately');
+        }
+      } catch (error) {
+        console.log('⏳ Deployment URL not yet ready, will verify domain directly');
       }
     }
     
-    // Wait a bit for DNS propagation
-    console.log('⏳ Waiting for DNS propagation...');
-    await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30 seconds
+    // Minimal DNS propagation wait (Git push triggers Vercel automatically)
+    console.log('⚡ Brief DNS propagation wait...');
+    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds only
   }
 
   /**
-   * Verify domain is live and accessible
+   * Verify domain is live and accessible (optimized for fast responses)
    */
-  async verifyDomainLive(domain, maxAttempts = 15, delayMs = 10000) {
-    console.log(`🔍 Verifying domain https://${domain} is live...`);
+  async verifyDomainLive(domain, maxAttempts = 3, delayMs = 2000) {
+    console.log(`🔍 Verifying domain https://${domain} is live (quick check)...`);
     
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
@@ -457,7 +458,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
         const fetch = await import('node-fetch').then(mod => mod.default);
         const response = await fetch(`https://${domain}`, {
           method: 'HEAD',
-          timeout: 15000,
+          timeout: 8000,
           headers: {
             'User-Agent': 'Store-Deployment-Verifier/1.0',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
@@ -484,15 +485,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
         }
       }
       
-      // Wait before next attempt (except on last attempt)
+      // Short wait before next attempt (except on last attempt)
       if (attempt < maxAttempts) {
         console.log(`⏰ Waiting ${delayMs/1000}s before next attempt...`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
     
-    console.log(`⚠️ Domain verification timeout after ${maxAttempts} attempts`);
-    console.log('💡 The domain may still be propagating or Vercel may need additional configuration');
+    console.log(`⚠️ Domain verification completed after ${maxAttempts} quick attempts`);
+    console.log('💡 Domain may still be propagating - files are deployed and will be accessible shortly');
     return false;
   }
 

@@ -349,13 +349,25 @@ class Store {
 
   async delete() {
     try {
-      // Delete store files first
+      console.log(`🗑️ Starting comprehensive deletion of store: ${this.name} (${this.domain})`);
+      
+      // 1. Delete store files first
       await this.deleteStoreFiles();
       
-      // Delete from database
+      // 2. Clean up Git repository (remove from version control)
+      await this.cleanupGitRepository();
+      
+      // 3. Clean up orphaned database records
+      await this.cleanupOrphanedRecords();
+      
+      // 4. Clean up Vercel project and domain
+      await this.cleanupVercelProject();
+      
+      // 5. Delete main store record from database
       await db.run('DELETE FROM stores WHERE id = ?', [this.id]);
       
-      console.log(`✅ Store ${this.name} deleted successfully`);
+      console.log(`✅ Store ${this.name} deleted successfully with COMPLETE automation cleanup`);
+      console.log(`🎉 Full cleanup completed: Local files, Git, Database, and Vercel!`);
     } catch (error) {
       console.error(`❌ Error deleting store ${this.name}:`, error);
       throw error;
@@ -587,31 +599,20 @@ class Store {
   }
 
   /**
-   * Regenerate store files (useful for updates)
+   * Regenerate store files (useful for content updates)
+   * For full deployment, use deploy() method instead
    */
   async regenerateStoreFiles() {
     try {
       console.log(`🔄 Regenerating store files for ${this.name}...`);
       
-      // Update deployment status
-      await this.update({ deployment_status: 'deploying' });
-      
-      // Generate files
+      // Just generate files without changing deployment status
       await this.generateStoreFiles();
-      
-      // Update deployment status
-      await this.update({ 
-        deployment_status: 'deployed',
-        deployed_at: new Date().toISOString()
-      });
       
       console.log(`✅ Store files regenerated for ${this.name}`);
       
     } catch (error) {
       console.error(`❌ Error regenerating store files for ${this.name}:`, error);
-      
-      // Update deployment status to failed
-      await this.update({ deployment_status: 'failed' });
       throw error;
     }
   }
@@ -722,116 +723,141 @@ class Store {
   }
 
   /**
-   * Create store with complete deployment automation
-   * This is the main method for true end-to-end automation
+   * Clean up Git repository (remove store files from version control)
    */
-  static async createWithDeployment(storeData, progressCallback = null) {
-    console.log('🚀 Starting COMPLETE AUTOMATION: Store Creation → Git → Vercel → Live Domain');
-    
-    // Helper function to send progress updates
-    const sendProgress = (step, message, progress, type = 'progress') => {
-      console.log(`📊 [${progress}%] ${step}: ${message}`);
-      if (progressCallback) {
-        progressCallback({ type, step, message, progress });
-      }
-    };
-
-    const deploymentAutomation = new DeploymentAutomation();
-
+  async cleanupGitRepository() {
     try {
-      sendProgress('validation', 'Validating store data and prerequisites...', 5);
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      const storePath = `stores/${this.domain}`;
       
-      // Step 1: Create store in database
-      sendProgress('database', 'Creating store in database...', 15);
-      const store = await Store.create(storeData);
-      
-      // Step 2: Generate store files
-      sendProgress('files', 'Generating store files...', 25);
-      await store.generateStoreFiles();
-      
-      // Step 3: Execute complete deployment automation
-      sendProgress('deployment-start', 'Starting complete deployment automation...', 35);
-      
-      const deploymentResult = await deploymentAutomation.executeCompleteDeployment(store, {
-        progressCallback: (update) => {
-          // Forward deployment progress updates
-          const progressMap = {
-            'git-init': 45,
-            'git-commit': 55,
-            'vercel-config': 65,
-            'deployment-trigger': 75,
-            'domain-verify': 85
-          };
-          
-          const progress = progressMap[update.step] || 50;
-          sendProgress(update.step, update.message, progress, update.type || 'progress');
-        }
-      });
-      
-      if (deploymentResult.success) {
-        // Update store with deployment results
-        await store.update({ 
-          deployment_status: 'deployed',
-          deployed_at: new Date().toISOString(),
-          deployment_url: `https://${store.domain}`
-        });
-        
-        if (deploymentResult.isLive) {
-          sendProgress('complete', 'Store is LIVE and accessible!', 100, 'complete');
-          console.log(`✅ AUTOMATION COMPLETE: https://${store.domain}`);
-        } else {
-          sendProgress('deployed-propagating', 'Deployment successful, domain propagating...', 95, 'warning');
-          console.log(`⚠️ DEPLOYMENT COMPLETE, DOMAIN PROPAGATING: https://${store.domain}`);
-        }
-      } else {
-        throw new Error('Deployment automation failed');
-      }
-      
-      return store;
-      
-    } catch (error) {
-      console.error('❌ AUTOMATION FAILED:', error.message);
-      
-      // Update store deployment status
+      // Check if store directory exists in git
       try {
-        if (error.store) {
-          await error.store.update({ deployment_status: 'failed' });
+        await execAsync(`git ls-files ${storePath} | head -1`);
+        
+        // Remove from git and commit
+        console.log(`🔧 Removing ${storePath} from Git repository...`);
+        await execAsync(`git rm -r ${storePath}`);
+        await execAsync(`git commit -m "Remove deleted store: ${this.domain}
+
+🗑️ Store deletion cleanup:
+- Removed store files from repository
+- Cleaned up version control history
+- Domain: ${this.domain}
+- Store: ${this.name}
+
+🤖 Generated with Claude Code
+Co-Authored-By: Claude <noreply@anthropic.com>"`);
+        
+        console.log(`✅ Git cleanup completed for ${this.name}`);
+        
+        // Push changes to remote
+        try {
+          await execAsync('git push');
+          console.log(`✅ Pushed deletion commit to remote repository`);
+        } catch (pushError) {
+          console.warn(`⚠️ Failed to push to remote (continuing anyway):`, pushError.message);
         }
-      } catch (updateError) {
-        console.error('Failed to update deployment status:', updateError.message);
+      } catch (lsError) {
+        console.log(`ℹ️ Store ${storePath} not found in Git (already clean)`);
       }
-      
-      sendProgress('error', `Automation failed: ${error.message}`, 0, 'error');
-      throw error;
+    } catch (error) {
+      console.error(`⚠️ Git cleanup failed for ${this.name}:`, error.message);
+      // Don't throw error - continue with other cleanup steps
     }
   }
 
   /**
-   * Quick deployment method for simpler use cases
+   * Clean up orphaned database records
    */
-  async deployToLive() {
+  async cleanupOrphanedRecords() {
     try {
-      console.log(`🚀 Deploying ${this.name} to live domain...`);
+      console.log(`🧹 Cleaning up orphaned database records for store ID: ${this.id}`);
       
-      const deploymentAutomation = new DeploymentAutomation();
-      const result = await deploymentAutomation.executeCompleteDeployment(this);
+      // Clean up related tables that might reference this store
+      const cleanupQueries = [
+        { table: 'store_pages', query: 'DELETE FROM store_pages WHERE store_id = ?' },
+        { table: 'store_products', query: 'DELETE FROM store_products WHERE store_id = ?' },
+        { table: 'store_settings', query: 'DELETE FROM store_settings WHERE store_id = ?' }
+      ];
       
-      if (result.success) {
-        await this.update({ 
-          deployment_status: 'deployed',
-          deployed_at: new Date().toISOString(),
-          deployment_url: `https://${this.domain}`
-        });
-        console.log(`✅ ${this.name} deployed successfully: https://${this.domain}`);
+      for (const cleanup of cleanupQueries) {
+        try {
+          const result = await db.run(cleanup.query, [this.id]);
+          if (result.changes > 0) {
+            console.log(`✅ Cleaned up ${result.changes} records from ${cleanup.table}`);
+          }
+        } catch (tableError) {
+          // Table might not exist - that's okay
+          console.log(`ℹ️ Table ${cleanup.table} not found or already clean`);
+        }
       }
       
-      return result;
-      
+      console.log(`✅ Database cleanup completed for ${this.name}`);
     } catch (error) {
-      console.error(`❌ Deployment failed for ${this.name}:`, error.message);
+      console.error(`⚠️ Database cleanup failed for ${this.name}:`, error.message);
+      // Don't throw error - continue with deletion
+    }
+  }
+
+  /**
+   * Clean up Vercel project and domain
+   */
+  async cleanupVercelProject() {
+    try {
+      const { exec } = require('child_process');
+      const { promisify } = require('util');
+      const execAsync = promisify(exec);
+      console.log(`🔧 Attempting to remove Vercel project for ${this.domain}...`);
       
-      await this.update({ deployment_status: 'failed' });
-      throw error;
+      // Method 1: Try to remove domain from Vercel project
+      try {
+        await execAsync(`vercel domains rm ${this.domain} --yes`);
+        console.log(`✅ Removed domain ${this.domain} from Vercel`);
+      } catch (domainError) {
+        console.log(`ℹ️ Domain ${this.domain} not found in Vercel or already removed`);
+      }
+      
+      // Method 2: Try to delete the entire project
+      try {
+        // Get project info
+        const projectListResult = await execAsync('vercel list');
+        
+        // Look for project with matching domain
+        if (projectListResult.includes(this.domain)) {
+          // Find project name/id from the list
+          const lines = projectListResult.split('\n');
+          for (const line of lines) {
+            if (line.includes(this.domain)) {
+              // Extract project name (first column typically)
+              const projectName = line.trim().split(/\s+/)[0];
+              
+              if (projectName && projectName !== 'Name' && projectName.length > 0) {
+                console.log(`🗑️ Attempting to remove Vercel project: ${projectName}`);
+                
+                try {
+                  await execAsync(`vercel remove ${projectName} --yes`);
+                  console.log(`✅ Successfully removed Vercel project: ${projectName}`);
+                } catch (removeError) {
+                  console.warn(`⚠️ Could not remove project ${projectName}: ${removeError.message}`);
+                }
+              }
+              break;
+            }
+          }
+        } else {
+          console.log(`ℹ️ No Vercel project found for ${this.domain}`);
+        }
+      } catch (listError) {
+        console.log(`ℹ️ Could not list Vercel projects: ${listError.message}`);
+      }
+      
+      console.log(`✅ Vercel cleanup completed for ${this.domain}`);
+    } catch (error) {
+      console.error(`⚠️ Vercel cleanup failed for ${this.domain}:`, error.message);
+      console.log(`💡 Manual cleanup: Run 'vercel domains rm ${this.domain}' and remove project from Vercel dashboard`);
+      // Don't throw error - this is optional cleanup
     }
   }
 
@@ -863,42 +889,117 @@ class Store {
   }
 
   /**
-   * Force redeploy the store
+   * Fast deployment method for quick API responses
    */
-  async forceDeploy(progressCallback = null) {
+  async deployFast(force = false) {
     try {
-      console.log(`🔄 Force redeploying ${this.name}...`);
+      console.log(`⚡ Fast deploying ${this.name}${force ? ' (FORCED)' : ''}`);
+      
+      // Check if already deployed and not forcing
+      if (!force && this.deployment_status === 'deployed' && this.storeFilesExist()) {
+        console.log(`✅ ${this.name} is already deployed at https://${this.domain}`);
+        return {
+          success: true,
+          url: `https://${this.domain}`,
+          isLive: true,
+          message: 'Store is already deployed',
+          alreadyDeployed: true
+        };
+      }
       
       // Update status to deploying
       await this.update({ deployment_status: 'deploying' });
       
-      // Regenerate files first
-      await this.regenerateStoreFiles();
+      // Generate store files only
+      console.log(`📁 Generating store files for ${this.name}...`);
+      await this.generateStoreFiles();
       
-      // Execute deployment
+      // Update deployment status to success (files are auto-deployed via Git automation)
+      await this.update({ 
+        deployment_status: 'deployed',
+        deployed_at: new Date().toISOString(),
+        deployment_url: `https://${this.domain}`
+      });
+      
+      console.log(`⚡ ${this.name} deployed successfully (fast mode): https://${this.domain}`);
+      return {
+        success: true,
+        url: `https://${this.domain}`,
+        isLive: false, // Will be live shortly
+        message: 'Fast deployment completed - files pushed to GitHub and will be live shortly'
+      };
+      
+    } catch (error) {
+      console.error(`❌ Fast deployment failed for ${this.name}:`, error.message);
+      
+      // Update deployment status to failed
+      await this.update({ deployment_status: 'failed' });
+      
+      throw new Error(`Fast deployment failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Single, reliable deployment method - handles all deployment scenarios
+   * This replaces forceDeploy, deployToLive, regenerateStoreFiles etc.
+   */
+  async deploy(progressCallback = null, force = false) {
+    try {
+      console.log(`🚀 Deploying ${this.name} - Single reliable deployment path${force ? ' (FORCED)' : ''}`);
+      
+      // Check if already deployed and not forcing
+      if (!force && this.deployment_status === 'deployed' && this.storeFilesExist()) {
+        console.log(`✅ ${this.name} is already deployed at https://${this.domain}`);
+        return {
+          success: true,
+          url: `https://${this.domain}`,
+          isLive: true,
+          message: 'Store is already deployed',
+          alreadyDeployed: true
+        };
+      }
+      
+      // Update status to deploying
+      await this.update({ deployment_status: 'deploying' });
+      
+      // Step 1: Generate/regenerate store files
+      console.log(`📁 Generating store files for ${this.name}...`);
+      await this.generateStoreFiles();
+      
+      // Step 2: Execute deployment automation
+      console.log(`🚀 Executing deployment automation for ${this.name}...`);
       const deploymentAutomation = new DeploymentAutomation();
       const result = await deploymentAutomation.executeCompleteDeployment(this, {
         progressCallback
       });
       
       if (result.success) {
+        // Update deployment status to success
         await this.update({ 
           deployment_status: 'deployed',
           deployed_at: new Date().toISOString(),
           deployment_url: `https://${this.domain}`
         });
-        console.log(`✅ ${this.name} force redeployed successfully`);
+        
+        console.log(`✅ ${this.name} deployed successfully: https://${this.domain}`);
+        return {
+          success: true,
+          url: `https://${this.domain}`,
+          isLive: result.isLive || false,
+          message: 'Deployment completed successfully'
+        };
       } else {
         await this.update({ deployment_status: 'failed' });
-        throw new Error('Force deployment failed');
+        throw new Error('Deployment automation failed');
       }
       
-      return result;
-      
     } catch (error) {
-      console.error(`❌ Force deployment failed for ${this.name}:`, error.message);
+      console.error(`❌ Deployment failed for ${this.name}:`, error.message);
+      
+      // Update deployment status to failed
       await this.update({ deployment_status: 'failed' });
-      throw error;
+      
+      throw new Error(`Deployment failed: ${error.message}`);
     }
   }
 

@@ -60,13 +60,21 @@ router.get('/', (req, res) => {
 });
 
 
-// Middleware to validate JSON content type for POST requests (skip for specific endpoints)
+// Simplified middleware to validate JSON content type for POST requests
 router.use((req, res, next) => {
-  // Skip content-type validation for deploy/regenerate/bulk endpoints that don't need body
-  const skipValidation = req.path.includes('/deploy') || req.path.includes('/regenerate') || req.path.includes('/bulk') || req.method === 'GET' || req.method === 'DELETE';
+  // Skip content-type validation for specific endpoints that don't require a body
+  const skipValidation = req.path.includes('/deploy') || 
+                        req.path.includes('/bulk') || 
+                        req.path.includes('/test-connection') ||
+                        req.path.includes('/toggle-status') ||
+                        req.method === 'GET' || 
+                        req.method === 'DELETE';
   
-  if (!skipValidation && req.method === 'POST' && !req.is('application/json') && !req.is('application/x-www-form-urlencoded')) {
-    return res.status(400).json({ error: 'Content-Type must be application/json or application/x-www-form-urlencoded' });
+  // Only validate content-type for POST/PUT requests that require a body
+  if (!skipValidation && (req.method === 'POST' || req.method === 'PUT') && Object.keys(req.body || {}).length > 0) {
+    if (!req.is('application/json') && !req.is('application/x-www-form-urlencoded')) {
+      return res.status(400).json({ error: 'Content-Type must be application/json or application/x-www-form-urlencoded' });
+    }
   }
   next();
 });
@@ -434,38 +442,6 @@ router.post('/detect-domain-info', async (req, res) => {
 
 // === STORE MANAGEMENT ENDPOINTS ===
 
-// Bulk regenerate legal pages for all stores - MUST be before /stores/:uuid
-router.post('/stores/bulk/regenerate-legal', async (req, res) => {
-  try {
-    const stores = await Store.findAll();
-    let updated = 0;
-    const errors = [];
-    
-    for (const store of stores) {
-      try {
-        await store.regenerateLegalPages();
-        updated++;
-      } catch (error) {
-        console.error(`Error regenerating legal pages for ${store.name}:`, error.message);
-        errors.push({ store: store.name, error: error.message });
-      }
-    }
-    
-    res.json({
-      success: true,
-      updated,
-      total: stores.length,
-      errors: errors.length > 0 ? errors : null,
-      message: `Legal pages regenerated for ${updated} out of ${stores.length} stores`
-    });
-  } catch (error) {
-    console.error('Bulk regenerate legal pages error:', error);
-    res.status(500).json({ 
-      error: 'Failed to bulk regenerate legal pages',
-      details: error.message 
-    });
-  }
-});
 
 // Bulk redeploy all stores - MUST be before /stores/:uuid
 router.post('/stores/bulk/redeploy', async (req, res) => {
@@ -479,10 +455,10 @@ router.post('/stores/bulk/redeploy', async (req, res) => {
       await store.update({ deployment_status: 'deploying' });
       count++;
       
-      // Start deployment in background
+      // Start deployment in background using simplified deploy method
       setImmediate(async () => {
         try {
-          await store.forceDeploy();
+          await store.deploy();
         } catch (error) {
           console.error(`Bulk redeploy failed for ${store.name}:`, error.message);
         }
@@ -662,8 +638,8 @@ router.put('/stores/:uuid', async (req, res) => {
       await store.regenerateStoreFiles();
       console.log(`🔄 Store files auto-regenerated for ${store.name} after update`);
       
-      // Trigger GitHub + Vercel deployment (same as store creation)
-      await store.forceDeploy();
+      // Trigger deployment using simplified method
+      await store.deploy();
       console.log(`🚀 Store deployment triggered for ${store.name} after update`);
     } catch (regenError) {
       console.warn(`⚠️ Failed to auto-regenerate/deploy store files for ${store.name}:`, regenError.message);
@@ -702,29 +678,6 @@ router.delete('/stores/:uuid', async (req, res) => {
   }
 });
 
-// Regenerate store files
-router.post('/stores/:uuid/regenerate', async (req, res) => {
-  try {
-    const store = await Store.findByUuid(req.params.uuid);
-    if (!store) {
-      return res.status(404).json({ error: 'Store not found' });
-    }
-    
-    await store.regenerateStoreFiles();
-    
-    res.json({
-      success: true,
-      store: store.toJSON(),
-      message: 'Store files regenerated successfully'
-    });
-  } catch (error) {
-    console.error('Regenerate store error:', error);
-    res.status(500).json({ 
-      error: 'Failed to regenerate store files',
-      details: error.message 
-    });
-  }
-});
 
 // Get store deployment status
 router.get('/stores/:uuid/deployment', async (req, res) => {
@@ -750,95 +703,95 @@ router.get('/stores/:uuid/deployment', async (req, res) => {
   }
 });
 
-// Deploy store (generate files if not exist)
-router.post('/stores/:uuid/deploy', async (req, res) => {
+
+// Fast deployment endpoint for quick API responses
+router.post('/stores/:uuid/deploy-fast', async (req, res) => {
+  let store;
   try {
-    const store = await Store.findByUuid(req.params.uuid);
+    store = await Store.findByUuid(req.params.uuid);
     if (!store) {
       return res.status(404).json({ error: 'Store not found' });
     }
     
-    // Check if files already exist
-    if (store.storeFilesExist() && store.deployment_status === 'deployed') {
-      return res.json({
-        success: true,
-        store: store.toJSON(),
-        message: 'Store is already deployed'
-      });
-    }
+    const { force = false } = req.body;
+    console.log(`⚡ Fast deploying ${store.name}${force ? ' (FORCED)' : ''}`);
     
-    // Update status to deploying
-    await store.update({ deployment_status: 'deploying' });
-    
-    // Generate store files
-    await store.generateStoreFiles();
-    
-    // Update status to deployed
-    await store.update({ 
-      deployment_status: 'deployed',
-      deployed_at: new Date().toISOString(),
-      deployment_url: `https://${store.domain}`
-    });
+    // Use the fast deploy method
+    const result = await store.deployFast(force);
     
     res.json({
       success: true,
       store: store.toJSON(),
-      message: 'Store deployed successfully'
+      message: result.message,
+      deployment: {
+        status: store.deployment_status,
+        url: result.url,
+        deployed_at: store.deployed_at,
+        live: result.isLive || false,
+        alreadyDeployed: result.alreadyDeployed || false,
+        fast_mode: true
+      }
     });
   } catch (error) {
-    console.error('Deploy store error:', error);
+    console.error('Fast deploy store error:', error);
     
-    // Update status to failed
-    try {
-      const store = await Store.findByUuid(req.params.uuid);
-      if (store) {
+    // Update status to failed if store exists
+    if (store) {
+      try {
         await store.update({ deployment_status: 'failed' });
+      } catch (updateError) {
+        console.error('Failed to update deployment status:', updateError);
       }
-    } catch (updateError) {
-      console.error('Failed to update deployment status:', updateError);
     }
     
     res.status(500).json({ 
-      error: 'Failed to deploy store',
+      error: 'Fast deployment failed',
       details: error.message 
     });
   }
 });
 
-// Force deploy to Vercel using DeploymentAutomation
-router.post('/stores/:uuid/force-deploy', async (req, res) => {
+// Single reliable deployment endpoint - handles all deployment scenarios
+router.post('/stores/:uuid/deploy', async (req, res) => {
+  let store;
   try {
-    const store = await Store.findByUuid(req.params.uuid);
+    store = await Store.findByUuid(req.params.uuid);
     if (!store) {
       return res.status(404).json({ error: 'Store not found' });
     }
     
-    console.log(`🚀 Force deploying ${store.name} to Vercel...`);
+    const { force = false } = req.body;
+    console.log(`🚀 Deploying ${store.name} - Single reliable deployment path${force ? ' (FORCED)' : ''}`);
     
-    // Use the store's forceDeploy method which includes DeploymentAutomation
-    await store.forceDeploy();
+    // Use the simplified deploy method
+    const result = await store.deploy(null, force);
     
     res.json({
       success: true,
       store: store.toJSON(),
-      message: 'Store force deployed to Vercel successfully',
-      note: 'Deployment includes Git commit, push, and Vercel CLI deployment'
+      message: result.message,
+      deployment: {
+        status: store.deployment_status,
+        url: result.url,
+        deployed_at: store.deployed_at,
+        live: result.isLive || false,
+        alreadyDeployed: result.alreadyDeployed || false
+      }
     });
   } catch (error) {
-    console.error('Force deploy error:', error);
+    console.error('Deploy store error:', error);
     
-    // Update status to failed
-    try {
-      const store = await Store.findByUuid(req.params.uuid);
-      if (store) {
+    // Update status to failed if store exists
+    if (store) {
+      try {
         await store.update({ deployment_status: 'failed' });
+      } catch (updateError) {
+        console.error('Failed to update deployment status:', updateError);
       }
-    } catch (updateError) {
-      console.error('Failed to update deployment status:', updateError);
     }
     
     res.status(500).json({ 
-      error: 'Failed to force deploy store to Vercel',
+      error: 'Deployment failed',
       details: error.message 
     });
   }
@@ -1576,29 +1529,6 @@ router.patch('/company-shopify-stores/:uuid/toggle-status', async (req, res) => 
 });
 
 // Regenerate legal pages for a specific store
-router.post('/stores/:uuid/regenerate-legal', async (req, res) => {
-  try {
-    const store = await Store.findByUuid(req.params.uuid);
-    if (!store) {
-      return res.status(404).json({ error: 'Store not found' });
-    }
-    
-    // Regenerate legal pages using professional templates
-    await store.regenerateLegalPages();
-    
-    res.json({
-      success: true,
-      store: store.toJSON(),
-      message: 'Legal pages regenerated successfully'
-    });
-  } catch (error) {
-    console.error('Regenerate legal pages error:', error);
-    res.status(500).json({ 
-      error: 'Failed to regenerate legal pages',
-      details: error.message 
-    });
-  }
-});
 
 
 

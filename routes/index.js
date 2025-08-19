@@ -224,17 +224,13 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
           
           await existingStore.update(updateData);
           
-          // Auto-regenerate and deploy store files after update (same as API route)
-          console.log('🎯 Starting auto-regeneration and deployment...');
+          // Auto-regenerate and deploy store files after update (fast deployment)
+          console.log('⚡ Starting fast auto-regeneration and deployment...');
           try {
-            console.log('📁 Calling regenerateStoreFiles...');
-            await existingStore.regenerateStoreFiles();
-            console.log(`🔄 Store files auto-regenerated for ${existingStore.name} after site-setup update`);
-            
-            console.log('🚀 Calling forceDeploy...');
-            // Trigger GitHub + Vercel deployment
-            await existingStore.forceDeploy();
-            console.log(`🚀 Store deployment triggered for ${existingStore.name} after site-setup update`);
+            console.log('⚡ Calling deployFast...');
+            // Use fast deployment which regenerates files instantly
+            await existingStore.deployFast(true);
+            console.log(`⚡ Store fast deployment completed for ${existingStore.name} after site-setup update`);
           } catch (regenError) {
             console.error(`⚠️ Failed to auto-regenerate/deploy store files for ${existingStore.name}:`, regenError.message);
             console.error('Full error:', regenError);
@@ -347,7 +343,11 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
           console.log('🚀 EXECUTING COMPLETE AUTOMATION PIPELINE');
           console.log('📋 Pipeline: Database → Files → Git → Vercel → Live Domain');
           
-          const store = await Store.createWithDeployment(storeData, (update) => {
+          // Create store first
+          const store = await Store.create(storeData);
+          
+          // Then deploy it
+          await store.deploy((update) => {
             // Enhanced progress updates with automation context
             const enhancedUpdate = {
               ...update,
@@ -654,7 +654,7 @@ router.post('/admin/deployment/redeploy/:storeId', async (req, res) => {
     // Execute redeployment in background
     setImmediate(async () => {
       try {
-        await store.forceDeploy((update) => {
+        await store.deploy((update) => {
           sendDeploymentUpdate(deploymentId, {
             ...update,
             redeployment: true,

@@ -216,29 +216,17 @@
                                                             <li><a class="dropdown-item" href="/admin/stores/<%= store.uuid %>">
                                                                 <i class="bi bi-info-circle me-2"></i>View Details
                                                             </a></li>
-                                                            <li><a class="dropdown-item" href="#" onclick="editStore('<%= store.uuid %>')">
-                                                                <i class="bi bi-pencil me-2"></i>Edit Basic Details
-                                                            </a></li>
                                                             <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
-                                                                <i class="bi bi-sliders me-2"></i>Edit Advanced Settings
+                                                                <i class="bi bi-pencil me-2"></i>Edit Store
                                                             </a></li>
                                                             
                                                             <!-- CONTENT & DEPLOYMENT -->
                                                             <li><hr class="dropdown-divider"></li>
                                                             <li><h6 class="dropdown-header text-muted small">
-                                                                <i class="bi bi-cloud-upload me-1"></i>Content & Deployment
+                                                                <i class="bi bi-cloud me-1"></i>Deployment
                                                             </h6></li>
-                                                            <li><a class="dropdown-item" href="#" onclick="regenerateLegalPages('<%= store.uuid %>')">
-                                                                <i class="bi bi-file-earmark-text me-2"></i>Regenerate Legal Pages
-                                                            </a></li>
-                                                            <li><a class="dropdown-item" href="#" onclick="regenerateStore('<%= store.uuid %>')">
-                                                                <i class="bi bi-arrow-clockwise me-2"></i>Regenerate All Content
-                                                            </a></li>
-                                                            <li><a class="dropdown-item deployment-action" href="#" onclick="smartDeploy('<%= store.uuid %>')" data-store-uuid="<%= store.uuid %>">
-                                                                <i class="bi bi-rocket me-2"></i><span class="deploy-text">Deploy Changes</span>
-                                                            </a></li>
-                                                            <li><a class="dropdown-item text-primary" href="#" onclick="forceDeployToVercel('<%= store.uuid %>')">
-                                                                <i class="bi bi-cloud-upload me-2"></i>Force Deploy to Vercel
+                                                            <li><a class="dropdown-item text-primary" href="#" onclick="deployStore('<%= store.uuid %>')">
+                                                                <i class="bi bi-cloud-upload me-2"></i>Deploy Store
                                                             </a></li>
                                                             
                                                             <!-- DANGER ZONE -->
@@ -276,11 +264,6 @@
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-3">
-                                <button class="btn btn-outline-info w-100" onclick="bulkRegenerateLegal()">
-                                    <i class="bi bi-file-earmark-text me-2"></i>Update Legal Pages (All Stores)
-                                </button>
-                            </div>
                             <div class="col-md-3">
                                 <button class="btn btn-outline-secondary w-100" onclick="bulkUpdateConfig()">
                                     <i class="bi bi-sliders me-2"></i>Advanced Bulk Operations
@@ -501,35 +484,6 @@
         }
         
         // Regenerate store files
-        async function regenerateStore(uuid) {
-            if (!confirm('Regenerate store files? This will rebuild all pages and may cause temporary downtime.')) {
-                return;
-            }
-            
-            const statusElement = document.querySelector(`[data-store-uuid="${uuid}"]`);
-            if (statusElement) {
-                statusElement.innerHTML = '<span class="badge bg-warning"><i class="bi bi-arrow-clockwise me-1"></i>Regenerating...</span>';
-            }
-            
-            try {
-                const response = await fetch(`/api/stores/${uuid}/regenerate`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert('Store files regenerated successfully!');
-                    loadDeploymentStatuses();
-                } else {
-                    alert('Regeneration failed: ' + data.error);
-                    loadDeploymentStatuses();
-                }
-            } catch (error) {
-                console.error('Regeneration error:', error);
-                alert('Regeneration failed. Please try again.');
-                loadDeploymentStatuses();
-            }
-        }
         
         // Load live stores
         function loadLiveStores() {
@@ -558,7 +512,7 @@
         }
         
         function deleteStore(storeUuid) {
-            if (confirm('Are you sure you want to delete this store? This action cannot be undone and will remove all files.')) {
+            if (confirm('🗑️ COMPLETE Store Deletion - Full Automation\n\nThis will permanently remove:\n✅ All store files and folders\n✅ Database records and related data  \n✅ Files from Git repository\n✅ Commit and push to GitHub\n✅ Vercel project and domain\n✅ Complete cleanup everywhere\n\n⚠️ This action cannot be undone!\n\nProceed with FULL deletion?')) {
                 fetch(`/api/stores/${storeUuid}`, {
                     method: 'DELETE',
                     headers: {
@@ -580,251 +534,40 @@
             }
         }
         
-        // Edit store details
-        async function editStore(uuid) {
-            try {
-                const response = await fetch(`/api/stores/${uuid}`);
-                const data = await response.json();
-                
-                if (data.success) {
-                    showEditStoreModal(data.store);
-                } else {
-                    alert('Failed to load store details: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error loading store details:', error);
-                alert('Failed to load store details');
-            }
-        }
         
-        // Show edit store modal
-        function showEditStoreModal(store) {
-            const modalHtml = `
-                <div class="modal fade" id="editStoreModal" tabindex="-1">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Edit Store: ${store.name}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="editStoreForm">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Store Name</label>
-                                                <input type="text" class="form-control" name="name" value="${store.name}" required>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Domain</label>
-                                                <input type="text" class="form-control" name="domain" value="${store.domain}" required>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <div class="mb-3">
-                                                <label class="form-label">Country</label>
-                                                <input type="text" class="form-control" name="country" value="${store.country}">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="mb-3">
-                                                <label class="form-label">Currency</label>
-                                                <input type="text" class="form-control" name="currency" value="${store.currency}">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="mb-3">
-                                                <label class="form-label">Language</label>
-                                                <input type="text" class="form-control" name="language" value="${store.language}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Support Email</label>
-                                                <input type="email" class="form-control" name="support_email" value="${store.support_email || ''}">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Support Phone</label>
-                                                <input type="text" class="form-control" name="support_phone" value="${store.support_phone || ''}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Business Address</label>
-                                        <textarea class="form-control" name="business_address" rows="2">${store.business_address || ''}</textarea>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Primary Color</label>
-                                                <input type="color" class="form-control form-control-color" name="primary_color" value="${store.primary_color || '#007cba'}">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label">Secondary Color</label>
-                                                <input type="color" class="form-control form-control-color" name="secondary_color" value="${store.secondary_color || '#f8f9fa'}">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" onclick="saveStoreChanges('${store.uuid}')">Save Changes</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Remove existing modal if any
-            const existingModal = document.getElementById('editStoreModal');
-            if (existingModal) {
-                existingModal.remove();
-            }
-            
-            // Add modal to body
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            
-            // Show modal
-            const modal = new bootstrap.Modal(document.getElementById('editStoreModal'));
-            modal.show();
-        }
         
-        // Save store changes
-        async function saveStoreChanges(uuid) {
-            const form = document.getElementById('editStoreForm');
-            const formData = new FormData(form);
-            const updateData = Object.fromEntries(formData.entries());
-            
-            try {
-                const response = await fetch(`/api/stores/${uuid}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(updateData)
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editStoreModal'));
-                    modal.hide();
-                    
-                    // Reload page to show changes
-                    location.reload();
-                } else {
-                    alert('Failed to update store: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error updating store:', error);
-                alert('Failed to update store');
-            }
-        }
         
-        // Regenerate legal pages for a store
-        async function regenerateLegalPages(uuid) {
-            if (!confirm('Regenerate legal pages for this store? This will update terms, privacy, refund, and delivery pages with professional templates.')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/stores/${uuid}/regenerate-legal`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert('Legal pages regenerated successfully!');
-                } else {
-                    alert('Failed to regenerate legal pages: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error regenerating legal pages:', error);
-                alert('Failed to regenerate legal pages');
-            }
-        }
-        
-        // Smart deployment - context aware
-        async function smartDeploy(uuid) {
-            const statusElement = document.querySelector(`[data-store-uuid="${uuid}"]`);
-            const isDeployed = statusElement && statusElement.textContent.includes('Deployed');
-            
-            const action = isDeployed ? 'redeploy' : 'deploy';
-            const message = isDeployed ? 
-                'Redeploy this store? This will update the live site with any changes.' :
-                'Deploy this store? This will generate all store files and make the store live.';
-            
-            if (!confirm(message)) {
-                return;
-            }
-            
-            if (statusElement) {
-                statusElement.innerHTML = `<span class="badge bg-warning"><i class="bi bi-clock me-1"></i>${isDeployed ? 'Redeploying...' : 'Deploying...'}</span>`;
-            }
-            
-            try {
-                const response = await fetch(`/api/stores/${uuid}/deploy`, {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(`Store ${isDeployed ? 'redeployed' : 'deployed'} successfully! It is now live at: https://${data.store.domain}`);
-                    loadDeploymentStatuses();
-                } else {
-                    alert(`${isDeployed ? 'Redeployment' : 'Deployment'} failed: ${data.error}`);
-                    loadDeploymentStatuses();
-                }
-            } catch (error) {
-                console.error(`${action} error:`, error);
-                alert(`${isDeployed ? 'Redeployment' : 'Deployment'} failed. Please try again.`);
-                loadDeploymentStatuses();
-            }
-        }
-        
-        // Force deploy to Vercel with full automation
-        async function forceDeployToVercel(uuid) {
-            if (!confirm('Force deploy this store to Vercel?\n\nThis will:\n• Regenerate all store files\n• Commit and push to GitHub\n• Trigger Vercel CLI deployment\n• Update live domain\n\nThis may take 2-5 minutes.')) {
+        // Deploy store using simplified single endpoint
+        async function deployStore(uuid) {
+            if (!confirm('Deploy this store?\n\nThis will:\n• Regenerate all store files instantly\n• Execute fast deployment\n• Files will be live in seconds\n\nProceed?')) {
                 return;
             }
             
             // Show loading state
             const button = event.target.closest('a');
             const originalText = button.innerHTML;
-            button.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Deploying to Vercel...';
+            button.innerHTML = '<i class="bi bi-lightning me-2"></i>Deploying...';
             button.style.pointerEvents = 'none';
             
             try {
-                const response = await fetch(`/api/stores/${uuid}/force-deploy`, {
+                const response = await fetch(`/api/stores/${uuid}/deploy-fast`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({})
+                    body: JSON.stringify({ force: true })
                 });
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert(`🚀 Store successfully deployed to Vercel!\n\n✅ ${data.message}\n🌐 Live at: https://${data.store.domain}\n\nNote: ${data.note}`);
+                    alert(`🚀 Store deployed successfully!\n\n✅ ${data.message}\n🌐 Live at: ${data.deployment.url}`);
                     loadDeploymentStatuses();
                 } else {
-                    alert(`❌ Vercel deployment failed:\n\n${data.error}\n\nDetails: ${data.details || 'No additional details'}`);
+                    alert(`❌ Deployment failed:\n\n${data.error}\n\nDetails: ${data.details || 'No additional details'}`);
                 }
             } catch (error) {
-                console.error('Force deploy error:', error);
-                alert(`❌ Vercel deployment failed:\n\nNetwork error or server timeout.\nPlease check the server logs and try again.`);
+                console.error('Deploy error:', error);
+                alert(`❌ Deployment failed:\n\nNetwork error or server timeout.\nPlease check the server logs and try again.`);
             } finally {
                 // Restore button
                 button.innerHTML = originalText;
@@ -833,28 +576,6 @@
             }
         }
         
-        // Bulk operations
-        async function bulkRegenerateLegal() {
-            if (!confirm('Regenerate legal pages for ALL stores? This may take a while.')) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/stores/bulk/regenerate-legal', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (data.success) {
-                    alert(`Legal pages regenerated for ${data.updated} stores!`);
-                } else {
-                    alert('Failed to regenerate legal pages: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error in bulk legal regeneration:', error);
-                alert('Failed to regenerate legal pages');
-            }
-        }
         
         async function bulkUpdateConfig() {
             alert('Bulk configuration update feature coming soon!');
