@@ -74,6 +74,74 @@
             width: 0%;
         }
         
+        /* Step Navigation Styles */
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            background: #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border: 3px solid #e9ecef;
+        }
+        
+        .step-label {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #333333;
+            text-align: center;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-circle {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.1);
+        }
+        
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .step.completed .step-circle {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .step.completed .step-label {
+            color: #28a745;
+        }
+        
+        .step:hover:not(.active) .step-circle {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+            transform: scale(1.05);
+        }
+        
+        .step:hover .step-label {
+            color: #667eea;
+        }
+        
         .form-section {
             padding: 3rem;
         }
@@ -1130,6 +1198,9 @@
                 if (step) {
                     this.goToStep(parseInt(step));
                 }
+                
+                // Make step indicators clickable
+                this.setupStepNavigation();
 
                 // Show success message if redirected after successful updates
                 if (urlParams.get('updated') === 'true') {
@@ -1144,6 +1215,31 @@
 
                 // Initialize localized titles
                 this.updateLocalizedTitles();
+            }
+            
+            setupStepNavigation() {
+                // Add click listeners to step indicators
+                document.querySelectorAll('.step').forEach(step => {
+                    step.addEventListener('click', () => {
+                        const targetStep = parseInt(step.dataset.step);
+                        
+                        // Only allow navigation to previous steps or current step
+                        // Don't allow skipping ahead without validation
+                        if (targetStep <= this.currentStep || targetStep === this.currentStep + 1) {
+                            if (targetStep === this.currentStep + 1) {
+                                // If trying to go to next step, validate current step first
+                                if (this.validateStep(this.currentStep)) {
+                                    this.goToStep(targetStep);
+                                } else {
+                                    this.showAlert('Please complete current step first', 'warning');
+                                }
+                            } else {
+                                // Allow going back to previous steps
+                                this.goToStep(targetStep);
+                            }
+                        }
+                    });
+                });
             }
 
             async loadPageTemplates() {

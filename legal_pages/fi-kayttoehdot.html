@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Käyttöehdot – $domain</title>
+  <meta name="description" content="Käyttöehdot für $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Käyttöehdot</nav>
+  <h1>Käyttöehdot</h1>
+
+  <section>
+    <h2>1. Yleistä</h2>
+    <p>Nämä käyttöehdot koskevat, kun vierailet tai asioit sivustolla <strong>$domain</strong>, jota ylläpitää <strong>$company_name</strong> (<strong>$company_orgnr</strong>, <strong>$company_address</strong>). <strong>$country</strong>n lait, mukaan lukien kuluttaja- ja sähköisen kaupankäynnin säännökset, ovat sovellettavia.</p>
+  </section>
+
+  <section>
+    <h2>2. Ikäraja</h2>
+    <p>Tilauksen tekeminen <strong>$domain</strong>-sivustolla edellyttää 18 vuoden ikää tai huoltajan suostumusta.</p>
+  </section>
+
+  <section>
+    <h2>3. Tilaus &amp; maksu</h2>
+    <p>Kaikki hinnat ilmoitetaan valuutassa <strong>$currency</strong> ja ne sisältävät arvonlisäveron. Pidätämme oikeuden kirjoitusvirheisiin ja hinnanmuutoksiin. Maksu suoritetaan kassalla tarjolla olevilla maksutavoilla.</p>
+  </section>
+
+  <section>
+    <h2>4. Toimitus</h2>
+    <p>Toimitus tapahtuu <a href="/pages/leveranspolicy">Toimitusehdot</a>-sivun mukaisesti. Vastuu siirtyy asiakkaalle, kun lähetys on toimitettu.</p>
+  </section>
+
+  <section>
+    <h2>5. Peruuttamisoikeus &amp; palautukset</h2>
+    <p>Sinulla on lain mukainen 14 päivän peruuttamisoikeus. Lisäksi <strong>$domain</strong> tarjoaa 30 päivän palautusajan tuotteen vastaanottamisesta.</p>
+    <ul>
+      <li>Tuotteen on oltava käyttämätön ja alkuperäispakkauksessa.</li>
+      <li>Asiakas maksaa palautuslähetyksen.</li>
+      <li>Ota yhteyttä osoitteeseen <a href="mailto:$contact_email">$contact_email</a> ennen palautusta.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6. Reklamaatiot</h2>
+    <p>Voit tehdä reklamaation sovellettavan kuluttajansuojalain mukaisesti.</p>
+  </section>
+
+  <section>
+    <h2>7. Riidanratkaisu</h2>
+    <p>Voit käyttää EU:n verkkovälitteistä riidanratkaisualustaa: <a href="https://ec.europa.eu/consumers/odr" rel="noopener">https://ec.europa.eu/consumers/odr</a>.</p>
+  </section>
+
+  <footer>
+    <p>Fragen / Questions / Kysymykset: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

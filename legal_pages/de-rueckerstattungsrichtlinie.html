@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rückerstattungsrichtlinie – $domain</title>
+  <meta name="description" content="Rückerstattungsrichtlinie für $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Rückerstattungsrichtlinie</nav>
+  <h1>Rückerstattungsrichtlinie</h1>
+
+  <section>
+    <h2>1. Widerrufsrecht</h2>
+    <p>Sie können den Kauf innerhalb von 14 Tagen gesetzlich widerrufen. Zusätzlich bietet <strong>$domain</strong> eine 30‑tägige Rückgabefrist ab Erhalt.</p>
+    <ul>
+      <li>Artikel müssen unbenutzt und in der Originalverpackung sein.</li>
+      <li>Die Rücksendekosten trägt der Kunde.</li>
+      <li>Kontaktieren Sie uns vor der Rücksendung unter <a href="mailto:$contact_email">$contact_email</a>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Ausnahmen</h2>
+    <p>Kein Widerruf für:</p>
+    <ul>
+      <li>Versiegelte Waren, die aus Gesundheits-/Hygienegründen nicht zur Rückgabe geeignet sind und geöffnet wurden.</li>
+      <li>Sonderanfertigungen.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Erstattung</h2>
+    <p>Erstattungen erfolgen innerhalb von 14 Tagen nach geprüfter Rücksendung über die ursprüngliche Zahlungsart.</p>
+  </section>
+
+  <section>
+    <h2>4. Mängelrüge</h2>
+    <p>Sie können Mängel gemäß dem anwendbaren Verbraucherrecht rügen.</p>
+  </section>
+
+  <footer>
+    <p>Fragen / Questions / Kysymykset: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

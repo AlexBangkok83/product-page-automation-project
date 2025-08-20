@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Användarvillkor – $domain</title>
+  <meta name="description" content="Användarvillkor för $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+    code.var { background: #f6f6f6; padding: .1rem .3rem; border-radius: .25rem; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Användarvillkor</nav>
+  <h1>Användarvillkor</h1>
+
+  <section>
+    <h2>1. Allmänt</h2>
+    <p>Dessa användarvillkor gäller när du besöker eller handlar på <strong>$domain</strong>, som drivs av <strong>$company_name</strong> (org.nr <strong>$company_orgnr</strong>, <strong>$company_address</strong>). Lagar i <strong>$country</strong> tillämpas, inklusive Konsumentköplagen, Distansavtalslagen och E‑handelslagen.</p>
+  </section>
+
+  <section>
+    <h2>2. Åldersgräns</h2>
+    <p>För att handla på <strong>$domain</strong> måste du vara minst 18 år eller ha målsmans tillstånd.</p>
+  </section>
+
+  <section>
+    <h2>3. Beställning &amp; betalning</h2>
+    <p>Alla priser anges i <strong>$currency</strong> inklusive moms. Vi reserverar oss för eventuella skrivfel och prisändringar. Betalning sker genom de betalningsalternativ som erbjuds i kassan.</p>
+  </section>
+
+  <section>
+    <h2>4. Leverans</h2>
+    <p>Leverans sker enligt villkor i vår <a href="/pages/leveranspolicy">Leveranspolicy</a>. Risken övergår till dig när varan har levererats.</p>
+  </section>
+
+  <section>
+    <h2>5. Ångerrätt &amp; retur</h2>
+    <p>Du har rätt att ångra ditt köp inom 14 dagar enligt Distansavtalslagen. <strong>$domain</strong> erbjuder dessutom en utökad returperiod på 30 dagar från mottagandet av varan.</p>
+    <ul>
+      <li>Produkten ska vara i ursprungligt skick och förpackning.</li>
+      <li>Kunden betalar returfrakten.</li>
+      <li>Kontakta oss på <a href="mailto:$contact_email">$contact_email</a> innan retur.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6. Reklamation</h2>
+    <p>Vid fel på varan har du rätt att reklamera inom tre år enligt Konsumentköplagen. Vi följer Allmänna Reklamationsnämndens (ARN) rekommendationer.</p>
+  </section>
+
+  <section>
+    <h2>7. Tvistlösning</h2>
+    <p>Vid tvist kan du vända dig till ARN eller EU:s Online Dispute Resolution: <a href="https://ec.europa.eu/consumers/odr" rel="noopener">https://ec.europa.eu/consumers/odr</a>.</p>
+  </section>
+
+  <footer>
+    <p>Frågor? Kontakta oss på <a href="mailto:$contact_email">$contact_email</a>.</p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · Org.nr $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Återbetalningspolicy – $domain</title>
+  <meta name="description" content="Återbetalningspolicy för $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+    code.var { background: #f6f6f6; padding: .1rem .3rem; border-radius: .25rem; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Återbetalningspolicy</nav>
+  <h1>Återbetalningspolicy</h1>
+
+  <section>
+    <h2>1. Ångerrätt</h2>
+    <p>Du har rätt att ångra ditt köp inom 14 dagar enligt lag. <strong>$domain</strong> erbjuder dessutom 30 dagars retur från mottagandet.</p>
+    <ul>
+      <li>Produkten ska vara oanvänd och i originalförpackning.</li>
+      <li>Kunden betalar returfrakten.</li>
+      <li>Kontakta <a href="mailto:$contact_email">$contact_email</a> innan retur.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Undantag</h2>
+    <p>Ångerrätten gäller inte för:</p>
+    <ul>
+      <li>Förseglade produkter som öppnats av hälso‑/hygieniska skäl.</li>
+      <li>Specialtillverkade produkter.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Återbetalning</h2>
+    <p>Återbetalning sker inom 14 dagar från godkänd retur via samma betalningsmetod som användes vid köpet.</p>
+  </section>
+
+  <section>
+    <h2>4. Reklamation</h2>
+    <p>Reklamation kan ske inom 3 år enligt Konsumentköplagen.</p>
+  </section>
+
+  <footer>
+    <p>Frågor? Kontakta oss på <a href="mailto:$contact_email">$contact_email</a>.</p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · Org.nr $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

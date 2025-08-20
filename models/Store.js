@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const TemplateRenderer = require('../utils/TemplateRenderer');
 const DeploymentAutomation = require('../utils/DeploymentAutomation');
 const { PageTemplate } = require('./PageTemplate');
+const LegalPageLoader = require('../utils/LegalPageLoader');
 const fs = require('fs');
 const path = require('path');
 
@@ -426,25 +427,35 @@ class Store {
         let isLegalPage = legalPages.includes(pageType);
         
         if (isLegalPage) {
-          // Use professional legal page templates
+          // Use localized legal pages from legal_pages folder
           try {
-            console.log(`🏛️ Using professional template for ${pageType}`);
-            const template = await PageTemplate.getTranslatedContent(pageType, this.language);
+            console.log(`🏛️ Using localized legal page for ${pageType} (${this.language})`);
+            const legalLoader = new LegalPageLoader();
+            await legalLoader.loadAllLegalPages(); // Ensure pages are loaded
             
-            // Replace template variables with store data
-            const processedContent = this.replaceTemplateVariables(template.content);
+            const legalPage = legalLoader.getLegalPage(this.language, pageType);
             
-            pageContent = {
-              title: template.title,
-              subtitle: '',
-              content: processedContent,
-              meta_title: this.replaceTemplateVariables(template.meta_title || template.title),
-              meta_description: this.replaceTemplateVariables(template.meta_description || ''),
-              slug: template.slug
-            };
+            if (legalPage) {
+              // Process the HTML content and replace placeholders
+              const processedContent = this.replaceLegalPageVariables(legalPage.content);
+              
+              pageContent = {
+                title: legalPage.title,
+                subtitle: '',
+                content: processedContent, // This is now full HTML content
+                meta_title: legalPage.title,
+                meta_description: `${legalPage.title} - ${this.name}`,
+                slug: legalPage.slug // Use localized slug!
+              };
+              
+              console.log(`✅ Created localized legal page: ${pageType} → /${legalPage.slug}.html`);
+            } else {
+              console.warn(`⚠️ No localized legal page found for ${pageType} in ${this.language}, falling back to basic page`);
+              isLegalPage = false; // Fall back to basic content
+            }
             
           } catch (templateError) {
-            console.warn(`⚠️ Could not load professional template for ${pageType}:`, templateError.message);
+            console.warn(`⚠️ Could not load localized legal page for ${pageType}:`, templateError.message);
             isLegalPage = false; // Fall back to basic content
           }
         }
@@ -581,6 +592,17 @@ class Store {
     }
     
     return result;
+  }
+
+  /**
+   * Replace variables in legal page HTML content
+   * Uses same variable mapping as replaceTemplateVariables
+   */
+  replaceLegalPageVariables(htmlContent) {
+    if (!htmlContent) return htmlContent;
+    
+    // Use the existing variable replacement logic
+    return this.replaceTemplateVariables(htmlContent);
   }
 
   async getPages() {

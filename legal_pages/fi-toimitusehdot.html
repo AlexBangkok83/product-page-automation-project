@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toimitusehdot – $domain</title>
+  <meta name="description" content="Toimitusehdot für $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Toimitusehdot</nav>
+  <h1>Toimitusehdot</h1>
+
+  <section>
+    <h2>1. Toimitusajat</h2>
+    <ul>
+      <li>$country/EU:ssa: tilaukset lähetetään yleensä 1–3 arkipäivässä, toimitus 2–7 arkipäivää.</li>
+      <li>Kansainvälisesti: 8–25 arkipäivää määrämaan ja kuljetusyhtiön mukaan.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Toimituskulut</h2>
+    <p>Kulut näytetään kassalla ennen maksua.</p>
+  </section>
+
+  <section>
+    <h2>3. Seuranta</h2>
+    <p>Seurantanumero toimitetaan sähköpostilla, jos lähetys on seurattavissa.</p>
+  </section>
+
+  <section>
+    <h2>4. Vastuu &amp; riskit</h2>
+    <p>Vastuu siirtyy asiakkaalle, kun lähetys on toimitettu. Vaurioista ilmoita kuljetusyhtiölle ja meille osoitteeseen <a href="mailto:$contact_email">$contact_email</a>.</p>
+  </section>
+
+  <section>
+    <h2>5. Tullit &amp; verot</h2>
+    <p>EU:n ulkopuolelle toimitettavissa tilauksissa mahdolliset tullit ja verot maksaa asiakas.</p>
+  </section>
+
+  <section>
+    <h2>6. Viivästykset</h2>
+    <p>Ilmoitamme viivästyksistä viipymättä. Voit peruuttaa kaupan olennaisen viivästyksen vuoksi.</p>
+  </section>
+
+  <footer>
+    <p>Fragen / Questions / Kysymykset: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
