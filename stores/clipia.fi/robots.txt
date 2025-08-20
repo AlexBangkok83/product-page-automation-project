@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clipia.fi/sitemap.xml
