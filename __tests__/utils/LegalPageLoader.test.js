@@ -9,11 +9,12 @@ describe('LegalPageLoader', () => {
   let loader;
 
   beforeEach(() => {
-    loader = new LegalPageLoader();
-    
-    // Setup path mocks
+    // Setup path mocks BEFORE creating loader instance
     path.join = jest.fn().mockImplementation((...args) => args.join('/'));
     process.cwd = jest.fn().mockReturnValue('/project');
+    
+    // Now create loader instance with mocked dependencies
+    loader = new LegalPageLoader();
     
     // Setup fs mocks
     fs.existsSync = jest.fn().mockReturnValue(true);
@@ -53,7 +54,7 @@ describe('LegalPageLoader', () => {
     test('should load and parse all legal page files', async () => {
       await loader.loadAllLegalPages();
 
-      expect(fs.readdirSync).toHaveBeenCalledWith('/project/legal_pages');
+      expect(fs.readdirSync).toHaveBeenCalledWith(loader.legalPagesDir);
       expect(fs.readFileSync).toHaveBeenCalledTimes(4);
       
       // Check Finnish pages
@@ -61,12 +62,14 @@ describe('LegalPageLoader', () => {
       expect(loader.legalPages.fi.terms).toEqual({
         title: 'Käyttöehdot',
         content: '<h1>Käyttöehdot</h1><p>Finnish terms content</p>',
-        slug: 'kayttoehdot'
+        slug: 'kayttoehdot',
+        filename: 'fi-kayttoehdot.html'
       });
       expect(loader.legalPages.fi.privacy).toEqual({
         title: 'Tietosuojaseloste',
         content: '<h1>Tietosuojaseloste</h1><p>Finnish privacy content</p>',
-        slug: 'tietosuojaseloste'
+        slug: 'tietosuojaseloste',
+        filename: 'fi-tietosuojaseloste.html'
       });
 
       // Check German pages
@@ -74,12 +77,14 @@ describe('LegalPageLoader', () => {
       expect(loader.legalPages.de.terms).toEqual({
         title: 'Nutzungsbedingungen',
         content: '<h1>Nutzungsbedingungen</h1><p>German terms content</p>',
-        slug: 'nutzungsbedingungen'
+        slug: 'nutzungsbedingungen',
+        filename: 'de-nutzungsbedingungen.html'
       });
       expect(loader.legalPages.de.privacy).toEqual({
         title: 'Datenschutzerklärung',
         content: '<h1>Datenschutzerklärung</h1><p>German privacy content</p>',
-        slug: 'datenschutzerklaerung'
+        slug: 'datenschutzerklaerung',
+        filename: 'de-datenschutzerklaerung.html'
       });
     });
 
@@ -97,7 +102,7 @@ describe('LegalPageLoader', () => {
         throw new Error('Permission denied');
       });
 
-      await expect(loader.loadAllLegalPages()).resolves.toBeUndefined();
+      await expect(loader.loadAllLegalPages()).resolves.toEqual({});
       expect(loader.legalPages).toEqual({});
     });
 
@@ -111,9 +116,10 @@ describe('LegalPageLoader', () => {
 
       await loader.loadAllLegalPages();
 
-      expect(fs.readFileSync).toHaveBeenCalledTimes(2); // Only valid files
-      expect(loader.legalPages.fi).toBeDefined();
+      expect(fs.readFileSync).toHaveBeenCalledTimes(4); // Reads all .html files
+      expect(loader.legalPages.fi).toBeDefined(); // But only stores valid parsed files
       expect(loader.legalPages.de).toBeDefined();
+      expect(Object.keys(loader.legalPages)).toHaveLength(2); // Only 2 languages stored
     });
   });
 
@@ -267,7 +273,8 @@ describe('LegalPageLoader', () => {
       expect(page).toEqual({
         title: 'Käyttöehdot',
         content: '<h1>Käyttöehdot</h1><p>Finnish terms content</p>',
-        slug: 'kayttoehdot'
+        slug: 'kayttoehdot',
+        filename: 'fi-kayttoehdot.html'
       });
     });
 
@@ -324,7 +331,7 @@ describe('LegalPageLoader', () => {
         throw new Error('EACCES: permission denied');
       });
 
-      await expect(loader.loadAllLegalPages()).resolves.toBeUndefined();
+      await expect(loader.loadAllLegalPages()).resolves.toEqual({});
       expect(loader.legalPages).toEqual({});
     });
 
@@ -379,7 +386,7 @@ describe('LegalPageLoader', () => {
       await loader.loadAllLegalPages();
 
       const page = loader.getLegalPage('fi', 'terms');
-      expect(page.title).toBe('Legal Page'); // Fallback title
+      expect(page.title).toBe('Legal Page'); // Fallback when no h1 found
       expect(page.content).toBe(htmlWithoutH1);
     });
   });
