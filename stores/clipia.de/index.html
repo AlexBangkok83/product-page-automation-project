@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Returpolicy</title>
-    <meta name="description" content="Vår returpolicy beskriver villkoren för returer och återbetalningar.">
+    <title>das - Home</title>
+    <meta name="description" content="Visit our home page at das">
     <link rel="icon" href="/favicon.ico">
     
     <style>
@@ -89,52 +89,101 @@
             color: var(--primary-color);
         }
         
-        /* Main Content */
-        .main {
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             padding: var(--spacing-xl) 0;
+            text-align: center;
+            color: white;
         }
         
-        .page-title {
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: var(--spacing-lg);
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: var(--primary-color);
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        /* Features Section */
+        .features {
+            padding: var(--spacing-xl) 0;
+            background: var(--secondary-color);
+        }
+        
+        .features h2 {
             text-align: center;
             margin-bottom: var(--spacing-lg);
-        }
-        
-        .page-title h1 {
             font-size: 2.5rem;
             color: var(--text-primary);
-            margin-bottom: var(--spacing-sm);
         }
         
-        .page-title p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
         }
         
-        .content {
-            max-width: 800px;
-            margin: 0 auto;
+        .feature-card {
             background: white;
             padding: var(--spacing-lg);
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
+            text-align: center;
+            transition: transform 0.3s ease;
         }
         
-        .content p {
-            color: var(--text-secondary);
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h3 {
+            color: var(--primary-color);
             margin-bottom: var(--spacing-sm);
-            font-size: 1.1rem;
+            font-size: 1.3rem;
+        }
+        
+        .feature-card p {
+            color: var(--text-secondary);
         }
         
         /* Footer styles are included in the footer component */
         
         /* Mobile Responsive */
         @media (max-width: 768px) {
-            .page-title h1 {
+            .hero h1 {
                 font-size: 2rem;
             }
             
             .nav {
                 display: none;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -144,7 +193,7 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <a href="/" class="logo">Test with Thomas</a>
+                <a href="/" class="logo">das</a>
                 <nav class="nav">
                     <a href="/">Home</a>
                     <a href="/products">Products</a>
@@ -155,67 +204,39 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main">
+    <!-- Hero Section -->
+    <section class="hero">
         <div class="container">
-            <div class="page-title">
-                <h1>Returpolicy</h1>
+            <h1>das - Home</h1>
+            <p>Welcome to our home page</p>
+            <a href="/products" class="cta-button">Shop Now</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="container">
+            <h2>Why Choose das?</h2>
+            <div class="features-grid">
                 
-            </div>
-
-            <div class="content">
+                    <div class="feature-card">
+                        <h3>Quality Products</h3>
+                        <p>Carefully curated selection of premium items</p>
+                    </div>
                 
-                    <p># Returpolicy för clipia.fi
-
-## 1. Returperiod
-Enligt Distansavtalslagen har du rätt att ångra ditt köp inom 14 dagar från mottagandet utan att ange anledning. clipia.fi erbjuder dessutom en utökad returperiod på 30 dagar.
-
-## 2. Varornas skick
-Varor måste returneras i originalskick, oanvända och i originalförpackning. Kunden ansvarar för eventuell värdeminskning av varan som beror på annan hantering än vad som är nödvändigt för att fastställa varans beskaffenhet, egenskaper och funktion.
-
-## 3. Returprocess
-För att påbörja en retur:
-1. Kontakta cto@nextsite.io inom returperioden
-2. Uppge ditt ordernummer och anledning till returen
-3. Vi tillhandahåller returinstruktioner och nödvändig dokumentation
-4. Förpacka varorna säkert i originalförpackning
-
-## 4. Returfrakt
-Kunden ansvarar för returfrakt utom när:
-- Varan var skadad, defekt eller felaktig
-- clipia.fi utövar sin ångerrätt
-- Annat följer av lag
-
-## 5. Återbetalningsprocess
-- Återbetalning sker inom 14 dagar efter att vi mottagit den returnerade varan
-- Återbetalning görs till samma betalningsmetod som användes vid köpet
-- Ursprungliga fraktkostnader kan dras av (utom för defekta/felaktiga varor)
-
-## 6. Byten
-Vi erbjuder byten mot olika storlekar eller färger beroende på tillgänglighet. Kontakta cto@nextsite.io för att ordna ett byte.
-
-## 7. Ej returerbara varor
-Följande varor kan inte returneras av hygieniska skäl eller på grund av deras beskaffenhet:
-- Personaliserade eller specialtillverkade produkter
-- Lättfördärvliga varor
-- Digitala nedladdningar
-- Varor som specificerats som icke-returerbara vid köptillfället
-
-## 8. Skadade eller defekta varor
-Om du mottar en skadad eller defekt vara:
-- Kontakta oss omedelbart på cto@nextsite.io
-- Bifoga bilder på skadan/defekten
-- Vi ordnar ersättning eller full återbetalning inklusive fraktkostnader
-
-## 9. Tvistlösning
-Vid tvister gällande returer kan du kontakta konsumentmyndigheter i SE eller använda EU:s Online Dispute Resolution: https://ec.europa.eu/consumers/odr.
-
-## Kontaktinformation
-För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
+                    <div class="feature-card">
+                        <h3>Fast Shipping</h3>
+                        <p>Quick and reliable delivery worldwide</p>
+                    </div>
+                
+                    <div class="feature-card">
+                        <h3>Great Support</h3>
+                        <p>24/7 customer service and support</p>
+                    </div>
                 
             </div>
         </div>
-    </main>
+    </section>
 
     <!-- Professional E-commerce Footer System -->
 <footer class="site-footer">
@@ -228,8 +249,8 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
             <div class="row">
                 <div class="col-md-6">
                     <div class="footer-about">
-                        <h3>About Test with Thomas</h3>
-                        <p>Test with Thomas is your trusted e-commerce destination offering quality products with exceptional customer service. Based in SE, we serve customers with dedication and reliability.</p>
+                        <h3>About das</h3>
+                        <p>das is your trusted e-commerce destination offering quality products with exceptional customer service. Based in DE, we serve customers with dedication and reliability.</p>
                         <div class="social-links">
                             <a href="#" class="social-link"><i class="icon-facebook"></i></a>
                             <a href="#" class="social-link"><i class="icon-twitter"></i></a>
@@ -242,11 +263,8 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
                     <div class="footer-links">
                         <h4>Information</h4>
                         <ul class="footer-nav">
-                            <li><a href="/leveranspolicy">Leveranspolicy</a></li>
-                            <li><a href="/integritetspolicy">Integritetspolicy</a></li>
-                            <li><a href="/returpolicy">Returpolicy</a></li>
-                            <li><a href="/anvandarvillkor">Användarvillkor</a></li>
-                            <li><a href="/faq">Test with Thomas - Faq</a></li>
+                            <li><a href="/versandrichtlinie">Versandrichtlinie – $domain</a></li>
+                            <li><a href="/nutzungsbedingungen">Nutzungsbedingungen – $domain</a></li>
                         </ul>
                     </div>
                 </div>
@@ -254,11 +272,8 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
                     <div class="footer-links">
                         <h4>Quick Links</h4>
                         <ul class="footer-nav">
-                            <li><a href="/">Test with Thomas - Home</a></li>
-                            <li><a href="/products">Test with Thomas - Products</a></li>
-                            <li><a href="/about">Test with Thomas - About</a></li>
-                            <li><a href="/contact">Test with Thomas - Contact</a></li>
-                            <li><a href="/blog">Test with Thomas - Blog</a></li>
+                            <li><a href="/">das - Home</a></li>
+                            <li><a href="/products">das - Products</a></li>
                         </ul>
                     </div>
                 </div>
@@ -273,11 +288,11 @@ För frågor om returer och återbetalningar, kontakta cto@nextsite.io.</p>
                 <div class="col-md-12">
                     <div class="footer-bottom">
                         <div class="copyright">
-                            <p>&copy; 2025 Test with Thomas. All rights reserved.</p>
+                            <p>&copy; 2025 das. All rights reserved.</p>
                             
                         </div>
                         <div class="footer-meta">
-                            <span class="powered-by">Powered by Test with Thomas E-commerce Platform</span>
+                            <span class="powered-by">Powered by das E-commerce Platform</span>
                             <div class="payment-methods">
                                 <i class="icon-credit-card" title="Credit Card"></i>
                                 <i class="icon-paypal" title="PayPal"></i>

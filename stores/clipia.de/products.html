@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leveranspolicy</title>
-    <meta name="description" content="Information om våra leveransmetoder, leveranstider och policyer.">
+    <title>das - Products</title>
+    <meta name="description" content="Visit our products page at das">
     <link rel="icon" href="/favicon.ico">
     
     <style>
@@ -84,7 +84,8 @@
             transition: all 0.3s ease;
         }
         
-        .nav a:hover {
+        .nav a:hover,
+        .nav a.active {
             background: var(--secondary-color);
             color: var(--primary-color);
         }
@@ -110,19 +111,75 @@
             color: var(--text-secondary);
         }
         
-        .content {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: var(--spacing-lg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
         }
         
-        .content p {
+        .product-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 250px;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .product-info {
+            padding: var(--spacing-md);
+        }
+        
+        .product-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+        
+        .product-description {
             color: var(--text-secondary);
             margin-bottom: var(--spacing-sm);
-            font-size: 1.1rem;
+            font-size: 0.9rem;
+        }
+        
+        .product-price {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* Coming Soon Message */
+        .coming-soon {
+            text-align: center;
+            padding: var(--spacing-xl);
+            background: var(--secondary-color);
+            border-radius: var(--border-radius);
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .coming-soon h2 {
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .coming-soon p {
+            color: var(--text-secondary);
         }
         
         /* Footer styles are included in the footer component */
@@ -136,6 +193,10 @@
             .nav {
                 display: none;
             }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
         }
     </style>
 </head>
@@ -144,10 +205,10 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <a href="/" class="logo">Test with Thomas</a>
+                <a href="/" class="logo">das</a>
                 <nav class="nav">
                     <a href="/">Home</a>
-                    <a href="/products">Products</a>
+                    <a href="/products" class="active">Products</a>
                     <a href="/about">About</a>
                     <a href="/contact">Contact</a>
                 </nav>
@@ -159,74 +220,17 @@
     <main class="main">
         <div class="container">
             <div class="page-title">
-                <h1>Leveranspolicy</h1>
-                
+                <h1>das - Products</h1>
+                <p>Welcome to our products page</p>
             </div>
 
-            <div class="content">
-                
-                    <p># Leveranspolicy för clipia.fi
-
-## 1. Leveransmetoder
-Vi erbjuder följande leveransalternativ:
-- Standardleverans (5-7 arbetsdagar)
-- Expressleverans (2-3 arbetsdagar)
-- Samdagsleverans (där tillgängligt)
-
-## 2. Leveranstider
-Beräknade leveranstider:
-- Standardfrakt: 5-7 arbetsdagar
-- Expressfrakt: 2-3 arbetsdagar
-- Internationell frakt: 7-14 arbetsdagar (varierar per destination)
-
-Leveranstider är uppskattningar och kan variera på grund av väder, helger eller andra omständigheter utanför vår kontroll.
-
-## 3. Fraktkostnader
-- Fraktkostnader beräknas vid kassan baserat på destination, vikt och leveransmetod
-- Fri standardfrakt tillgänglig för beställningar över ett specificerat belopp (varierar per land)
-- Express- och internationella frakttariffer tillämpas enligt vad som visas vid kassan
-- Alla priser inkluderar tillämpliga skatter och avgifter
-
-## 4. Orderbehandling
-- Beställningar behandlas inom 1-2 arbetsdagar (måndag-fredag)
-- Beställningar som görs på helger behandlas nästa arbetsdag
-- Behandlingstiden kan förlängas under högsäsong
-
-## 5. Spårningsinformation
-- Spårningsinformation skickas via e-post när din beställning levereras
-- Spåra ditt paket med det medföljande spårningsnumret
-- För problem med spårning, kontakta cto@nextsite.io
-
-## 6. Leveransbekräftelse
-- Signaturbekräftelse kan krävas för beställningar av högt värde
-- Säker leverans till den angivna adressen är kundens ansvar
-- Vi ansvarar inte för paket som försvinner på grund av felaktiga adresser
-
-## 7. Internationell leverans
-- Vi levererar till utvalda internationella destinationer
-- Ytterligare tullavgifter, skatter och avgifter kan tillkomma och är kundens ansvar
-- Leveranstider för internationella beställningar kan variera
-- Vissa produkter kan vara begränsade för internationell leverans
-
-## 8. Leveransproblem
-Om du upplever leveransproblem:
-- Kontrollera spårningsinformation först
-- Kontakta fraktföretaget direkt för leveransuppdateringar
-- Kontakta cto@nextsite.io om paketet är förlorat eller skadat
-- Rapportera leveransproblem inom 48 timmar från förväntad leverans
-
-## 9. Adressändringar
-- Adressändringar måste göras innan beställningen skickas
-- Kontakta cto@nextsite.io omedelbart för adresskorrigeringar
-- Vi kan inte garantera adressändringar när de väl skickats
-
-## 10. Risköverföring
-Risk för förlust och äganderätt för varor övergår till kunden vid leverans till fraktföretaget.
-
-## Kontaktinformation
-För frågor om frakt och leverans, kontakta cto@nextsite.io.</p>
-                
-            </div>
+            
+                <div class="coming-soon">
+                    <h2>Products Loading</h2>
+                    <p>Our products are being synced from Shopify. They will appear here soon!</p>
+                    <p><strong>Store:</strong> ecominter.myshopify.com</p>
+                </div>
+            
         </div>
     </main>
 
@@ -241,8 +245,8 @@ För frågor om frakt och leverans, kontakta cto@nextsite.io.</p>
             <div class="row">
                 <div class="col-md-6">
                     <div class="footer-about">
-                        <h3>About Test with Thomas</h3>
-                        <p>Test with Thomas is your trusted e-commerce destination offering quality products with exceptional customer service. Based in SE, we serve customers with dedication and reliability.</p>
+                        <h3>About das</h3>
+                        <p>das is your trusted e-commerce destination offering quality products with exceptional customer service. Based in DE, we serve customers with dedication and reliability.</p>
                         <div class="social-links">
                             <a href="#" class="social-link"><i class="icon-facebook"></i></a>
                             <a href="#" class="social-link"><i class="icon-twitter"></i></a>
@@ -255,11 +259,8 @@ För frågor om frakt och leverans, kontakta cto@nextsite.io.</p>
                     <div class="footer-links">
                         <h4>Information</h4>
                         <ul class="footer-nav">
-                            <li><a href="/leveranspolicy">Leveranspolicy</a></li>
-                            <li><a href="/integritetspolicy">Integritetspolicy</a></li>
-                            <li><a href="/returpolicy">Returpolicy</a></li>
-                            <li><a href="/anvandarvillkor">Användarvillkor</a></li>
-                            <li><a href="/faq">Test with Thomas - Faq</a></li>
+                            <li><a href="/versandrichtlinie">Versandrichtlinie – $domain</a></li>
+                            <li><a href="/nutzungsbedingungen">Nutzungsbedingungen – $domain</a></li>
                         </ul>
                     </div>
                 </div>
@@ -267,11 +268,8 @@ För frågor om frakt och leverans, kontakta cto@nextsite.io.</p>
                     <div class="footer-links">
                         <h4>Quick Links</h4>
                         <ul class="footer-nav">
-                            <li><a href="/">Test with Thomas - Home</a></li>
-                            <li><a href="/products">Test with Thomas - Products</a></li>
-                            <li><a href="/about">Test with Thomas - About</a></li>
-                            <li><a href="/contact">Test with Thomas - Contact</a></li>
-                            <li><a href="/blog">Test with Thomas - Blog</a></li>
+                            <li><a href="/">das - Home</a></li>
+                            <li><a href="/products">das - Products</a></li>
                         </ul>
                     </div>
                 </div>
@@ -286,11 +284,11 @@ För frågor om frakt och leverans, kontakta cto@nextsite.io.</p>
                 <div class="col-md-12">
                     <div class="footer-bottom">
                         <div class="copyright">
-                            <p>&copy; 2025 Test with Thomas. All rights reserved.</p>
+                            <p>&copy; 2025 das. All rights reserved.</p>
                             
                         </div>
                         <div class="footer-meta">
-                            <span class="powered-by">Powered by Test with Thomas E-commerce Platform</span>
+                            <span class="powered-by">Powered by das E-commerce Platform</span>
                             <div class="payment-methods">
                                 <i class="icon-credit-card" title="Credit Card"></i>
                                 <i class="icon-paypal" title="PayPal"></i>
