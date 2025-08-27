@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leveringsbeleid – $domain</title>
+  <meta name="description" content="Leveringsbeleid for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Leveringsbeleid</nav>
+  <h1>Leveringsbeleid</h1>
+
+<section><h2>1. Leveringstijden</h2><ul><li>Binnen $country/EU: Bestellingen worden doorgaans binnen 1–3 werkdagen verzonden, levering 2–7 werkdagen.</li><li>Internationaal: 8–25 werkdagen afhankelijk van bestemming en vervoerder.</li></ul></section>
+<section><h2>2. Verzendkosten</h2><p>Verzendkosten worden getoond in de checkout vóór betaling.</p></section>
+<section><h2>3. Tracking</h2><p>Bij traceerbare zendingen ontvangt u een trackingnummer per e-mail.</p></section>
+<section><h2>4. Risico &amp; aansprakelijkheid</h2><p>Het risico gaat over op de klant na levering. Bij schade neem contact op met de vervoerder en meld ons via <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>5. Douane &amp; belastingen</h2><p>Klant is verantwoordelijk voor eventuele douanekosten en belastingen buiten de EU.</p></section>
+<section><h2>6. Vertragingen</h2><p>Bij vertragingen informeren wij u zo snel mogelijk. U kunt de aankoop annuleren bij aanzienlijke vertraging.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

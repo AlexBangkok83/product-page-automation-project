@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacybeleid – $domain</title>
+  <meta name="description" content="Privacybeleid for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Privacybeleid</nav>
+  <h1>Privacybeleid</h1>
+
+<section><h2>1. Verwerkingsverantwoordelijke</h2><p><strong>$company_name</strong> (<strong>$company_orgnr</strong>, <strong>$company_address</strong>) is verantwoordelijk voor de verwerking van persoonsgegevens. Contact: <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>2. Gegevens die wij verzamelen</h2><ul><li>Contactgegevens (naam, adres, e-mail, telefoon)</li><li>Bestel- en betaalinformatie</li><li>Technische gegevens (cookies, IP-adres, browser)</li></ul></section>
+<section><h2>3. Doeleinden &amp; rechtsgrond</h2><ul><li>Verwerking van bestellingen (Contract)</li><li>Klantenservice (Gerechtvaardigd belang)</li><li>Marketing (Toestemming)</li><li>Boekhouding (Wettelijke verplichting)</li></ul></section>
+<section><h2>4. Uw rechten</h2><p>U hebt recht op inzage, rectificatie, verwijdering, beperking, overdraagbaarheid van gegevens en bezwaar. Contact: <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>5. Bewaartermijn</h2><p>Gegevens worden alleen bewaard zolang dat nodig is of wettelijk verplicht (bijvoorbeeld 7 jaar voor boekhouding).</p></section>
+<section><h2>6. Derden</h2><p>Wij delen gegevens alleen met noodzakelijke dienstverleners (betaling, verzending). Verwerkersovereenkomsten zijn aanwezig.</p></section>
+<section><h2>7. Cookies</h2><p><strong>$domain</strong> gebruikt cookies. U kunt toestemming intrekken in de browserinstellingen.</p></section>
+<section><h2>8. Toezichthouder</h2><p>U kunt een klacht indienen bij de bevoegde toezichthouder.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

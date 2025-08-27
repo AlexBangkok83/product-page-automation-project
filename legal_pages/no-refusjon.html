@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Retur- og refusjonspolicy – $domain</title>
+  <meta name="description" content="Retur- og refusjonspolicy for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Retur- og refusjonspolicy</nav>
+  <h1>Retur- og refusjonspolicy</h1>
+
+<section><h2>1. Angrerett</h2><p>Du har rett til å angre kjøpet innen 14 dager etter loven. <strong>$domain</strong> tilbyr i tillegg 30 dagers retur fra mottak.</p><ul><li>Varen må være ubrukt og i originalemballasje.</li><li>Kunden betaler returfrakten.</li><li>Kontakt <a href="mailto:$contact_email">$contact_email</a> før retur.</li></ul></section>
+<section><h2>2. Unntak</h2><p>Angreretten gjelder ikke for:</p><ul><li>Forseglede varer som er åpnet av hensyn til helse/hygiene.</li><li>Varer som er spesiallaget for deg.</li></ul></section>
+<section><h2>3. Refusjon</h2><p>Refusjon utbetales innen 14 dager etter godkjent retur via samme betalingsmetode som ble brukt.</p></section>
+<section><h2>4. Reklamasjon</h2><p>Du kan reklamere på en vare i henhold til gjeldende lovgivning.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

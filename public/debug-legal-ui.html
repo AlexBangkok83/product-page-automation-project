@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Legal UI Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        code { background: #f1f1f1; padding: 2px 6px; border-radius: 3px; }
+        button { padding: 8px 16px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Legal Page UI Debug Test</h1>
+    <p>This page will test the legal page editor functionality step by step.</p>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function runTests() {
+            const results = document.getElementById('results');
+            
+            function addResult(title, content, type = 'info') {
+                const div = document.createElement('div');
+                div.className = `test-section ${type}`;
+                div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+                results.appendChild(div);
+            }
+            
+            // Test 1: Check if the admin page loads
+            try {
+                addResult('Test 1: Checking Admin Page', 'Testing if the admin page loads...', 'info');
+                
+                const response = await fetch('/admin/site-setup?step=3');
+                if (response.ok) {
+                    const html = await response.text();
+                    
+                    // Check for edit buttons
+                    const hasEditButtons = html.includes('edit-legal-content');
+                    const hasModal = html.includes('legalContentEditor');
+                    const hasQuillJS = html.includes('quill');
+                    
+                    addResult('Test 1: Admin Page Load', 
+                        `✅ Page loads successfully (${response.status})<br>
+                         📝 Edit buttons present: ${hasEditButtons}<br>
+                         🖼️ Modal present: ${hasModal}<br>
+                         ✏️ Quill editor included: ${hasQuillJS}`, 'success');
+                } else {
+                    addResult('Test 1: Admin Page Load', `❌ Failed to load page (${response.status})`, 'error');
+                }
+            } catch (error) {
+                addResult('Test 1: Admin Page Load', `❌ Error: ${error.message}`, 'error');
+            }
+            
+            // Test 2: Check API endpoints
+            try {
+                addResult('Test 2: API Testing', 'Testing legal page API endpoints...', 'info');
+                
+                const testCases = [
+                    { url: '/api/legal-pages/en/privacy', name: 'Privacy Policy' },
+                    { url: '/api/legal-pages/en/terms', name: 'Terms of Service' },
+                    { url: '/api/legal-pages/en/refund', name: 'Refund Policy' },
+                    { url: '/api/legal-pages/en/delivery', name: 'Delivery Policy' }
+                ];
+                
+                let apiResults = '';
+                let allSuccess = true;
+                
+                for (const test of testCases) {
+                    try {
+                        const response = await fetch(test.url);
+                        if (response.ok) {
+                            const data = await response.json();
+                            const hasContent = data.content && data.content.length > 0;
+                            apiResults += `✅ ${test.name}: OK (${hasContent ? 'has content' : 'no content'})<br>`;
+                        } else {
+                            apiResults += `❌ ${test.name}: ${response.status}<br>`;
+                            allSuccess = false;
+                        }
+                    } catch (error) {
+                        apiResults += `❌ ${test.name}: ${error.message}<br>`;
+                        allSuccess = false;
+                    }
+                }
+                
+                addResult('Test 2: API Endpoints', apiResults, allSuccess ? 'success' : 'error');
+            } catch (error) {
+                addResult('Test 2: API Endpoints', `❌ Error: ${error.message}`, 'error');
+            }
+            
+            // Test 3: Check for JavaScript libraries
+            addResult('Test 3: JavaScript Libraries', 'Checking for required JavaScript libraries...', 'info');
+            
+            const libraries = {
+                'Bootstrap': typeof bootstrap !== 'undefined',
+                'Quill Editor': typeof Quill !== 'undefined',
+                'Fetch API': typeof fetch !== 'undefined'
+            };
+            
+            let libResults = '';
+            let allLibsPresent = true;
+            
+            for (const [name, present] of Object.entries(libraries)) {
+                libResults += `${present ? '✅' : '❌'} ${name}: ${present ? 'Available' : 'Missing'}<br>`;
+                if (!present) allLibsPresent = false;
+            }
+            
+            addResult('Test 3: JavaScript Libraries', libResults, allLibsPresent ? 'success' : 'error');
+            
+            // Test 4: Simulate button click if on the actual page
+            if (window.location.pathname.includes('admin/site-setup')) {
+                addResult('Test 4: Button Click Simulation', 'Simulating edit button click...', 'info');
+                
+                setTimeout(() => {
+                    const editButton = document.querySelector('.edit-legal-content');
+                    if (editButton) {
+                        addResult('Test 4: Button Found', `✅ Edit button found with data-template: ${editButton.getAttribute('data-template')}`, 'success');
+                        
+                        // Add click listener to see what happens
+                        editButton.addEventListener('click', function(e) {
+                            console.log('Edit button clicked!', e);
+                            addResult('Test 4: Button Clicked', '🖱️ Edit button was clicked - check console for details', 'info');
+                        });
+                        
+                        // Try clicking it
+                        try {
+                            editButton.click();
+                            addResult('Test 4: Button Click', '✅ Button click triggered', 'success');
+                        } catch (error) {
+                            addResult('Test 4: Button Click', `❌ Click failed: ${error.message}`, 'error');
+                        }
+                    } else {
+                        addResult('Test 4: Button Search', '❌ No edit buttons found on page', 'error');
+                    }
+                }, 2000);
+            } else {
+                addResult('Test 4: Button Test', '⏭️ Skipped - not on admin page', 'info');
+            }
+            
+            addResult('Test Summary', '📋 All tests completed. Check the results above for any issues.', 'info');
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

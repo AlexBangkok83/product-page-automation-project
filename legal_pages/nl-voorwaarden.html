@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Algemene voorwaarden – $domain</title>
+  <meta name="description" content="Algemene voorwaarden for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Algemene voorwaarden</nav>
+  <h1>Algemene voorwaarden</h1>
+
+<section><h2>1. Algemeen</h2><p>Deze algemene voorwaarden zijn van toepassing wanneer u <strong>$domain</strong> bezoekt of er aankopen doet. Exploitant: <strong>$company_name</strong> (<strong>$company_orgnr</strong>, <strong>$company_address</strong>). De wetten van <strong>$country</strong> zijn van toepassing, inclusief consumenten- en e-commerceregels.</p></section>
+<section><h2>2. Leeftijdsgrens</h2><p>U moet minstens 18 jaar oud zijn of toestemming hebben van een ouder/voogd om te bestellen.</p></section>
+<section><h2>3. Bestelling &amp; betaling</h2><p>Alle prijzen worden weergegeven in <strong>$currency</strong> inclusief btw. Fouten en prijswijzigingen voorbehouden. Betaling geschiedt via de betaalmethoden die bij het afrekenen worden aangeboden.</p></section>
+<section><h2>4. Levering</h2><p>Levering gebeurt volgens ons <a href="/pages/leveranspolicy">Leveringsbeleid</a>. Het risico gaat over op de klant zodra de goederen zijn geleverd.</p></section>
+<section><h2>5. Herroepingsrecht &amp; retour</h2><p>U hebt wettelijk recht op 14 dagen herroeping. Daarnaast biedt <strong>$domain</strong> een retourtermijn van 30 dagen na ontvangst.</p><ul><li>Product moet ongebruikt zijn en in originele verpakking zitten.</li><li>Klant betaalt de retourkosten.</li><li>Neem contact met ons op via <a href="mailto:$contact_email">$contact_email</a> vóór retourzending.</li></ul></section>
+<section><h2>6. Klachten</h2><p>Klachten kunnen worden ingediend volgens toepasselijk consumentenrecht.</p></section>
+<section><h2>7. Geschillen</h2><p>Geschillen kunnen worden voorgelegd aan de bevoegde instanties of via het Europese ODR-platform: <a href="https://ec.europa.eu/consumers/odr">https://ec.europa.eu/consumers/odr</a>.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

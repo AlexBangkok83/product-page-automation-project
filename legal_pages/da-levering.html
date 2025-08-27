@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leveringspolitik – $domain</title>
+  <meta name="description" content="Leveringspolitik for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Leveringspolitik</nav>
+  <h1>Leveringspolitik</h1>
+
+<section><h2>1. Leveringstider</h2><ul><li>I $country/EU: Afsendes normalt inden for 1–3 hverdage, levering 2–7 hverdage.</li><li>Internationalt: 8–25 hverdage afhængigt af destination og transportør.</li></ul></section>
+<section><h2>2. Fragtomkostninger</h2><p>Fragtomkostninger fremgår i kassen før betaling.</p></section>
+<section><h2>3. Sporbarhed</h2><p>Ved sporbar forsendelse modtager du et trackingnummer via e-mail.</p></section>
+<section><h2>4. Risiko &amp; ansvar</h2><p>Risikoen overgår til kunden, når varen er leveret. Ved skader skal transportøren kontaktes, samt os på <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>5. Told &amp; afgifter</h2><p>Kunden er ansvarlig for eventuelle toldafgifter og skatter uden for EU.</p></section>
+<section><h2>6. Forsinkelser</h2><p>Ved forsinkelser informerer vi dig hurtigst muligt. Du kan ophæve købet ved væsentlig forsinkelse.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

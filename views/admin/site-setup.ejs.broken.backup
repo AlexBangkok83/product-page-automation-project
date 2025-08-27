@@ -1,0 +1,2770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/css/style.css">
+    
+    <!-- Quill.js WYSIWYG Editor -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <style>
+        .site-setup-container {
+            min-height: calc(100vh - 80px);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem 0;
+        }
+        
+        .setup-card {
+            max-width: 900px;
+            margin: 0 auto;
+            border-radius: 1.5rem;
+            box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.15);
+            border: none;
+            overflow: hidden;
+        }
+        
+        .setup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 0;
+        }
+        
+        .setup-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .setup-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+        
+        .progress-section {
+            background: rgba(102, 126, 234, 0.05);
+            padding: 2rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            margin: 0;
+        }
+        
+        .step-connector {
+            position: absolute;
+            top: 30px;
+            left: 60px;
+            right: 60px;
+            height: 3px;
+            background: #e9ecef;
+            z-index: 1;
+        }
+        
+        .step-connector-progress {
+            height: 100%;
+            background: var(--success-color);
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        /* Step Navigation Styles */
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            background: #e9ecef;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #6c757d;
+            border: 3px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .step-label {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #6c757d;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+        
+        .step.active .step-circle {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0.5rem 1.5rem rgba(102, 126, 234, 0.4);
+            animation: pulse 2s infinite;
+        }
+        
+        .step.active .step-label {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .step.completed .step-circle {
+            background: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        
+        .step.completed .step-label {
+            color: var(--success-color);
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0.5rem 1.5rem rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 0.5rem 2rem rgba(102, 126, 234, 0.6); }
+            100% { box-shadow: 0 0.5rem 1.5rem rgba(102, 126, 234, 0.4); }
+        }
+        
+        /* Form Steps */
+        .form-section {
+            background: white;
+            padding: 3rem;
+        }
+        
+        .form-step {
+            display: none;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .form-step.active {
+            display: block;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Validation Styles */
+        .form-floating.has-error .form-control {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .form-floating.has-success .form-control {
+            border-color: #198754;
+            box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+        }
+        
+        .field-error {
+            display: none;
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .validation-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+        
+        .validation-icon.success {
+            color: #198754;
+        }
+        
+        .validation-icon.error {
+            color: #dc3545;
+        }
+        
+        /* Page Template Selection */
+        .page-template-card {
+            border: 2px solid #e9ecef;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            height: 100%;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .page-template-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0.5rem 2rem rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .page-template-card.selected {
+            border-color: var(--success-color);
+            background: rgba(25, 135, 84, 0.05);
+            box-shadow: 0 0.5rem 2rem rgba(25, 135, 84, 0.2);
+        }
+        
+        .page-template-card.required {
+            border-color: var(--warning-color);
+            background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .page-template-card .template-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .page-template-card.selected .template-icon {
+            color: var(--success-color);
+        }
+        
+        .page-template-card.required .template-icon {
+            color: var(--warning-color);
+        }
+        
+        .template-title {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .template-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* Navigation Buttons */
+        .navigation-section {
+            background: rgba(102, 126, 234, 0.03);
+            padding: 2rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-button {
+            border-radius: 2rem;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Auto-detection Results */
+        .auto-detection-results {
+            background: rgba(25, 135, 84, 0.05);
+            border: 1px solid rgba(25, 135, 84, 0.2);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        /* Shopify Integration */
+        .shopify-section {
+            background: rgba(95, 39, 205, 0.05);
+            border: 1px solid rgba(95, 39, 205, 0.2);
+            border-radius: 1rem;
+            padding: 2rem;
+        }
+        
+        .shopify-icon {
+            color: #95C623;
+            font-size: 2rem;
+        }
+        
+        /* Loading states */
+        .btn.loading {
+            position: relative;
+            color: transparent !important;
+        }
+        
+        .btn.loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            animation: button-loading-spinner 1s ease infinite;
+        }
+        
+        @keyframes button-loading-spinner {
+            from { transform: rotate(0turn); }
+            to { transform: rotate(1turn); }
+        }
+        
+        /* Template Categories */
+        .template-category {
+            margin-bottom: 2rem;
+        }
+        
+        .template-category h6 {
+            color: #6c757d;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+        
+        /* Pre-Footer Configuration */
+        .pre-footer-config {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        /* Final Step Styling */
+        .final-step-content {
+            text-align: center;
+            padding: 2rem 0;
+        }
+        
+        .launch-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 2rem;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .launch-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 2rem;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .launch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 1rem 3rem rgba(40, 167, 69, 0.4);
+        }
+        
+        .launch-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .launch-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Confirmation Modal Styles */
+        .confirmation-modal {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .confirmation-modal.show {
+            opacity: 1;
+        }
+        
+        .confirmation-content {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.2);
+            transform: scale(0.8) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .confirmation-modal.show .confirmation-content {
+            transform: scale(1) translateY(0);
+        }
+        
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border: 3px solid #28a745;
+            border-radius: 50%;
+            opacity: 0.6;
+            animation: pulse-ring 2s infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+        
+        /* Sparkle effect */
+        .sparkles {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+        }
+        
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ffd700;
+            border-radius: 50%;
+            animation: sparkle 0.8s ease-out forwards;
+        }
+        
+        @keyframes sparkle {
+            0% {
+                opacity: 1;
+                transform: scale(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1) rotate(180deg) translateX(20px);
+            }
+        }
+
+        /* Legal Content Actions */
+        .legal-content-actions {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .legal-content-actions .btn {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="site-setup-container">
+        <div class="container">
+            <div class="card setup-card">
+                <!-- Header Section -->
+                <div class="setup-header">
+                    <h1><%= isEditMode ? 'Update Store' : 'Create New Store' %></h1>
+                    <p><%= isEditMode ? 'Modify your store settings and content' : 'Launch your professional e-commerce store in minutes' %></p>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="progress-section">
+                    <div class="progress-steps">
+                        <div class="step-connector">
+                            <div class="step-connector-progress" id="progressBar"></div>
+                        </div>
+                        
+                        <div class="step active" data-step="1">
+                            <div class="step-circle">
+                                <i class="bi bi-info-circle"></i>
+                            </div>
+                            <div class="step-label">Basic Info</div>
+                        </div>
+                        
+                        <div class="step" data-step="2">
+                            <div class="step-circle">
+                                <i class="bi bi-shop"></i>
+                            </div>
+                            <div class="step-label">Shopify</div>
+                        </div>
+                        
+                        <div class="step" data-step="3">
+                            <div class="step-circle">
+                                <i class="bi bi-file-text"></i>
+                            </div>
+                            <div class="step-label">Pages</div>
+                        </div>
+                        
+                        <div class="step" data-step="4">
+                            <div class="step-circle">
+                                <i class="bi bi-layout-three-columns"></i>
+                            </div>
+                            <div class="step-label">Footer</div>
+                        </div>
+                        
+                        <div class="step" data-step="5">
+                            <div class="step-circle">
+                                <i class="bi bi-rocket-takeoff"></i>
+                            </div>
+                            <div class="step-label">Launch</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Section -->
+                <div class="form-section">
+                    <form id="siteSetupForm" method="POST" action="/admin/site-setup">
+                        <!-- Hidden Fields -->
+                        <input type="hidden" name="step" value="1" id="stepInput">
+                        <% if (isEditMode && storeData) { %>
+                            <input type="hidden" name="storeId" value="<%= storeData.uuid %>" id="storeIdInput">
+                        <% } else { %>
+                            <input type="hidden" name="storeId" value="" id="storeIdInput">
+                        <% } %>
+
+                        <!-- Step 1: Basic Information -->
+                        <div class="form-step active" id="step1">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h3 class="mb-4">
+                                        <i class="bi bi-info-circle text-primary me-2"></i>
+                                        Basic Store Information
+                                    </h3>
+                                    <p class="text-muted mb-4">Let's start with the essential details for your store.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="url" class="form-control" id="siteUrl" name="domain" placeholder="https://example.com" required>
+                                        <label for="siteUrl">Store URL <span class="text-danger">*</span></label>
+                                        <div class="field-error"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="storeName" name="brandName" placeholder="My Store" required>
+                                        <label for="storeName">Store Name <span class="text-danger">*</span></label>
+                                        <div class="field-error"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="country" name="country" required>
+                                            <option value="">Choose...</option>
+                                            <option value="US">United States</option>
+                                            <option value="CA">Canada</option>
+                                            <option value="GB">United Kingdom</option>
+                                            <option value="DE">Germany</option>
+                                            <option value="FR">France</option>
+                                            <option value="SE">Sweden</option>
+                                            <option value="FI">Finland</option>
+                                            <option value="AU">Australia</option>
+                                            <option value="NZ">New Zealand</option>
+                                        </select>
+                                        <label for="country">Country <span class="text-danger">*</span></label>
+                                        <div class="field-error"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="language" name="language" required>
+                                            <option value="">Choose...</option>
+                                            <option value="en">English</option>
+                                            <option value="de">German</option>
+                                            <option value="fr">French</option>
+                                            <option value="sv">Swedish</option>
+                                            <option value="fi">Finnish</option>
+                                            <option value="da">Danish</option>
+                                            <option value="no">Norwegian</option>
+                                            <option value="nl">Dutch</option>
+                                        </select>
+                                        <label for="language">Language <span class="text-danger">*</span></label>
+                                        <div class="field-error"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="currency" name="currency" required>
+                                            <option value="">Choose...</option>
+                                            <option value="USD">US Dollar (USD)</option>
+                                            <option value="CAD">Canadian Dollar (CAD)</option>
+                                            <option value="GBP">British Pound (GBP)</option>
+                                            <option value="EUR">Euro (EUR)</option>
+                                            <option value="SEK">Swedish Krona (SEK)</option>
+                                            <option value="AUD">Australian Dollar (AUD)</option>
+                                            <option value="NZD">New Zealand Dollar (NZD)</option>
+                                        </select>
+                                        <label for="currency">Currency <span class="text-danger">*</span></label>
+                                        <div class="field-error"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Auto-detection Results -->
+                            <div id="autoDetectionResults" class="auto-detection-results d-none mt-3">
+                                <h6 class="text-success mb-2">
+                                    <i class="bi bi-check-circle me-2"></i>Auto-detected Settings
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <small><strong>Country:</strong> <span id="detectedCountry"></span></small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small><strong>Currency:</strong> <span id="detectedCurrency"></span></small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small><strong>Language:</strong> <span id="detectedLanguage"></span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Shopify Integration -->
+                        <div class="form-step" id="step2">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h3 class="mb-4">
+                                        <i class="bi bi-shop text-success me-2"></i>
+                                        Shopify Integration
+                                    </h3>
+                                    <p class="text-muted mb-4">Connect your Shopify store to sync products automatically (optional).</p>
+                                </div>
+                            </div>
+
+                            <div class="shopify-section">
+                                <div class="row g-4">
+                                    <div class="col-12">
+                                        <div class="text-center mb-4">
+                                            <i class="bi bi-shop shopify-icon"></i>
+                                            <h5 class="mt-3">Connect Your Shopify Store</h5>
+                                            <p class="text-muted">Automatically sync your products, inventory, and orders</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Saved Shopify Stores Selection -->
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <select class="form-select" id="savedShopifyStores" name="savedShopifyStore">
+                                                <option value="">Skip Shopify Integration</option>
+                                                <option value="new">Add New Shopify Store</option>
+                                            </select>
+                                            <label for="savedShopifyStores">Shopify Store</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Selected Store Info -->
+                                    <div id="selectedStoreInfo" class="col-12 d-none">
+                                        <div class="alert alert-success">
+                                            <h6><i class="bi bi-check-circle me-2"></i>Selected Store</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <strong>Shop Name:</strong> <span id="selectedShopName"></span>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <strong>Domain:</strong> <span id="selectedDomain"></span>
+                                                </div>
+                                                <div class="col-12 mt-2">
+                                                    <strong>Products:</strong> <span id="selectedProductCount"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Manual Entry Section -->
+                                    <div id="manualEntrySection" style="display: none;">
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" id="shopifyDomain" name="shopifyDomain" placeholder="mystore.myshopify.com">
+                                                <label for="shopifyDomain">Shopify Domain</label>
+                                                <small class="form-text text-muted">e.g., mystore.myshopify.com</small>
+                                                <div class="field-error"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="password" class="form-control" id="shopifyToken" name="shopifyToken" placeholder="shpat_...">
+                                                <label for="shopifyToken">Access Token</label>
+                                                <small class="form-text text-muted">Private app access token</small>
+                                                <div class="field-error"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control" id="newStoreNickname" name="newStoreNickname" placeholder="My Main Store">
+                                                <label for="newStoreNickname">Store Nickname</label>
+                                                <small class="form-text text-muted">For easy identification</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <button type="button" class="btn btn-outline-primary w-100" id="validateShopify">
+                                                <i class="bi bi-shield-check me-2"></i>Test Connection
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Shopify Status -->
+                                <div id="shopifyStatus" class="d-none mt-3"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Page Templates -->
+                        <div class="form-step" id="step3">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h3 class="mb-4">
+                                        <i class="bi bi-file-text text-primary me-2"></i>
+                                        Page Templates
+                                    </h3>
+                                    <p class="text-muted mb-4">Select the pages you want to include in your store. Essential pages are pre-selected.</p>
+                                </div>
+                            </div>
+
+                            <div id="pageTemplatesLoading" class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="text-muted mt-3">Loading page templates...</p>
+                            </div>
+
+                            <div class="template-selection" id="templateSelection" style="display: none;">
+                                <!-- Essential Pages Section -->
+                                <div class="template-category mb-4 w-100" id="essentialPages" style="display: none;">
+                                    <h6 class="text-muted text-uppercase fw-bold mb-3">
+                                        <i class="bi bi-star-fill me-2"></i>
+                                        Essential Pages (3)
+                                    </h6>
+                                    <div class="row g-3">
+                                        <!-- Home Page -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card required has-content" data-template="home" data-category="essential">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-house"></i>
+                                                </div>
+                                                <h6 class="template-title">Home Page</h6>
+                                                <p class="template-description text-muted small">Landing page</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="home" checked disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Products Page -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card required has-content" data-template="products" data-category="essential">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-box-seam"></i>
+                                                </div>
+                                                <h6 class="template-title">Products</h6>
+                                                <p class="template-description text-muted small">Product catalog</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="products" checked disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Contact Us -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="contact" data-category="essential">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-envelope"></i>
+                                                </div>
+                                                <h6 class="template-title">Contact Us</h6>
+                                                <p class="template-description text-muted small">Contact information</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="contact" checked>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Marketing Pages Section -->
+                                <div class="template-category mb-4 w-100" id="marketingPages" style="display: none;">
+                                    <h6 class="text-muted text-uppercase fw-bold mb-3">
+                                        <i class="bi bi-megaphone me-2"></i>
+                                        Marketing Pages (4)
+                                    </h6>
+                                    <div class="row g-3">
+                                        <!-- About Us -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="about" data-category="marketing">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-people"></i>
+                                                </div>
+                                                <h6 class="template-title">About Us</h6>
+                                                <p class="template-description text-muted small">Company story</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="about">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- FAQ -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="faq" data-category="marketing">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-question-circle"></i>
+                                                </div>
+                                                <h6 class="template-title">FAQ</h6>
+                                                <p class="template-description text-muted small">Common questions</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="faq">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Testimonials -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="testimonials" data-category="marketing">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-star-fill"></i>
+                                                </div>
+                                                <h6 class="template-title">Testimonials</h6>
+                                                <p class="template-description text-muted small">Customer reviews</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="testimonials">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Blog -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="blog" data-category="marketing">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-journal-text"></i>
+                                                </div>
+                                                <h6 class="template-title">Blog</h6>
+                                                <p class="template-description text-muted small">Articles & news</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="blog">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Static Legal Pages Section - Working Implementation -->
+                                <div class="template-category mb-4 w-100" id="staticLegalPages" style="display: none;">
+                                    <h6 class="text-muted text-uppercase fw-bold mb-3">
+                                        <i class="bi bi-shield-check me-2"></i>
+                                        Legal Pages (4)
+                                    </h6>
+                                    <div class="row g-3">
+                                        <!-- Privacy Policy -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="privacy" data-category="legal">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-shield-check"></i>
+                                                </div>
+                                                <h6 class="template-title">Privacy Policy <span class="badge bg-success ms-2">Professional Content</span></h6>
+                                                <p class="template-description text-muted small">Privacy policy</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="privacy">
+                                                </div>
+                                                <div class="legal-content-actions mt-2">
+                                                    <small class="text-success"><i class="bi bi-check-circle me-1"></i>Ready to use</small>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm ms-2 edit-legal-content" data-template="privacy">
+                                                        <i class="bi bi-pencil me-1"></i>Edit Content
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Terms of Service -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="terms" data-category="legal">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-file-text"></i>
+                                                </div>
+                                                <h6 class="template-title">Terms of Service <span class="badge bg-success ms-2">Professional Content</span></h6>
+                                                <p class="template-description text-muted small">Legal terms</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="terms">
+                                                </div>
+                                                <div class="legal-content-actions mt-2">
+                                                    <small class="text-success"><i class="bi bi-check-circle me-1"></i>Ready to use</small>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm ms-2 edit-legal-content" data-template="terms">
+                                                        <i class="bi bi-pencil me-1"></i>Edit Content
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Refund Policy -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="refund" data-category="legal">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-arrow-return-left"></i>
+                                                </div>
+                                                <h6 class="template-title">Refund Policy <span class="badge bg-success ms-2">Professional Content</span></h6>
+                                                <p class="template-description text-muted small">Return policy</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="refund">
+                                                </div>
+                                                <div class="legal-content-actions mt-2">
+                                                    <small class="text-success"><i class="bi bi-check-circle me-1"></i>Ready to use</small>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm ms-2 edit-legal-content" data-template="refund">
+                                                        <i class="bi bi-pencil me-1"></i>Edit Content
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Delivery Policy -->
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="page-template-card has-content" data-template="delivery" data-category="legal">
+                                                <div class="template-icon">
+                                                    <i class="bi bi-truck"></i>
+                                                </div>
+                                                <h6 class="template-title">Delivery Policy <span class="badge bg-success ms-2">Professional Content</span></h6>
+                                                <p class="template-description text-muted small">Shipping policy</p>
+                                                <div class="form-check position-absolute top-0 end-0 m-2">
+                                                    <input class="form-check-input" type="checkbox" name="selectedPages[]" value="delivery">
+                                                </div>
+                                                <div class="legal-content-actions mt-2">
+                                                    <small class="text-success"><i class="bi bi-check-circle me-1"></i>Ready to use</small>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm ms-2 edit-legal-content" data-template="delivery">
+                                                        <i class="bi bi-pencil me-1"></i>Edit Content
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Pre-Footer Content -->
+                        <div class="form-step" id="step4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h3 class="mb-4">
+                                        <i class="bi bi-layout-three-columns text-primary me-2"></i>
+                                        Pre-Footer Content
+                                    </h3>
+                                    <p class="text-muted mb-4">Add global content that appears in the pre-footer section of all pages.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="form-check form-switch mb-4">
+                                        <input class="form-check-input" type="checkbox" id="enablePreFooter" name="enablePreFooter">
+                                        <label class="form-check-label" for="enablePreFooter">
+                                            <strong>Enable Pre-Footer Section</strong>
+                                        </label>
+                                        <div class="form-text">Show additional content above the footer on all pages</div>
+                                    </div>
+                                    
+                                    <div id="preFooterContent" style="display: none;">
+                                        <div class="row g-4">
+                                            <!-- Footer Box 1 -->
+                                            <div class="col-md-4">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-primary text-white">
+                                                        <h6 class="mb-0"><i class="bi bi-1-circle me-2"></i>Footer Box 1</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="mb-3">
+                                                            <label for="footerBox1Title" class="form-label">Title</label>
+                                                            <input type="text" class="form-control" id="footerBox1Title" name="footerBox1Title" placeholder="Quick Links">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox1Link1" class="form-label">Link 1</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox1Link1" name="footerBox1Link1" placeholder="About Us">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox1Link2" class="form-label">Link 2</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox1Link2" name="footerBox1Link2" placeholder="Contact">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox1Link3" class="form-label">Link 3</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox1Link3" name="footerBox1Link3" placeholder="FAQ">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Footer Box 2 -->
+                                            <div class="col-md-4">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-success text-white">
+                                                        <h6 class="mb-0"><i class="bi bi-2-circle me-2"></i>Footer Box 2</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="mb-3">
+                                                            <label for="footerBox2Title" class="form-label">Title</label>
+                                                            <input type="text" class="form-control" id="footerBox2Title" name="footerBox2Title" placeholder="Customer Service">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox2Link1" class="form-label">Link 1</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox2Link1" name="footerBox2Link1" placeholder="Support">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox2Link2" class="form-label">Link 2</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox2Link2" name="footerBox2Link2" placeholder="Returns">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox2Link3" class="form-label">Link 3</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox2Link3" name="footerBox2Link3" placeholder="Shipping">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Footer Box 3 -->
+                                            <div class="col-md-4">
+                                                <div class="card h-100">
+                                                    <div class="card-header bg-info text-white">
+                                                        <h6 class="mb-0"><i class="bi bi-3-circle me-2"></i>Footer Box 3</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="mb-3">
+                                                            <label for="footerBox3Title" class="form-label">Title</label>
+                                                            <input type="text" class="form-control" id="footerBox3Title" name="footerBox3Title" placeholder="Follow Us">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox3Link1" class="form-label">Link 1</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox3Link1" name="footerBox3Link1" placeholder="Facebook">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox3Link2" class="form-label">Link 2</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox3Link2" name="footerBox3Link2" placeholder="Instagram">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <label for="footerBox3Link3" class="form-label">Link 3</label>
+                                                            <input type="text" class="form-control form-control-sm" id="footerBox3Link3" name="footerBox3Link3" placeholder="Twitter">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Final Review & Launch -->
+                        <div class="form-step" id="step5">
+                            <div class="final-step-content">
+                                <div class="launch-icon">
+                                    <i class="bi bi-rocket-takeoff"></i>
+                                </div>
+                                <h2 class="mb-4"><%= isEditMode ? 'Update Your Store' : 'Ready to Launch!' %></h2>
+                                <p class="lead text-muted mb-5">
+                                    <%= isEditMode ? 'Your store changes will be applied and updated immediately.' : 'Your professional e-commerce store is ready to go live.' %>
+                                </p>
+                                
+                                <div class="row justify-content-center mb-5">
+                                    <div class="col-lg-8">
+                                        <div class="card border-0 shadow-sm">
+                                            <div class="card-body">
+                                                <h5 class="card-title mb-3">
+                                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                    <%= isEditMode ? 'Store Update Summary' : 'Launch Checklist' %>
+                                                </h5>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <ul class="list-unstyled">
+                                                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Domain & branding configured</li>
+                                                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Page templates selected</li>
+                                                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Legal pages included</li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <ul class="list-unstyled">
+                                                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Footer configuration set</li>
+                                                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Shopify integration ready</li>
+                                                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>SEO optimized structure</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Section -->
+                        <div class="navigation-section">
+                            <div class="navigation-buttons">
+                                <button type="button" class="btn btn-outline-secondary nav-button" id="prevBtn" onclick="prevStep()" style="display: none;">
+                                    <i class="bi bi-arrow-left me-2"></i>Previous
+                                </button>
+                                
+                                <div class="d-flex gap-3">
+                                    <button type="button" class="btn btn-primary nav-button" id="nextBtn" onclick="nextStep()">
+                                        Next Step <i class="bi bi-arrow-right ms-2"></i>
+                                    </button>
+                                    
+                                    <button type="submit" class="btn launch-btn" id="submitBtn" style="display: none;">
+                                        <i class="bi bi-rocket-takeoff me-2 rocket-icon"></i>
+                                        <%= isEditMode ? 'Update Store' : 'Launch Store' %>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Site Setup Wizard Script -->
+    <script>
+        class SiteSetupWizard {
+            constructor() {
+                this.currentStep = 1;
+                this.totalSteps = 5;
+                this.isEditMode = <%= isEditMode ? 'true' : 'false' %>;
+                <% if (isEditMode && storeData) { %>
+                this.storeData = <%- JSON.stringify(storeData) %>;
+                this.storeId = '<%= storeData.uuid %>';
+                <% } else { %>
+                this.storeData = null;
+                this.storeId = null;
+                <% } %>
+                this.selectedShopifyData = null;
+                this.validationRules = {
+                    1: ['domain', 'brandName', 'country', 'language', 'currency'],
+                    2: [], // Shopify is optional
+                    3: [], // Page selection is flexible
+                    4: [], // Pre-footer is optional
+                    5: [] // Final step
+                };
+
+                this.init();
+                this.loadSavedShopifyStores();
+            }
+
+            init() {
+                // Initialize the wizard UI
+                this.goToStep(this.currentStep);
+                this.attachEventListeners();
+                
+                // CRITICAL FIX: Ensure step input field is correctly set on initialization
+                this.updateStepInputField();
+                
+                // CRITICAL FIX: Ensure submit button is properly initialized
+                this.initializeSubmitButton();
+
+                console.log('Site Setup Wizard initialized:', {
+                    currentStep: this.currentStep,
+                    isEditMode: this.isEditMode,
+                    hasStoreData: !!this.storeData,
+                    initialStepValue: document.querySelector('input[name="step"]')?.value,
+                    submitButtonExists: !!document.getElementById('submitBtn')
+                });
+                
+                // Pre-populate form if we have store data
+                if (this.storeData && this.isEditMode) {
+                    this.populateFormFromStore();
+                }
+            }
+            
+            initializeSubmitButton() {
+                const submitBtn = document.getElementById('submitBtn');
+                if (submitBtn) {
+                    // Ensure button is not disabled initially
+                    submitBtn.disabled = false;
+                    
+                    // Add click event listener as backup
+                    submitBtn.addEventListener('click', (e) => {
+                        console.log('🎯 Submit button clicked directly');
+                        console.log('🎯 Current step:', this.currentStep);
+                        console.log('🎯 Button type:', submitBtn.type);
+                        
+                        // If we're on step 5 and this is a submit button, manually trigger form submission
+                        if (this.currentStep === this.totalSteps && submitBtn.type === 'submit') {
+                            console.log('🚀 Manually triggering form submission from button click');
+                            const form = document.getElementById('siteSetupForm');
+                            if (form) {
+                                // Create and dispatch a submit event
+                                const submitEvent = new Event('submit', {
+                                    bubbles: true,
+                                    cancelable: true
+                                });
+                                form.dispatchEvent(submitEvent);
+                            }
+                        }
+                    });
+                    
+                    console.log('✅ Submit button initialized successfully');
+                } else {
+                    console.error('❌ Submit button not found during initialization');
+                }
+            }
+
+            populateFormFromStore() {
+                if (!this.storeData) return;
+
+                console.log('🔄 Populating form with store data:', this.storeData);
+
+                // Basic info
+                if (this.storeData.domain) document.getElementById('siteUrl').value = this.storeData.domain;
+                if (this.storeData.name) document.getElementById('storeName').value = this.storeData.name;
+                if (this.storeData.country) document.getElementById('country').value = this.storeData.country;
+                if (this.storeData.language) document.getElementById('language').value = this.storeData.language;
+                if (this.storeData.currency) document.getElementById('currency').value = this.storeData.currency;
+
+                // Shopify data
+                if (this.storeData.shopify_domain) {
+                    document.getElementById('shopifyDomain').value = this.storeData.shopify_domain;
+                    // Don't populate the token field for security
+                }
+
+                // Pre-populate page selection if we have it
+                if (this.storeData.selected_pages) {
+                    setTimeout(() => {
+                        this.prePopulateSelectedPages();
+                    }, 1000);
+                }
+            }
+
+            attachEventListeners() {
+                // Domain input blur for auto-detection
+                const siteUrlInput = document.getElementById('siteUrl');
+                if (siteUrlInput) {
+                    siteUrlInput.addEventListener('blur', () => this.detectDomainInfo());
+                }
+
+                // Saved Shopify stores selection
+                const savedStoresSelect = document.getElementById('savedShopifyStores');
+                if (savedStoresSelect) {
+                    savedStoresSelect.addEventListener('change', (e) => this.handleSavedStoreSelection(e.target.value));
+                }
+
+                // Shopify validation
+                const validateBtn = document.getElementById('validateShopify');
+                if (validateBtn) {
+                    validateBtn.addEventListener('click', () => this.validateShopifyConnection());
+                }
+
+                // Page template selection
+                document.querySelectorAll('.page-template-card:not(.required)').forEach(card => {
+                    card.addEventListener('click', () => this.togglePageTemplate(card));
+                });
+
+                // Pre-footer toggle functionality
+                const enablePreFooterToggle = document.getElementById('enablePreFooter');
+                if (enablePreFooterToggle) {
+                    enablePreFooterToggle.addEventListener('change', () => {
+                        const preFooterContent = document.getElementById('preFooterContent');
+                        if (preFooterContent) {
+                            preFooterContent.style.display = enablePreFooterToggle.checked ? 'block' : 'none';
+                        }
+                    });
+                }
+
+                // Form validation
+                const form = document.getElementById('siteSetupForm');
+                if (form) {
+                    form.addEventListener('submit', (e) => this.handleFormSubmit(e));
+                    console.log('✅ Form submit event listener attached successfully');
+                } else {
+                    console.error('❌ Form element not found - submit handler not attached');
+                }
+
+                // Input validation with real-time feedback
+                document.querySelectorAll('input[required], select[required]').forEach(input => {
+                    input.addEventListener('blur', () => this.validateFieldWithFeedback(input));
+                    input.addEventListener('input', () => this.clearValidationFeedback(input));
+                    input.addEventListener('focus', () => this.clearValidationFeedback(input));
+                });
+
+                // Language change listener for localized titles and templates
+                const languageSelect = document.getElementById('language');
+                if (languageSelect) {
+                    languageSelect.addEventListener('change', async () => {
+                        this.updateLocalizedTitles();
+                        await this.loadPageTemplates(); // Reload templates for new language
+                    });
+                }
+            }
+
+            async detectDomainInfo() {
+                const siteUrl = document.getElementById('siteUrl').value;
+                if (!siteUrl) return;
+
+                try {
+                    // Simple domain detection based on TLD
+                    const domain = new URL(siteUrl.includes('://') ? siteUrl : 'https://' + siteUrl);
+                    const tld = domain.hostname.split('.').pop().toLowerCase();
+                    
+                    const detectionMap = {
+                        'com': { country: 'US', currency: 'USD', language: 'en' },
+                        'ca': { country: 'CA', currency: 'CAD', language: 'en' },
+                        'co.uk': { country: 'GB', currency: 'GBP', language: 'en' },
+                        'uk': { country: 'GB', currency: 'GBP', language: 'en' },
+                        'de': { country: 'DE', currency: 'EUR', language: 'de' },
+                        'fr': { country: 'FR', currency: 'EUR', language: 'fr' },
+                        'se': { country: 'SE', currency: 'SEK', language: 'sv' },
+                        'fi': { country: 'FI', currency: 'EUR', language: 'fi' },
+                        'au': { country: 'AU', currency: 'AUD', language: 'en' },
+                        'nz': { country: 'NZ', currency: 'NZD', language: 'en' }
+                    };
+
+                    const detected = detectionMap[tld] || detectionMap['com'];
+                    this.showAutoDetectionResults(detected);
+                    
+                } catch (error) {
+                    console.error('Domain detection failed:', error);
+                }
+            }
+
+            showAutoDetectionResults(detected) {
+                const resultsDiv = document.getElementById('autoDetectionResults');
+                const countrySpan = document.getElementById('detectedCountry');
+                const currencySpan = document.getElementById('detectedCurrency');
+                const languageSpan = document.getElementById('detectedLanguage');
+
+                if (resultsDiv && countrySpan && currencySpan && languageSpan) {
+                    const countryNames = {
+                        'US': 'United States', 'CA': 'Canada', 'GB': 'United Kingdom',
+                        'DE': 'Germany', 'FR': 'France', 'SE': 'Sweden', 'FI': 'Finland',
+                        'AU': 'Australia', 'NZ': 'New Zealand'
+                    };
+
+                    countrySpan.textContent = countryNames[detected.country] || detected.country;
+                    currencySpan.textContent = detected.currency;
+                    languageSpan.textContent = detected.language.toUpperCase();
+                    
+                    resultsDiv.classList.remove('d-none');
+                    
+                    // Auto-fill form fields
+                    document.getElementById('country').value = detected.country;
+                    document.getElementById('currency').value = detected.currency;
+                    document.getElementById('language').value = detected.language;
+                    
+                    // Update localized titles
+                    this.updateLocalizedTitles();
+                }
+            }
+
+            updateLocalizedTitles() {
+                const selectedLanguage = document.getElementById('language')?.value || 'en';
+                const localizedTitles = document.querySelectorAll('.page-localized-title');
+                
+                localizedTitles.forEach(titleElement => {
+                    const localizedText = titleElement.dataset[selectedLanguage] || titleElement.dataset['en'];
+                    titleElement.textContent = localizedText;
+                });
+            }
+
+            async loadSavedShopifyStores() {
+                try {
+                    const response = await fetch('/api/company-shopify-stores?activeOnly=true');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.populateShopifyStoresDropdown(data.stores);
+                    }
+                } catch (error) {
+                    console.error('Failed to load saved Shopify stores:', error);
+                }
+            }
+
+            populateShopifyStoresDropdown(stores) {
+                const select = document.getElementById('savedShopifyStores');
+                if (!select) return;
+                
+                // Clear existing options except the first two
+                while (select.children.length > 2) {
+                    select.removeChild(select.lastChild);
+                }
+                
+                // Add saved stores
+                stores.forEach(store => {
+                    if (store.connection_status === 'connected') {
+                        const option = document.createElement('option');
+                        option.value = store.uuid;
+                        option.textContent = `${store.nickname} (${store.shopify_domain})`;
+                        option.dataset.store = JSON.stringify(store);
+                        select.appendChild(option);
+                    }
+                });
+            }
+
+            handleSavedStoreSelection(value) {
+                const manualSection = document.getElementById('manualEntrySection');
+                const selectedInfo = document.getElementById('selectedStoreInfo');
+                
+                if (value === 'new') {
+                    // Show manual entry
+                    manualSection.style.display = 'block';
+                    selectedInfo.classList.add('d-none');
+                    this.clearShopifyFields();
+                } else if (value) {
+                    // Show selected store info
+                    manualSection.style.display = 'none';
+                    this.showSelectedStoreInfo(value);
+                } else {
+                    // Hide both
+                    manualSection.style.display = 'none';
+                    selectedInfo.classList.add('d-none');
+                    this.clearShopifyFields();
+                }
+            }
+
+            showSelectedStoreInfo(storeUuid) {
+                const select = document.getElementById('savedShopifyStores');
+                const option = select.querySelector(`option[value="${storeUuid}"]`);
+                
+                if (option && option.dataset.store) {
+                    const store = JSON.parse(option.dataset.store);
+                    
+                    document.getElementById('selectedShopName').textContent = store.shopify_shop_name || store.nickname;
+                    document.getElementById('selectedDomain').textContent = store.shopify_domain;
+                    document.getElementById('selectedProductCount').textContent = store.product_count || 0;
+                    
+                    document.getElementById('selectedStoreInfo').classList.remove('d-none');
+                    
+                    // Set hidden fields for form submission
+                    this.setShopifyFormData(store.shopify_domain, store.shopify_access_token);
+                }
+            }
+
+            setShopifyFormData(domain, token) {
+                // We don't set the visible fields to avoid showing sensitive data
+                // Instead, we'll handle this in form submission
+                this.selectedShopifyData = {
+                    domain: domain,
+                    token: token
+                };
+            }
+
+            clearShopifyFields() {
+                document.getElementById('shopifyDomain').value = '';
+                document.getElementById('shopifyToken').value = '';
+                document.getElementById('newStoreNickname').value = '';
+                this.selectedShopifyData = null;
+            }
+
+            async validateShopifyConnection() {
+                const shopifyDomain = document.getElementById('shopifyDomain').value;
+                const shopifyToken = document.getElementById('shopifyToken').value;
+                const validateBtn = document.getElementById('validateShopify');
+
+                if (!shopifyDomain || !shopifyToken) {
+                    this.showAlert('Please enter both Shopify domain and access token', 'warning');
+                    return;
+                }
+
+                // Show loading state
+                validateBtn.classList.add('loading');
+                validateBtn.disabled = true;
+                validateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Testing...';
+
+                try {
+                    console.log('🔄 Testing Shopify connection...', { shopifyDomain, tokenLength: shopifyToken.length });
+                    
+                    const response = await fetch('/api/validate-shopify', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            shopifyDomain: shopifyDomain,
+                            accessToken: shopifyToken
+                        })
+                    });
+                    
+                    console.log('📥 Shopify API response:', { status: response.status, statusText: response.statusText });
+                    
+                    const data = await response.json();
+                    console.log('📊 Response data:', JSON.stringify(data, null, 2));
+                    
+                    if (response.ok && data.success) {
+                        console.log('✅ Shopify connection successful');
+                        this.showShopifySuccess(data);
+                    } else {
+                        // Handle API errors
+                        const errorMessage = data.error || 'Connection failed';
+                        console.error('❌ Shopify connection failed:', errorMessage);
+                        this.showShopifyError(errorMessage);
+                    }
+                    
+                } catch (error) {
+                    console.error('💥 Shopify validation error:', error);
+                    
+                    // Show detailed error message
+                    let userFriendlyError = 'Connection failed. Please check your credentials.';
+                    if (error.message.includes('401') || error.message.includes('Invalid')) {
+                        userFriendlyError = 'Invalid access token. Please check your Shopify credentials.';
+                    } else if (error.message.includes('404') || error.message.includes('not found')) {
+                        userFriendlyError = 'Store not found. Please check your Shopify domain.';
+                    } else if (error.message.includes('timeout') || error.message.includes('network')) {
+                        userFriendlyError = 'Network timeout. Please check your connection and try again.';
+                    } else if (error.message) {
+                        userFriendlyError = error.message;
+                    }
+                    
+                    this.showShopifyError(userFriendlyError);
+                } finally {
+                    validateBtn.classList.remove('loading');
+                    validateBtn.disabled = false;
+                    validateBtn.innerHTML = '<i class="bi bi-shield-check me-2"></i>Test Connection';
+                }
+            }
+
+            showShopifySuccess(data) {
+                console.log('🎉 showShopifySuccess called with:', data);
+                const statusDiv = document.getElementById('shopifyStatus');
+                
+                if (!statusDiv) {
+                    console.warn('⚠️ Shopify status div not found');
+                    return;
+                }
+                
+                console.log('✅ Found shopifyStatus div, updating content...');
+                
+                // Update the status div content for success
+                statusDiv.innerHTML = `
+                    <div class="alert alert-success border-0 mb-0">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill me-3" style="font-size: 1.5rem; color: #198754;"></i>
+                            <div>
+                                <h6 class="mb-1">
+                                    <i class="bi bi-shop me-2"></i>Successfully Connected!
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Shop Name:</strong> ${data.shopName || 'N/A'}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Products:</strong> ${data.productCount || 0}
+                                    </div>
+                                </div>
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Your products will be automatically synced to your new store.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                statusDiv.classList.remove('d-none');
+                
+                console.log('✅ Shopify status updated successfully');
+            }
+
+            showShopifyError(errorMessage) {
+                const statusDiv = document.getElementById('shopifyStatus');
+                if (!statusDiv) return;
+
+                statusDiv.innerHTML = `
+                    <div class="alert alert-danger border-0 mb-0">
+                        <h6><i class="bi bi-exclamation-triangle-fill me-2"></i>Connection Failed</h6>
+                        <p class="mb-0">${errorMessage}</p>
+                    </div>
+                `;
+                statusDiv.classList.remove('d-none');
+            }
+
+            togglePageTemplate(card) {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                if (!checkbox) return;
+
+                // Toggle the checkbox
+                checkbox.checked = !checkbox.checked;
+                
+                // Update visual state
+                if (checkbox.checked) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            }
+
+            async loadPageTemplates() {
+                // This function would load dynamic templates from the API
+                // For now, we're using static templates in the HTML
+                console.log('Loading page templates...');
+            }
+
+            validateStep(stepNumber) {
+                const requiredFields = this.validationRules[stepNumber] || [];
+                let isValid = true;
+
+                requiredFields.forEach(fieldName => {
+                    const field = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
+                    if (field && (!field.value || field.value.trim() === '')) {
+                        this.showFieldError(field, `${fieldName} is required`);
+                        isValid = false;
+                    }
+                });
+
+                return isValid;
+            }
+
+            validateFieldWithFeedback(field) {
+                this.clearValidationFeedback(field);
+                
+                if (field.hasAttribute('required') && (!field.value || field.value.trim() === '')) {
+                    this.showFieldError(field, 'This field is required');
+                    return false;
+                }
+
+                // Field-specific validation
+                if (field.type === 'email' && field.value && !this.isValidEmail(field.value)) {
+                    this.showFieldError(field, 'Please enter a valid email address');
+                    return false;
+                }
+
+                if (field.id === 'siteUrl' && field.value) {
+                    try {
+                        new URL(field.value.includes('://') ? field.value : 'https://' + field.value);
+                        this.showFieldSuccess(field);
+                    } catch {
+                        this.showFieldError(field, 'Please enter a valid URL');
+                        return false;
+                    }
+                }
+
+                this.showFieldSuccess(field);
+                return true;
+            }
+
+            showFieldError(field, message) {
+                const container = field.closest('.form-floating');
+                if (!container) return;
+
+                container.classList.add('has-error');
+                container.classList.remove('has-success');
+
+                const errorDiv = container.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.textContent = message;
+                    errorDiv.style.display = 'block';
+                }
+
+                // Add error icon
+                this.updateValidationIcon(container, 'error');
+            }
+
+            showFieldSuccess(field) {
+                const container = field.closest('.form-floating');
+                if (!container) return;
+
+                container.classList.add('has-success');
+                container.classList.remove('has-error');
+
+                const errorDiv = container.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+
+                // Add success icon
+                this.updateValidationIcon(container, 'success');
+            }
+
+            clearValidationFeedback(field) {
+                const container = field.closest('.form-floating');
+                if (!container) return;
+
+                container.classList.remove('has-error', 'has-success');
+
+                const errorDiv = container.querySelector('.field-error');
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+
+                // Remove validation icon
+                this.updateValidationIcon(container, null);
+            }
+
+            updateValidationIcon(container, type) {
+                // Remove existing icon
+                const existingIcon = container.querySelector('.validation-icon');
+                if (existingIcon) {
+                    existingIcon.remove();
+                }
+
+                if (!type) return;
+
+                // Add new icon
+                const icon = document.createElement('i');
+                icon.className = `bi validation-icon ${type}`;
+                
+                if (type === 'success') {
+                    icon.classList.add('bi-check-circle-fill');
+                } else if (type === 'error') {
+                    icon.classList.add('bi-exclamation-circle-fill');
+                }
+
+                container.appendChild(icon);
+            }
+
+            isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email);
+            }
+
+            nextStep() {
+                console.log('🔵 wizard.nextStep() called - currentStep:', this.currentStep, 'totalSteps:', this.totalSteps);
+                if (this.currentStep < this.totalSteps) {
+                    // Validate current step before proceeding
+                    if (!this.validateStep(this.currentStep)) {
+                        return;
+                    }
+                    
+                    // NEW WORKFLOW: Submit form data for each step to server
+                    console.log(`🚀 Submitting step ${this.currentStep} data to server...`);
+                    
+                    // Get the form and submit via AJAX
+                    const form = document.getElementById('siteSetupForm');
+                    const nextBtn = document.getElementById('nextBtn');
+                    
+                    if (form && nextBtn) {
+                        // Set loading state
+                        this.setButtonLoading(nextBtn, true);
+                        
+                        // Submit form data for current step
+                        this.submitStepData(form, nextBtn);
+                    } else {
+                        console.error('❌ Form or next button not found');
+                        this.showAlert('Unable to proceed. Please refresh the page and try again.', 'error');
+                    }
+                } else {
+                    console.log('⚠️ Already at final step');
+                }
+            }
+            
+            // New method to submit individual step data
+            async submitStepData(form, button) {
+                try {
+                    // CRITICAL FIX: Update the hidden step input before creating FormData
+                    const stepInput = form.querySelector('#stepInput');
+                    if (stepInput) {
+                        // Always set to numeric step value for intermediate steps
+                        stepInput.value = this.currentStep.toString();
+                        console.log('🔧 Updated step input value to:', this.currentStep.toString());
+                    } else {
+                        console.error('❌ Step input not found!');
+                        return;
+                    }
+                    
+                    // Update store ID if we have it
+                    const storeIdInput = form.querySelector('#storeIdInput');
+                    if (storeIdInput && this.storeId) {
+                        storeIdInput.value = this.storeId;
+                        console.log('🔧 Updated storeId input value to:', this.storeId);
+                    }
+                    
+                    // Debug: Check all form inputs before creating FormData
+                    console.log('🔍 Form inputs before FormData creation:');
+                    const allInputs = form.querySelectorAll('input, select');
+                    allInputs.forEach(input => {
+                        if (input.name) {
+                            console.log(`  ${input.name}: "${input.value}" (${input.type})`);
+                        }
+                    });
+                    
+                    // Create FormData from the form (after updating hidden inputs)
+                    const formData = new FormData(form);
+                    
+                    console.log('📋 FormData created from updated form inputs');
+                    console.log('📋 FormData entries:', [...formData.entries()]);
+                    
+                    // Add default values for step 1 if missing
+                    if (this.currentStep === 1) {
+                        if (!formData.get('country')) formData.set('country', 'US');
+                        if (!formData.get('language')) formData.set('language', 'en');
+                        if (!formData.get('currency')) formData.set('currency', 'USD');
+                    }
+                    
+                    console.log(`📝 Step ${this.currentStep} form data:`);
+                    for (let [key, value] of formData.entries()) {
+                        console.log(`  ${key}: ${value}`);
+                    }
+                    
+                    // Submit to server
+                    const response = await fetch('/admin/site-setup', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    console.log(`📬 Step ${this.currentStep} response status:`, response.status);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log(`📊 Step ${this.currentStep} response data:`, data);
+                    
+                    if (data.success) {
+                        // Update store ID if provided
+                        if (data.storeId) {
+                            this.updateStoreId(data.storeId);
+                        }
+                        
+                        // Show success message
+                        if (data.message) {
+                            this.showAlert(data.message, 'success');
+                        }
+                        
+                        // Proceed to next step
+                        if (data.nextStep && data.nextStep <= this.totalSteps) {
+                            setTimeout(() => {
+                                this.currentStep = data.nextStep;
+                                this.goToStep(this.currentStep);
+                            }, 1000);
+                        } else {
+                            // Shouldn't happen with new workflow
+                            console.warn('⚠️ No nextStep provided, incrementing manually');
+                            this.currentStep++;
+                            this.goToStep(this.currentStep);
+                        }
+                    } else {
+                        throw new Error(data.error || 'Failed to save step data');
+                    }
+                    
+                } catch (error) {
+                    console.error(`❌ Step ${this.currentStep} submission error:`, error);
+                    this.showAlert(error.message || 'Failed to save step data. Please try again.', 'error');
+                } finally {
+                    // Reset button state
+                    this.setButtonLoading(button, false);
+                }
+            }
+
+            prevStep() {
+                if (this.currentStep > 1) {
+                    this.currentStep--;
+                    this.goToStep(this.currentStep);
+                }
+            }
+
+            goToStep(stepNumber) {
+                console.log('🚀 goToStep called with stepNumber:', stepNumber, 'totalSteps:', this.totalSteps);
+                
+                // Update step indicators
+                document.querySelectorAll('.step').forEach((step, index) => {
+                    const stepNum = index + 1;
+                    step.classList.remove('active', 'completed');
+                    
+                    if (stepNum < stepNumber) {
+                        step.classList.add('completed');
+                    } else if (stepNum === stepNumber) {
+                        step.classList.add('active');
+                    }
+                });
+
+                // Hide all steps
+                document.querySelectorAll('.form-step').forEach(step => {
+                    step.classList.remove('active');
+                });
+
+                // Show target step
+                const targetStepElement = document.getElementById(`step${stepNumber}`);
+                if (targetStepElement) {
+                    targetStepElement.classList.add('active');
+                    console.log('✅ Activated step element:', `step${stepNumber}`);
+                } else {
+                    console.error('❌ Step element not found:', `step${stepNumber}`);
+                }
+                
+                this.currentStep = stepNumber;
+                this.updateProgress();
+                this.updateNavigation();
+                
+                // CRITICAL FIX: Update step input field when navigating
+                this.updateStepInputField();
+                
+                // CRITICAL FIX: Force button visibility on step 5
+                if (stepNumber === this.totalSteps) {
+                    const submitBtn = document.getElementById('submitBtn');
+                    const nextBtn = document.getElementById('nextBtn');
+                    
+                    if (submitBtn) {
+                        submitBtn.style.display = 'block';
+                        submitBtn.disabled = false;
+                        console.log('🚀 Force-enabled Launch Store button on step 5');
+                    }
+                    
+                    if (nextBtn) {
+                        nextBtn.style.display = 'none';
+                        console.log('🚫 Hidden Next button on step 5');
+                    }
+                }
+                
+                console.log('🔄 Navigated to step:', stepNumber, 'Updated step input field');
+                
+                // Update URL
+                const url = new URL(window.location);
+                url.searchParams.set('step', stepNumber);
+                window.history.pushState({}, '', url);
+            }
+
+            updateProgress() {
+                const progressBar = document.getElementById('progressBar');
+                const progressPercentage = ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
+                progressBar.style.width = progressPercentage + '%';
+
+                // Update step indicators
+                document.querySelectorAll('.step').forEach((step, index) => {
+                    const stepNumber = index + 1;
+                    step.classList.remove('active', 'completed');
+                    
+                    if (stepNumber < this.currentStep) {
+                        step.classList.add('completed');
+                    } else if (stepNumber === this.currentStep) {
+                        step.classList.add('active');
+                    }
+                });
+            }
+
+            updateNavigation() {
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const submitBtn = document.getElementById('submitBtn');
+
+                console.log('🔄 Updating navigation for step:', this.currentStep, 'of', this.totalSteps);
+                console.log('🔄 Button elements found:', {
+                    prevBtn: !!prevBtn,
+                    nextBtn: !!nextBtn,
+                    submitBtn: !!submitBtn
+                });
+
+                // Show/hide previous button
+                if (prevBtn) {
+                    prevBtn.style.display = this.currentStep > 1 ? 'block' : 'none';
+                }
+
+                // Show/hide next/submit buttons
+                if (this.currentStep === this.totalSteps) {
+                    // Final step (Step 5): Show Launch Store button, hide Next
+                    if (nextBtn) {
+                        nextBtn.style.display = 'none';
+                    }
+                    if (submitBtn) {
+                        submitBtn.style.display = 'block';
+                        submitBtn.disabled = false;
+                        
+                        // Add entrance animation for the Launch Store button
+                        submitBtn.style.transform = 'scale(0.8) translateY(20px)';
+                        submitBtn.style.opacity = '0';
+                        
+                        setTimeout(() => {
+                            submitBtn.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                            submitBtn.style.transform = 'scale(1) translateY(0)';
+                            submitBtn.style.opacity = '1';
+                        }, 100);
+                        
+                        console.log('✅ Step 5: Launch Store button enabled and visible');
+                        console.log('🚀 Button text:', submitBtn.textContent.trim());
+                        console.log('🚀 Button disabled:', submitBtn.disabled);
+                        console.log('🚀 Button display:', submitBtn.style.display);
+                    }
+                } else {
+                    // Steps 1-4: Show Next button, hide Launch Store
+                    if (nextBtn) {
+                        nextBtn.style.display = 'block';
+                    }
+                    if (submitBtn) {
+                        submitBtn.style.display = 'none';
+                    }
+                    console.log('⏭️ Step', this.currentStep, ': Showing Next button');
+                }
+            }
+            
+            updateStepInputField() {
+                // Update the step input field based on current step
+                const stepInput = document.querySelector('input[name="step"]');
+                if (stepInput) {
+                    let stepValue = '';
+                    
+                    if (this.currentStep === 3) {
+                        stepValue = 'configure-pages';
+                    } else if (this.currentStep === 4) {
+                        stepValue = 'configure-footer';
+                    } else if (this.currentStep === 5 || this.currentStep === this.totalSteps) {
+                        stepValue = this.isEditMode ? 'update-store' : 'create-store';
+                    } else {
+                        stepValue = this.currentStep.toString();
+                    }
+                    
+                    stepInput.value = stepValue;
+                    console.log('🔄 Step input field updated to:', stepValue, 'for step:', this.currentStep);
+                } else {
+                    console.error('❌ Step input field not found when updating step');
+                }
+            }
+
+            handleFormSubmit(e) {
+                e.preventDefault();
+                
+                console.log('🔍 Form submission triggered!');
+                console.log('🔍 Current step:', this.currentStep);
+                console.log('🔍 Total steps:', this.totalSteps);
+                console.log('🔍 Event type:', e.type);
+                console.log('🔍 Event target:', e.target);
+                
+                // CRITICAL FIX: Only allow form submission on the final step (step 5)
+                // Steps 1-4 should NEVER submit to server, only step 5 should
+                if (this.currentStep < this.totalSteps) {
+                    console.log('⚠️ Blocking form submission - not on final step');
+                    console.log('⚠️ Current step:', this.currentStep, 'Total steps:', this.totalSteps);
+                    
+                    // This prevents accidental form submissions on intermediate steps
+                    // Users should only submit on the final "Launch Store" step
+                    return;
+                }
+                
+                // Show confirmation dialog for store launch (not for updates)
+                if (!this.isEditMode) {
+                    this.showLaunchConfirmation(e);
+                    return;
+                }
+                
+                console.log('✅ Form submission allowed - on final step');
+                console.log('🚀 Proceeding with store creation/update...');
+                
+                this.proceedWithSubmission(e);
+            }
+
+            showLaunchConfirmation(e) {
+                const modal = document.createElement('div');
+                modal.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center confirmation-modal';
+                modal.style.zIndex = '9999';
+                
+                modal.innerHTML = `
+                    <div class="confirmation-content p-5 mx-3" style="max-width: 500px;">
+                        <div class="text-center">
+                            <div class="position-relative d-inline-block mb-4">
+                                <div class="pulse-ring"></div>
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; margin: 0 auto;">
+                                    <i class="bi bi-rocket-takeoff text-white" style="font-size: 2rem;"></i>
+                                </div>
+                            </div>
+                            
+                            <h3 class="text-dark mb-3">Ready to Launch Your Store?</h3>
+                            <p class="text-muted mb-4 lead">Your store will be live and accessible to customers worldwide. This action will:</p>
+                            
+                            <div class="text-start bg-light p-3 rounded mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <small>Deploy your store to a live domain</small>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <small>Generate all necessary pages and content</small>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <small>Connect Shopify integration (if configured)</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                    <small>Make your store searchable by Google</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex gap-3 justify-content-center">
+                                <button type="button" class="btn btn-outline-secondary px-4" onclick="this.closest('.confirmation-modal').remove()">
+                                    <i class="bi bi-arrow-left me-2"></i>Review Settings
+                                </button>
+                                <button type="button" class="btn btn-success launch-store-btn px-4" id="confirmLaunchBtn">
+                                    <div class="btn-text">
+                                        <i class="bi bi-rocket-takeoff me-2 rocket-icon"></i>Launch Store Now
+                                    </div>
+                                    <div class="loading-animation">
+                                        <div class="spinner-border spinner-border-sm" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span class="ms-2">Launching...</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Animate in
+                setTimeout(() => modal.classList.add('show'), 10);
+                
+                // Handle confirmation
+                const confirmBtn = modal.querySelector('#confirmLaunchBtn');
+                confirmBtn.addEventListener('click', () => {
+                    this.addSparkleEffect(confirmBtn);
+                    setTimeout(() => {
+                        modal.remove();
+                        this.proceedWithSubmission(e);
+                    }, 800);
+                });
+                
+                // Close on backdrop click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                        setTimeout(() => modal.remove(), 300);
+                    }
+                });
+            }
+            
+            addSparkleEffect(button) {
+                const rect = button.getBoundingClientRect();
+                const sparkles = document.createElement('div');
+                sparkles.className = 'sparkles';
+                sparkles.style.left = rect.left + 'px';
+                sparkles.style.top = rect.top + 'px';
+                sparkles.style.width = rect.width + 'px';
+                sparkles.style.height = rect.height + 'px';
+                
+                // Create multiple sparkles
+                for (let i = 0; i < 8; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    sparkle.style.left = Math.random() * rect.width + 'px';
+                    sparkle.style.top = Math.random() * rect.height + 'px';
+                    sparkle.style.animationDelay = Math.random() * 0.3 + 's';
+                    sparkles.appendChild(sparkle);
+                }
+                
+                document.body.appendChild(sparkles);
+                
+                // Remove sparkles after animation
+                setTimeout(() => sparkles.remove(), 1000);
+            }
+
+            async proceedWithSubmission(e) {
+                const submitBtn = document.getElementById('submitBtn');
+                
+                try {
+                    // Show loading state on submit button
+                    this.setButtonLoading(submitBtn, true);
+                    
+                    // CRITICAL FIX: Ensure step input is set correctly for final submission
+                    this.updateStepInputField();
+                    
+                    console.log('🚀 Final form submission starting...');
+                    console.log('🚀 Form action:', e.target.action);
+                    console.log('🚀 Form method:', e.target.method);
+                    
+                    const form = e.target;
+                    
+                    // Add Shopify data if selected from saved stores
+                    this.addShopifyDataToForm(form);
+                    
+                    // Create FormData and log all entries for debugging
+                    const formData = new FormData(form);
+                    console.log('📋 Final submission FormData:');
+                    for (let [key, value] of formData.entries()) {
+                        console.log(`  ${key}: ${value}`);
+                    }
+                    
+                    const response = await fetch(form.action, {
+                        method: form.method || 'POST',
+                        body: formData
+                    });
+
+                    console.log('📬 Final submission response status:', response.status);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('📊 Final submission response data:', data);
+                        
+                        if (data.success) {
+                            // Success! Show success message and redirect
+                            this.showAlert(data.message || (this.isEditMode ? 'Store updated successfully!' : 'Store launched successfully!'), 'success');
+                            
+                            // Redirect to success page or store dashboard
+                            setTimeout(() => {
+                                if (data.redirectUrl) {
+                                    window.location.href = data.redirectUrl;
+                                } else {
+                                    window.location.href = '/admin/dashboard';
+                                }
+                            }, 2000);
+                        } else {
+                            throw new Error(data.error || 'Submission failed');
+                        }
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `Server error: ${response.status}`);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ Final submission error:', error);
+                    this.showAlert(error.message || 'Failed to submit form. Please try again.', 'error');
+                } finally {
+                    // Reset button state
+                    this.setButtonLoading(submitBtn, false);
+                }
+            }
+
+            updateStoreId(storeId) {
+                this.storeId = storeId;
+                
+                // Update hidden form field
+                const storeIdInput = document.getElementById('storeIdInput');
+                if (storeIdInput) {
+                    storeIdInput.value = storeId;
+                    console.log('✅ Store ID updated to:', storeId);
+                }
+            }
+
+            setButtonLoading(button, isLoading) {
+                if (isLoading) {
+                    button.disabled = true;
+                    button.classList.add('loading');
+                    button.setAttribute('data-original-text', button.innerHTML);
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+                } else {
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    const originalText = button.getAttribute('data-original-text');
+                    if (originalText) {
+                        button.innerHTML = originalText;
+                        button.removeAttribute('data-original-text');
+                    }
+                }
+            }
+
+            getStoreId() {
+                return this.storeId || document.getElementById('storeIdInput')?.value || null;
+            }
+
+            addShopifyDataToForm(form) {
+                const savedStore = document.getElementById('savedShopifyStores').value;
+                
+                if (savedStore && savedStore !== 'new' && this.selectedShopifyData) {
+                    // Use selected saved store
+                    this.setHiddenInput(form, 'selectedShopifyStore', savedStore);
+                    this.setHiddenInput(form, 'shopifyDomain', this.selectedShopifyData.domain);
+                    this.setHiddenInput(form, 'shopifyToken', this.selectedShopifyData.token);
+                } else if (savedStore === 'new') {
+                    // Save new store to company profile and use it
+                    const nickname = document.getElementById('newStoreNickname').value;
+                    const domain = document.getElementById('shopifyDomain').value;
+                    const token = document.getElementById('shopifyToken').value;
+                    
+                    if (nickname && domain && token) {
+                        this.setHiddenInput(form, 'newShopifyStore', 'true');
+                        this.setHiddenInput(form, 'newStoreNickname', nickname);
+                    }
+                }
+            }
+
+            setHiddenInput(form, name, value) {
+                let input = form.querySelector(`input[name="${name}"]`);
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    form.appendChild(input);
+                }
+                input.value = value;
+            }
+
+            showAlert(message, type = 'info') {
+                // Remove existing alerts
+                document.querySelectorAll('.alert-dismissible').forEach(alert => alert.remove());
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                const formSection = document.querySelector('.form-section');
+                formSection.insertBefore(alertDiv, formSection.firstChild);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+            
+            isTemplateSelected(templateId) {
+                if (!this.isEditMode || !this.storeData || !this.storeData.selected_pages) {
+                    return false;
+                }
+                
+                const selectedPages = this.storeData.selected_pages.split(',').map(p => p.trim());
+                return selectedPages.includes(templateId);
+            }
+            
+            prePopulateSelectedPages() {
+                if (!this.storeData || !this.storeData.selected_pages) {
+                    console.log('📝 No store data or selected pages to pre-populate');
+                    return;
+                }
+                
+                const selectedPages = this.storeData.selected_pages.split(',').map(p => p.trim()).filter(p => p);
+                console.log('🔄 Pre-populating selected pages:', selectedPages);
+                
+                selectedPages.forEach(pageId => {
+                    // Try both possible checkbox name formats
+                    let checkbox = document.querySelector(`input[name="selectedPages[]"][value="${pageId}"]`);
+                    if (!checkbox) {
+                        checkbox = document.querySelector(`input[name="selectedPages"][value="${pageId}"]`);
+                    }
+                    
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        const card = checkbox.closest('.page-template-card');
+                        if (card) {
+                            card.classList.add('selected');
+                        }
+                        console.log(`✅ Pre-selected page: ${pageId}`);
+                    } else {
+                        console.warn(`⚠️ Checkbox not found for page: ${pageId}`);
+                    }
+                });
+            }
+            
+            // FOOTER CONFIGURATION METHOD: Save footer configuration to server (DEPRECATED - now handled in submitStepData)
+            async saveFooterConfiguration() {
+                console.log('💾 Saving footer configuration (DEPRECATED - use submitStepData instead)...');
+                
+                // Get the store ID from existing form data or URL params
+                const storeId = this.getStoreId();
+                if (!storeId) {
+                    throw new Error('Store ID not found - cannot save footer configuration');
+                }
+                
+                // Collect footer form data
+                const footerData = {
+                    step: 'configure-footer',
+                    storeId: storeId,
+                    enablePreFooter: document.getElementById('enablePreFooter')?.checked || false,
+                    footerBox1Title: document.getElementById('footerBox1Title')?.value || '',
+                    footerBox1Link1: document.getElementById('footerBox1Link1')?.value || '',
+                    footerBox1Link2: document.getElementById('footerBox1Link2')?.value || '',
+                    footerBox1Link3: document.getElementById('footerBox1Link3')?.value || '',
+                    footerBox2Title: document.getElementById('footerBox2Title')?.value || '',
+                    footerBox2Link1: document.getElementById('footerBox2Link1')?.value || '',
+                    footerBox2Link2: document.getElementById('footerBox2Link2')?.value || '',
+                    footerBox2Link3: document.getElementById('footerBox2Link3')?.value || '',
+                    footerBox3Title: document.getElementById('footerBox3Title')?.value || '',
+                    footerBox3Link1: document.getElementById('footerBox3Link1')?.value || '',
+                    footerBox3Link2: document.getElementById('footerBox3Link2')?.value || '',
+                    footerBox3Link3: document.getElementById('footerBox3Link3')?.value || ''
+                };
+                
+                console.log('📋 Footer data to send:', footerData);
+                
+                try {
+                    const response = await fetch('/admin/site-setup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(footerData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server responded with ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    if (!result.success) {
+                        throw new Error(result.error || 'Failed to save footer configuration');
+                    }
+                    
+                    console.log('✅ Footer configuration saved successfully');
+                    return result;
+                    
+                } catch (error) {
+                    console.error('❌ Error saving footer configuration:', error);
+                    throw error;
+                }
+            }
+        }
+
+        // Global functions for step navigation
+        let wizard;
+
+        function nextStep() {
+            console.log('🔵 Global nextStep() called');
+            if (wizard) {
+                console.log('🔵 Calling wizard.nextStep()');
+                wizard.nextStep();
+            } else {
+                console.error('❌ Wizard not initialized!');
+            }
+        }
+
+        function prevStep() {
+            wizard.prevStep();
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async () => {
+            wizard = new SiteSetupWizard();
+        });
+    </script>
+
+    <!-- Legal Content Editor Modal -->
+    <div class="modal fade" id="legalContentEditorModal" tabindex="-1" aria-labelledby="legalContentEditorLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="legalContentEditorLabel">
+                        <i class="bi bi-pencil me-2"></i>Edit Legal Page Content
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4 border-end">
+                            <h6 class="fw-bold mb-3">Page Information</h6>
+                            <div id="legalPageInfo">
+                                <p><strong>Page Type:</strong> <span id="currentPageType"></span></p>
+                                <p><strong>Language:</strong> <span id="currentLanguage"></span></p>
+                                <p><strong>Template:</strong> <span id="currentTemplate"></span></p>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Note:</strong> Changes are saved locally for this store setup session only. They will be applied when you complete the setup process.
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-2" id="previewLegalPage">
+                                    <i class="bi bi-eye me-1"></i>Preview Changes
+                                </button>
+                                <button type="button" class="btn btn-outline-warning btn-sm w-100" id="resetLegalContent">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Reset to Default
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="legalPageTitle" class="form-label">Page Title</label>
+                                <input type="text" class="form-control" id="legalPageTitle" placeholder="Enter page title">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="legalPageContent" class="form-label">Page Content</label>
+                                <div id="legalContentEditor" style="height: 400px;"></div>
+                                <textarea id="legalPageContent" name="legalPageContent" style="display: none;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveLegalContent">
+                        <i class="bi bi-check me-1"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legal Content Editor JavaScript -->
+    <script>
+        class LegalContentEditor {
+            constructor() {
+                this.currentTemplate = null;
+                this.currentLanguage = 'en';
+                this.quillEditor = null;
+                this.customContent = {}; // Store custom content locally
+                this.init();
+            }
+
+            init() {
+                // Attach event listeners to edit buttons
+                document.querySelectorAll('.edit-legal-content').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const template = e.target.dataset.template;
+                        this.openEditor(template);
+                    });
+                });
+
+                // Initialize Quill editor when modal opens
+                const modal = document.getElementById('legalContentEditorModal');
+                modal.addEventListener('shown.bs.modal', () => {
+                    if (!this.quillEditor) {
+                        this.initializeQuillEditor();
+                    }
+                });
+
+                // Save content button
+                document.getElementById('saveLegalContent').addEventListener('click', () => {
+                    this.saveLegalContent();
+                });
+
+                // Preview button
+                document.getElementById('previewLegalPage').addEventListener('click', () => {
+                    this.previewLegalPage();
+                });
+
+                // Reset button
+                document.getElementById('resetLegalContent').addEventListener('click', () => {
+                    this.resetLegalContent();
+                });
+
+                console.log('Legal content editor initialized');
+            }
+
+            initializeQuillEditor() {
+                this.quillEditor = new Quill('#legalContentEditor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline', 'strike'],
+                            ['blockquote', 'code-block'],
+                            [{'header': 1}, {'header': 2}],
+                            [{'list': 'ordered'}, {'list': 'bullet'}],
+                            [{'script': 'sub'}, {'script': 'super'}],
+                            [{'indent': '-1'}, {'indent': '+1'}],
+                            [{'direction': 'rtl'}],
+                            [{'size': ['small', false, 'large', 'huge']}],
+                            [{'header': [1, 2, 3, 4, 5, 6, false]}],
+                            [{'color': []}, {'background': []}],
+                            [{'font': []}],
+                            [{'align': []}],
+                            ['clean'],
+                            ['link']
+                        ]
+                    }
+                });
+            }
+
+            async openEditor(template) {
+                this.currentTemplate = template;
+                this.currentLanguage = document.getElementById('language')?.value || 'en';
+
+                // Update modal info
+                document.getElementById('currentPageType').textContent = template.charAt(0).toUpperCase() + template.slice(1);
+                document.getElementById('currentLanguage').textContent = this.currentLanguage.toUpperCase();
+                document.getElementById('currentTemplate').textContent = `${this.currentLanguage}-${template}`;
+
+                // Load content (custom or default)
+                const contentKey = `${this.currentLanguage}-${template}`;
+                let content, title;
+
+                if (this.customContent[contentKey]) {
+                    // Use custom content
+                    content = this.customContent[contentKey].content;
+                    title = this.customContent[contentKey].title;
+                } else {
+                    // Load default content
+                    try {
+                        const response = await fetch(`/api/legal-content/${this.currentLanguage}-${template}`);
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            content = data.content;
+                            title = data.title;
+                        } else {
+                            content = '<p>Error loading content. Please try again.</p>';
+                            title = `${template.charAt(0).toUpperCase() + template.slice(1)} Policy`;
+                        }
+                    } catch (error) {
+                        console.error('Failed to load legal content:', error);
+                        content = '<p>Error loading content. Please try again.</p>';
+                        title = `${template.charAt(0).toUpperCase() + template.slice(1)} Policy`;
+                    }
+                }
+
+                // Set content in editor
+                document.getElementById('legalPageTitle').value = title;
+                if (this.quillEditor) {
+                    this.quillEditor.root.innerHTML = content;
+                }
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('legalContentEditorModal'));
+                modal.show();
+            }
+
+            saveLegalContent() {
+                if (!this.currentTemplate) return;
+
+                const title = document.getElementById('legalPageTitle').value;
+                const content = this.quillEditor ? this.quillEditor.root.innerHTML : '';
+
+                // Store in local custom content
+                const contentKey = `${this.currentLanguage}-${this.currentTemplate}`;
+                this.customContent[contentKey] = {
+                    title: title,
+                    content: content,
+                    template: this.currentTemplate,
+                    language: this.currentLanguage
+                };
+
+                console.log('Legal content saved locally:', contentKey, this.customContent[contentKey]);
+
+                // Update the UI to show that content has been customized
+                this.markTemplateAsCustomized(this.currentTemplate);
+
+                // Hide modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('legalContentEditorModal'));
+                modal.hide();
+
+                // Show success message
+                wizard.showAlert('Legal page content updated successfully! Changes will be applied when you complete the store setup.', 'success');
+            }
+
+            markTemplateAsCustomized(template) {
+                const templateCard = document.querySelector(`[data-template="${template}"]`);
+                if (templateCard) {
+                    const badge = templateCard.querySelector('.badge');
+                    if (badge) {
+                        badge.textContent = 'Customized Content';
+                        badge.className = 'badge bg-info ms-2';
+                    }
+
+                    const statusText = templateCard.querySelector('.legal-content-actions small');
+                    if (statusText) {
+                        statusText.innerHTML = '<i class="bi bi-pencil me-1"></i>Content customized';
+                        statusText.className = 'text-info';
+                    }
+                }
+            }
+
+            previewLegalPage() {
+                if (!this.quillEditor) return;
+
+                const title = document.getElementById('legalPageTitle').value;
+                const content = this.quillEditor.root.innerHTML;
+
+                // Open preview in new window
+                const previewWindow = window.open('', '_blank');
+                previewWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${title}</title>
+                        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                        <style>
+                            body { padding: 2rem; }
+                            .preview-header { border-bottom: 2px solid #007bff; padding-bottom: 1rem; margin-bottom: 2rem; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <div class="preview-header">
+                                <h1>${title}</h1>
+                                <small class="text-muted">Preview - This is how your legal page will appear to visitors</small>
+                            </div>
+                            <div class="content">
+                                ${content}
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                previewWindow.document.close();
+            }
+
+            resetLegalContent() {
+                if (confirm('Are you sure you want to reset this legal page to its default content? This action cannot be undone.')) {
+                    const contentKey = `${this.currentLanguage}-${this.currentTemplate}`;
+                    delete this.customContent[contentKey];
+
+                    // Reload the editor with default content
+                    this.openEditor(this.currentTemplate);
+
+                    wizard.showAlert('Legal page content reset to default.', 'info');
+                }
+            }
+
+            // Method to get all custom legal content for form submission
+            getCustomLegalContent() {
+                return this.customContent;
+            }
+        }
+
+        // Initialize legal content editor when page loads
+        let legalContentEditor;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show static legal pages after short delay
+            setTimeout(() => {
+                const loadingElement = document.getElementById('pageTemplatesLoading');
+                const essentialPages = document.getElementById('essentialPages');
+                const marketingPages = document.getElementById('marketingPages');
+                const staticLegalPages = document.getElementById('staticLegalPages');
+                
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
+                if (essentialPages) {
+                    essentialPages.style.display = 'block';
+                }
+                if (marketingPages) {
+                    marketingPages.style.display = 'block';
+                }
+                if (staticLegalPages) {
+                    staticLegalPages.style.display = 'block';
+                }
+                
+                console.log('✅ All page templates loaded and displayed');
+            }, 500);
+            
+            // Initialize legal content editor
+            setTimeout(() => {
+                try {
+                    console.log('Initializing legal content editor...');
+                    console.log('Quill available:', typeof Quill !== 'undefined');
+                    
+                    if (typeof Quill === 'undefined') {
+                        console.error('Quill.js failed to load from CDN. Edit functionality will not work.');
+                        return;
+                    }
+                    
+                    legalContentEditor = new LegalContentEditor();
+                    console.log('Legal content editor initialized successfully');
+                } catch (error) {
+                    console.error('Failed to initialize legal content editor:', error);
+                    console.error('Edit buttons will be visible but non-functional');
+                }
+            }, 2000); // Give more time for all scripts to load
+        });
+    </script>
+</body>
+</html>

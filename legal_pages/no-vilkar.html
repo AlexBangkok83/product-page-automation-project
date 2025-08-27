@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vilkår for bruk – $domain</title>
+  <meta name="description" content="Vilkår for bruk for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Vilkår for bruk</nav>
+  <h1>Vilkår for bruk</h1>
+
+<section><h2>1. Generelt</h2><p>Disse vilkårene gjelder når du besøker eller handler på <strong>$domain</strong>, som drives av <strong>$company_name</strong> (<strong>$company_orgnr</strong>, <strong>$company_address</strong>). Lovene i <strong>$country</strong> gjelder, inkludert forbrukerkjøpsloven, angrerettloven og e-handelsloven.</p></section>
+<section><h2>2. Aldersgrense</h2><p>For å handle på <strong>$domain</strong> må du være minst 18 år eller ha samtykke fra foresatte.</p></section>
+<section><h2>3. Bestilling &amp; betaling</h2><p>Alle priser oppgis i <strong>$currency</strong> inkludert merverdiavgift (mva). Vi tar forbehold om skrivefeil og prisendringer. Betaling skjer via de betalingsmetoder som tilbys i kassen.</p></section>
+<section><h2>4. Levering</h2><p>Levering skjer i henhold til vår <a href="/pages/leveranspolicy">Leveringspolicy</a>. Risikoen går over til deg når varen er levert.</p></section>
+<section><h2>5. Angrerett &amp; retur</h2><p>Du har rett til å angre kjøpet innen 14 dager i henhold til angrerettloven. <strong>$domain</strong> tilbyr i tillegg en returperiode på 30 dager fra mottak.</p><ul><li>Varen må være ubrukt og i originalemballasje.</li><li>Kunden betaler returfrakten.</li><li>Kontakt oss på <a href="mailto:$contact_email">$contact_email</a> før retur.</li></ul></section>
+<section><h2>6. Reklamasjon</h2><p>Du kan reklamere på en vare i inntil to år i henhold til forbrukerkjøpsloven. Vi følger Forbrukerrådets anbefalinger.</p></section>
+<section><h2>7. Tvisteløsning</h2><p>Ved tvist kan du kontakte Forbrukerrådet eller bruke EUs plattform for tvisteløsning: <a href="https://ec.europa.eu/consumers/odr">https://ec.europa.eu/consumers/odr</a>.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leveringsvilkår – $domain</title>
+  <meta name="description" content="Leveringsvilkår for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Leveringsvilkår</nav>
+  <h1>Leveringsvilkår</h1>
+
+<section><h2>1. Leveringstider</h2><ul><li>I $country/EU: Vanligvis sendt innen 1–3 virkedager, levering 2–7 virkedager.</li><li>Internasjonalt: 8–25 virkedager avhengig av destinasjon og transportør.</li></ul></section>
+<section><h2>2. Fraktkostnad</h2><p>Fraktkostnader vises i kassen før betaling.</p></section>
+<section><h2>3. Sporing</h2><p>Ved sporbar frakt mottar du sporingsnummer på e-post.</p></section>
+<section><h2>4. Risiko &amp; ansvar</h2><p>Risikoen går over til kunden når varen er levert. Ved skade kontakt transportøren og oss på <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>5. Toll &amp; avgifter</h2><p>Kunden betaler eventuelle tollavgifter og skatter utenfor EU.</p></section>
+<section><h2>6. Forsinkelser</h2><p>Ved forsinkelser vil vi informere deg. Du kan kansellere kjøpet ved vesentlig forsinkelse.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

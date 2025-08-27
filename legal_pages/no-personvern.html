@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personvernerklæring – $domain</title>
+  <meta name="description" content="Personvernerklæring for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Personvernerklæring</nav>
+  <h1>Personvernerklæring</h1>
+
+<section><h2>1. Behandlingsansvarlig</h2><p><strong>$company_name</strong> (<strong>$company_orgnr</strong>, <strong>$company_address</strong>) er ansvarlig for behandlingen av personopplysninger. Kontakt: <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>2. Opplysninger vi samler inn</h2><ul><li>Kontaktinformasjon (navn, adresse, e-post, telefon)</li><li>Bestillings- og betalingsinformasjon</li><li>Tekniske data (cookies, IP-adresse, nettleser)</li></ul></section>
+<section><h2>3. Formål &amp; rettslig grunnlag</h2><ul><li>Behandle bestillinger (Avtale)</li><li>Kundeservice (Berettiget interesse)</li><li>Markedsføring (Samtykke)</li><li>Regnskap (Rettlig forpliktelse)</li></ul></section>
+<section><h2>4. Dine rettigheter</h2><p>Du har rett til innsyn, retting, sletting, begrensning, dataportabilitet og å protestere mot behandling. Kontakt <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>5. Lagringstid</h2><p>Vi lagrer personopplysninger kun så lenge det er nødvendig eller pålagt ved lov (f.eks. 5 år for regnskap).</p></section>
+<section><h2>6. Tredjeparter</h2><p>Vi deler kun data med nødvendige tjenesteleverandører (betaling, frakt). Databehandleravtaler er inngått.</p></section>
+<section><h2>7. Cookies</h2><p><strong>$domain</strong> bruker cookies. Du kan trekke tilbake samtykke i nettleserens innstillinger.</p></section>
+<section><h2>8. Tilsynsmyndighet</h2><p>Du kan klage til Datatilsynet dersom du ikke er fornøyd med vår håndtering.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

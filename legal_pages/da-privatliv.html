@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privatlivspolitik – $domain</title>
+  <meta name="description" content="Privatlivspolitik for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Privatlivspolitik</nav>
+  <h1>Privatlivspolitik</h1>
+
+<section><h2>1. Dataansvarlig</h2><p><strong>$company_name</strong> (<strong>$company_orgnr</strong>, <strong>$company_address</strong>) er dataansvarlig. Kontakt: <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>2. Hvilke oplysninger vi indsamler</h2><ul><li>Kontaktoplysninger (navn, adresse, e-mail, telefon)</li><li>Bestillings- og betalingsoplysninger</li><li>Tekniske data (cookies, IP-adresse, browser)</li></ul></section>
+<section><h2>3. Formål &amp; retsgrundlag</h2><ul><li>Behandling af ordrer (Kontrakt)</li><li>Kundeservice (Legitim interesse)</li><li>Markedsføring (Samtykke)</li><li>Bogføring (Retlig forpligtelse)</li></ul></section>
+<section><h2>4. Dine rettigheder</h2><p>Du har ret til indsigt, berigtigelse, sletning, begrænsning, dataportabilitet og til at gøre indsigelse. Kontakt <a href="mailto:$contact_email">$contact_email</a>.</p></section>
+<section><h2>5. Opbevaring</h2><p>Oplysninger gemmes kun, så længe det er nødvendigt eller krævet ved lov (f.eks. 5 år for regnskab).</p></section>
+<section><h2>6. Tredjeparter</h2><p>Vi deler kun data med nødvendige tjenesteudbydere (betaling, levering). Databehandleraftaler er indgået.</p></section>
+<section><h2>7. Cookies</h2><p><strong>$domain</strong> bruger cookies. Du kan tilbagetrække dit samtykke i browserens indstillinger.</p></section>
+<section><h2>8. Tilsynsmyndighed</h2><p>Du kan klage til Datatilsynet, hvis du er utilfreds med vores håndtering.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

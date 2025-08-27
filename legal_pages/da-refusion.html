@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Retur- og refusionspolitik – $domain</title>
+  <meta name="description" content="Retur- og refusionspolitik for $domain">
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 2rem; color: #111; }
+    main { max-width: 72ch; }
+    h1 { line-height: 1.25; }
+    nav.breadcrumb a { color: inherit; text-decoration: none; opacity: .85; }
+    nav.breadcrumb { font-size: .9rem; margin-bottom: 1rem; }
+    section { margin-block: 1.5rem; }
+    ul { padding-left: 1.2rem; }
+    footer { margin-top: 3rem; font-size: .9rem; color: #555; }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="breadcrumb"><a href="https://$domain/">$domain</a> &rsaquo; Retur- og refusionspolitik</nav>
+  <h1>Retur- og refusionspolitik</h1>
+
+<section><h2>1. Fortrydelsesret</h2><p>Du har ret til at fortryde dit køb inden for 14 dage ifølge loven. <strong>$domain</strong> tilbyder desuden 30 dages returret fra modtagelsen.</p><ul><li>Varen skal være ubrugt og i original emballage.</li><li>Kunden betaler returfragten.</li><li>Kontakt <a href="mailto:$contact_email">$contact_email</a> før returnering.</li></ul></section>
+<section><h2>2. Undtagelser</h2><p>Fortrydelsesretten gælder ikke for:</p><ul><li>Forseglede varer, der er åbnet af sundheds- eller hygiejniske årsager.</li><li>Varer fremstillet efter kundens specifikationer.</li></ul></section>
+<section><h2>3. Refusion</h2><p>Refusion sker inden for 14 dage efter godkendt returnering via samme betalingsmetode som anvendt.</p></section>
+<section><h2>4. Reklamation</h2><p>Du kan reklamere i henhold til købeloven.</p></section>
+
+  <footer>
+    <p>Kontakt: <a href="mailto:$contact_email">$contact_email</a></p>
+    <p>&copy; <span id="year"></span> $company_name · $company_address · $company_orgnr</p>
+  </footer>
+</main>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>
