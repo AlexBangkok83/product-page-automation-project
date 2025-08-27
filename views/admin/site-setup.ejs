@@ -439,6 +439,141 @@
                 width: 100%;
             }
         }
+        /* Template Selection Styles */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .template-option {
+            border: 2px solid #e9ecef;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: white;
+        }
+        
+        .template-option:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 0.75rem 1.5rem rgba(102, 126, 234, 0.15);
+        }
+        
+        .template-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+        
+        .template-preview {
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+            height: 160px;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+        
+        .template-preview-header {
+            background: white;
+            height: 25px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 4px;
+        }
+        
+        .template-preview-nav {
+            background: #dee2e6;
+            height: 8px;
+            border-radius: 2px;
+        }
+        
+        .template-preview-nav:first-child { width: 60px; }
+        .template-preview-nav:nth-child(2) { width: 45px; }
+        .template-preview-nav:nth-child(3) { width: 35px; }
+        
+        .template-preview-content {
+            padding: 8px;
+            height: calc(100% - 25px);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .template-preview-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 40px;
+            border-radius: 4px;
+        }
+        
+        .template-preview-section {
+            background: #dee2e6;
+            height: 20px;
+            border-radius: 3px;
+            width: 80%;
+        }
+        
+        .template-preview-cards {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+        }
+        
+        .template-preview-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 3px;
+            flex: 1;
+        }
+        
+        .template-info {
+            text-align: center;
+            position: relative;
+        }
+        
+        .template-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #495057;
+        }
+        
+        .template-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .template-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .template-check {
+            position: absolute;
+            top: -1rem;
+            right: -0.5rem;
+            color: #28a745;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .template-option.selected .template-check {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="admin-page">
@@ -665,14 +800,65 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Shopify Connection -->
+                        <!-- Step 2: Template & Shopify -->
                         <div class="form-step" id="step2">
                             <div class="row">
                                 <div class="col-12">
                                     <h3 class="mb-4">
-                                        <i class="bi bi-shop text-primary me-2"></i>
-                                        Shopify Integration
+                                        <i class="bi bi-brush text-primary me-2"></i>
+                                        Template & Integration
                                     </h3>
+                                    <p class="text-muted mb-4">Choose your store template and optionally connect to Shopify.</p>
+                                </div>
+                            </div>
+
+                            <!-- Template Selection -->
+                            <div class="row mb-5">
+                                <div class="col-12">
+                                    <h4 class="mb-3">
+                                        <i class="bi bi-palette me-2"></i>
+                                        Choose Your Template
+                                    </h4>
+                                    <p class="text-muted mb-3">Select the design template for your store. More templates coming soon!</p>
+                                    
+                                    <div class="template-grid">
+                                        <div class="template-option selected" data-template="bootstrap-default">
+                                            <div class="template-preview">
+                                                <div class="template-preview-header">
+                                                    <div class="template-preview-nav"></div>
+                                                    <div class="template-preview-nav"></div>
+                                                    <div class="template-preview-nav"></div>
+                                                </div>
+                                                <div class="template-preview-content">
+                                                    <div class="template-preview-hero"></div>
+                                                    <div class="template-preview-section"></div>
+                                                    <div class="template-preview-cards">
+                                                        <div class="template-preview-card"></div>
+                                                        <div class="template-preview-card"></div>
+                                                        <div class="template-preview-card"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="template-info">
+                                                <h5 class="template-title">Bootstrap Template</h5>
+                                                <p class="template-description">Modern & Clean Design</p>
+                                                <span class="template-badge">Default</span>
+                                                <i class="bi bi-check-circle template-check"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="hidden" name="template" id="selectedTemplate" value="bootstrap-default">
+                                </div>
+                            </div>
+
+                            <!-- Shopify Integration Section -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h4 class="mb-3">
+                                        <i class="bi bi-shop me-2"></i>
+                                        Shopify Integration (Optional)
+                                    </h4>
                                     <p class="text-muted mb-4">Choose from your saved Shopify stores or add a new connection.</p>
                                 </div>
                             </div>

@@ -23,6 +23,7 @@ class Store {
     this.shopify_shop_name = data.shopify_shop_name;
     this.shopify_connected = data.shopify_connected || false;
     this.theme_id = data.theme_id || 'default';
+    this.template = data.template || 'bootstrap-default';
     this.logo_url = data.logo_url;
     this.primary_color = data.primary_color || '#007cba';
     this.secondary_color = data.secondary_color || '#f8f9fa';
@@ -107,18 +108,18 @@ class Store {
         `INSERT INTO stores (
           uuid, name, domain, subdomain, country, language, currency, timezone,
           shopify_domain, shopify_access_token, shopify_shop_name, shopify_connected,
-          theme_id, logo_url, primary_color, secondary_color,
+          theme_id, template, logo_url, primary_color, secondary_color,
           meta_title, meta_description, favicon_url,
           business_address, business_orgnr, support_email, support_phone,
           shipping_info, shipping_time, return_policy, return_period,
           gdpr_compliant, cookie_consent, selected_pages,
           status, deployment_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           store.uuid, store.name, store.domain, store.subdomain,
           store.country, store.language, store.currency, store.timezone,
           store.shopify_domain, store.shopify_access_token, store.shopify_shop_name, store.shopify_connected ? 1 : 0,
-          store.theme_id, store.logo_url, store.primary_color, store.secondary_color,
+          store.theme_id, store.template, store.logo_url, store.primary_color, store.secondary_color,
           store.meta_title, store.meta_description, store.favicon_url,
           store.business_address, store.business_orgnr, store.support_email, store.support_phone,
           store.shipping_info, store.shipping_time, store.return_policy, store.return_period,
@@ -310,7 +311,7 @@ class Store {
     const allowedFields = [
       'name', 'domain', 'subdomain', 'country', 'language', 'currency', 'timezone',
       'shopify_domain', 'shopify_access_token', 'shopify_shop_name', 'shopify_connected',
-      'theme_id', 'logo_url', 'primary_color', 'secondary_color',
+      'theme_id', 'template', 'logo_url', 'primary_color', 'secondary_color',
       'meta_title', 'meta_description', 'favicon_url',
       'shipping_info', 'shipping_time', 'return_policy', 'return_period',
       'support_email', 'support_phone', 'business_address', 'business_orgnr',
@@ -1125,6 +1126,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       shopify_shop_name: this.shopify_shop_name,
       shopify_connected: this.shopify_connected,
       theme_id: this.theme_id,
+      template: this.template,
       logo_url: this.logo_url,
       primary_color: this.primary_color,
       secondary_color: this.secondary_color,
@@ -1164,6 +1166,82 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       store_path: this.getStorePath(),
       live_url: `https://${this.domain}`
     };
+  }
+
+  // Get store pages for content editing
+  async getPages() {
+    const pages = await db.all('SELECT * FROM store_pages WHERE store_id = ? ORDER BY sort_order, page_type', [this.id]);
+    
+    // If no pages exist, create default pages from content_defaults
+    if (pages.length === 0) {
+      console.log(`📄 No pages found for store ${this.name}, creating default pages...`);
+      await this.createDefaultPages();
+      return await db.all('SELECT * FROM store_pages WHERE store_id = ? ORDER BY sort_order, page_type', [this.id]);
+    }
+    
+    return pages;
+  }
+
+  // Create default pages for a store from content_defaults
+  async createDefaultPages() {
+    const defaultContent = await db.all(
+      'SELECT * FROM content_defaults WHERE language = ? OR language = "en" ORDER BY page_type', 
+      [this.language]
+    );
+
+    const defaultPageTypes = ['home', 'about', 'contact'];
+    
+    for (const pageType of defaultPageTypes) {
+      const content = defaultContent.find(c => c.page_type === pageType && c.language === this.language) ||
+                     defaultContent.find(c => c.page_type === pageType && c.language === 'en');
+      
+      if (content) {
+        await db.run(
+          `INSERT INTO store_pages 
+           (store_id, page_type, slug, title, subtitle, content, meta_title, meta_description, template_data) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            this.id,
+            content.page_type,
+            content.page_type === 'home' ? '' : content.page_type,
+            content.title.replace('{store_name}', this.name),
+            content.subtitle.replace('{store_name}', this.name),
+            content.description.replace('{store_name}', this.name),
+            content.meta_title.replace('{store_name}', this.name),
+            content.meta_description.replace('{store_name}', this.name),
+            content.template_config
+          ]
+        );
+      }
+    }
+  }
+
+  // Get specific page for editing
+  async getPage(pageType) {
+    return await db.get('SELECT * FROM store_pages WHERE store_id = ? AND page_type = ?', [this.id, pageType]);
+  }
+
+  // Update page content
+  async updatePage(pageType, pageData) {
+    const allowedFields = ['title', 'subtitle', 'content', 'meta_title', 'meta_description', 'is_enabled'];
+    const updateFields = [];
+    const updateValues = [];
+
+    for (const [key, value] of Object.entries(pageData)) {
+      if (allowedFields.includes(key)) {
+        updateFields.push(`${key} = ?`);
+        updateValues.push(value);
+      }
+    }
+
+    if (updateFields.length > 0) {
+      updateValues.push(this.id, pageType);
+      await db.run(
+        `UPDATE store_pages SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+         WHERE store_id = ? AND page_type = ?`,
+        updateValues
+      );
+    }
   }
 }
 

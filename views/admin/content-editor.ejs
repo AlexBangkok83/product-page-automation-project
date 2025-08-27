@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link href="/css/admin.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@7/tinymce.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3 bg-dark text-white p-4">
+                <h4><i class="bi bi-pencil-square me-2"></i>Content Editor</h4>
+                <h6 class="text-muted"><%= store.name %></h6>
+                
+                <div class="mt-4">
+                    <h6>Pages (<%= pages.length %>)</h6>
+                    <div class="list-group list-group-flush">
+                        <% pages.forEach(function(page) { %>
+                            <a href="?page=<%= page.page_type %>" class="list-group-item list-group-item-action bg-transparent text-white border-secondary <%= currentPage === page.page_type ? 'active' : '' %>">
+                                <i class="bi bi-<%= page.page_type === 'home' ? 'house' : page.page_type === 'about' ? 'info-circle' : page.page_type === 'contact' ? 'envelope' : 'file-text' %> me-2"></i>
+                                <%= page.title %>
+                                <% if (!page.is_enabled) { %>
+                                    <small class="text-muted d-block">Disabled</small>
+                                <% } %>
+                            </a>
+                        <% }); %>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="/admin/store/<%= store.uuid %>/pages" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-files me-2"></i>Manage Pages
+                    </a>
+                    <a href="<%= store.deployment_url.startsWith('http') ? store.deployment_url : 'https://' + store.deployment_url %>" target="_blank" class="btn btn-outline-success btn-sm mt-2">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>View Live
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-9 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2>Edit Content - <%= currentPage.charAt(0).toUpperCase() + currentPage.slice(1) %> Page</h2>
+                        <% if (currentPageData) { %>
+                            <p class="text-muted">Last updated: <%= currentPageData.updated_at ? new Date(currentPageData.updated_at).toLocaleString() : 'Never' %></p>
+                        <% } else { %>
+                            <p class="text-muted">Page not found - will be created when you save</p>
+                        <% } %>
+                    </div>
+                    <div>
+                        <button type="submit" form="contentForm" class="btn btn-success">
+                            <i class="bi bi-save me-2"></i>Save Changes
+                        </button>
+                        <a href="/admin/site-setup?step=5&store=<%= store.uuid %>&success=true&deployed=true&automated=true" class="btn btn-outline-secondary ms-2">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Overview
+                        </a>
+                    </div>
+                </div>
+                
+                <div id="saveMessage" class="alert alert-success d-none">
+                    <i class="bi bi-check-circle me-2"></i>
+                    <span></span>
+                </div>
+                
+                <form id="contentForm" class="needs-validation" novalidate>
+                    <input type="hidden" name="pageType" value="<%= currentPage %>">
+                    
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-layout-text-window me-2"></i>
+                                Page Content
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="title" class="form-label">Page Title</label>
+                                        <input type="text" class="form-control" id="title" name="title" 
+                                               value="<%= currentPageData ? currentPageData.title : '' %>" 
+                                               placeholder="Enter page title" required>
+                                        <div class="invalid-feedback">Please provide a page title.</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="subtitle" class="form-label">Subtitle</label>
+                                        <input type="text" class="form-control" id="subtitle" name="subtitle" 
+                                               value="<%= currentPageData ? currentPageData.subtitle : '' %>" 
+                                               placeholder="Enter page subtitle">
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="meta_title" class="form-label">SEO Title</label>
+                                        <input type="text" class="form-control" id="meta_title" name="meta_title" 
+                                               value="<%= currentPageData ? currentPageData.meta_title : '' %>" 
+                                               placeholder="SEO meta title">
+                                        <small class="form-text text-muted">Shown in search results and browser tabs</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="meta_description" class="form-label">SEO Description</label>
+                                        <textarea class="form-control" id="meta_description" name="meta_description" 
+                                                  rows="2" placeholder="SEO meta description"><%= currentPageData ? currentPageData.meta_description : '' %></textarea>
+                                        <small class="form-text text-muted">Brief description for search engines (160 chars max)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="content" class="form-label">Main Content</label>
+                                <textarea class="form-control" id="content" name="content" rows="10" 
+                                          placeholder="Enter the main content for this page..."><%= currentPageData ? currentPageData.content : '' %></textarea>
+                                <small class="form-text text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Use the visual editor above to format your content. Click "Source Code" button for HTML editing.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">Quick Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="insertImagePlaceholder()">
+                                        <i class="bi bi-image me-2"></i>Add Images
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="showColorHelper()">
+                                        <i class="bi bi-palette me-2"></i>Colors
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="showTypographyHelper()">
+                                        <i class="bi bi-type me-2"></i>Typography
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="<%= store.deployment_url.startsWith('http') ? store.deployment_url : 'https://' + store.deployment_url %>" target="_blank" class="btn btn-outline-success btn-sm w-100">
+                                        <i class="bi bi-eye me-2"></i>Preview
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize TinyMCE
+        tinymce.init({
+            selector: '#content',
+            height: 400,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | blocks | ' +
+                'bold italic backcolor | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | help',
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px }',
+            branding: false,
+            menubar: false,
+            statusbar: false,
+            // Content filtering to prevent HTML structure changes
+            valid_elements: 'p,br,strong,em,u,s,a[href],ul,ol,li,h1,h2,h3,h4,h5,h6,blockquote,img[src|alt|class],span[style],div[class]',
+            invalid_elements: 'script,style,head,meta,title,html,body,link',
+            // Allow only content-safe styles
+            valid_styles: {
+                '*': 'color,background-color,text-align,font-weight,font-style,text-decoration,margin,padding'
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('contentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const form = this;
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const saveMessage = document.getElementById('saveMessage');
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+            
+            // Hide any previous messages
+            saveMessage.classList.add('d-none');
+            
+            try {
+                // Get TinyMCE content
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Override content with TinyMCE content
+                data.content = tinymce.get('content').getContent();
+                
+                const response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show enhanced success message
+                    saveMessage.className = 'alert alert-success';
+                    saveMessage.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill me-3 text-success" style="font-size: 1.5rem;"></i>
+                            <div>
+                                <strong>${result.message}</strong>
+                                <div class="small mt-1">
+                                    <i class="bi bi-rocket me-1"></i>Your changes are being deployed to the live store...
+                                    <a href="<%= store.deployment_url.startsWith('http') ? store.deployment_url : 'https://' + store.deployment_url %>" target="_blank" class="ms-2 text-decoration-none">
+                                        View Live Store <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    saveMessage.classList.remove('d-none');
+                    
+                    // Scroll to top to show message
+                    window.scrollTo(0, 0);
+                } else {
+                    throw new Error(result.message || 'Save failed');
+                }
+                
+            } catch (error) {
+                console.error('Save error:', error);
+                
+                // Show error message
+                saveMessage.className = 'alert alert-danger';
+                saveMessage.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i><span>Failed to save changes: ' + error.message + '</span>';
+                saveMessage.classList.remove('d-none');
+                
+                // Scroll to top to show message
+                window.scrollTo(0, 0);
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-save me-2"></i>Save Changes';
+            }
+        });
+        
+        // Quick Action Functions
+        function insertImagePlaceholder() {
+            const imageHtml = '<img src="https://via.placeholder.com/400x300?text=Your+Image" alt="Description" class="img-fluid mb-3">';
+            
+            // Insert into TinyMCE editor
+            tinymce.get('content').insertContent(imageHtml);
+            
+            // Show helper message
+            showAlert('Image placeholder added! Right-click the image in the editor to change the URL.', 'info');
+        }
+        
+        function showColorHelper() {
+            const helpText = `
+            <strong>Color Tips:</strong><br>
+            • Use the <strong>background color</strong> button in the toolbar to highlight text<br>
+            • Select text and use the <strong>text color</strong> dropdown for colored text<br>
+            • For advanced colors, use the <strong>Source Code</strong> button and add: <code>style="color: #your-color"</code>
+            `;
+            showAlert(helpText, 'info');
+        }
+        
+        function showTypographyHelper() {
+            const helpText = `
+            <strong>Typography Tips:</strong><br>
+            • Use the <strong>Format</strong> dropdown for headings (Heading 1, 2, 3, etc.)<br>
+            • <strong>Bold</strong> and <strong>Italic</strong> buttons are in the toolbar<br>
+            • Use the <strong>Bullet List</strong> and <strong>Numbered List</strong> buttons for lists<br>
+            • For advanced formatting, click the <strong>Source Code</strong> button
+            `;
+            showAlert(helpText, 'info');
+        }
+        
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Insert after the save message div
+            const saveMessage = document.getElementById('saveMessage');
+            saveMessage.parentNode.insertBefore(alertDiv, saveMessage.nextSibling);
+            
+            // Auto-dismiss after 8 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 8000);
+        }
+        
+        // Form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+</body>
+</html>

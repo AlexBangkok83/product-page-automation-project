@@ -42,6 +42,8 @@ router.get('/admin/site-setup', async (req, res) => {
   try {
     const step = req.query.step || '1';
     const storeId = req.query.store;
+    const success = req.query.success === 'true';
+    const deployed = req.query.deployed === 'true';
     let store = null;
     let isEditMode = false;
     
@@ -54,6 +56,15 @@ router.get('/admin/site-setup', async (req, res) => {
       } else {
         console.warn('⚠️ Store not found for UUID:', storeId);
       }
+    }
+    
+    // If success=true and store exists, show the Store Success Page
+    if (success && store && deployed) {
+      console.log('🎉 Showing Store Success Page for:', store.name);
+      return res.render('admin/store-success', {
+        title: `Store Created Successfully - ${store.name}`,
+        store: store
+      });
     }
     
     const templateData = {
@@ -317,6 +328,8 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
             country: req.body.country || 'US',
             language: req.body.language || 'en',
             currency: req.body.currency || 'USD',
+            // Template selection
+            template: req.body.template || 'bootstrap-default',
             shopify_domain: req.body.shopifyDomain,
             shopify_access_token: req.body.shopifyToken,
             shopify_connected: !!(req.body.shopifyDomain && req.body.shopifyToken),
@@ -608,6 +621,118 @@ router.get('/admin/site-setup/deploy', (req, res) => {
       'Live Domain Confirmation'
     ]
   });
+});
+
+// === STORE MANAGEMENT ROUTES (Phase 2) ===
+
+// Store Content Editor - Edit content for specific store
+router.get('/admin/store/:uuid/content', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const store = await Store.findByUuid(storeUuid);
+    
+    if (!store) {
+      return res.status(404).render('error', {
+        title: 'Store Not Found',
+        message: 'The store you are looking for does not exist.'
+      });
+    }
+    
+    // Get store pages for editing
+    const pages = await store.getPages();
+    const currentPageType = req.query.page || 'home';
+    const currentPageData = await store.getPage(currentPageType);
+    
+    console.log(`📝 Loading content editor for ${store.name}, page: ${currentPageType}`);
+    console.log(`📄 Found ${pages.length} pages for store`);
+    
+    res.render('admin/content-editor', {
+      title: `Edit Content - ${store.name}`,
+      store: store,
+      pages: pages,
+      currentPage: currentPageType,
+      currentPageData: currentPageData
+    });
+  } catch (error) {
+    console.error('Content editor error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load content editor'
+    });
+  }
+});
+
+// Save content changes
+router.post('/admin/store/:uuid/content', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const store = await Store.findByUuid(storeUuid);
+    
+    if (!store) {
+      return res.status(404).json({ success: false, message: 'Store not found' });
+    }
+    
+    const { pageType, title, subtitle, content, meta_title, meta_description } = req.body;
+    
+    // Update the page content
+    await store.updatePage(pageType, {
+      title,
+      subtitle, 
+      content,
+      meta_title,
+      meta_description
+    });
+    
+    console.log(`💾 Updated ${pageType} page content for store ${store.name}`);
+    
+    // Regenerate store files with new content
+    try {
+      console.log(`🚀 Starting regeneration for ${store.name}...`);
+      await store.regenerateStoreFiles();
+      console.log(`✅ Store files regenerated for ${store.name} with updated content`);
+    } catch (error) {
+      console.error(`❌ Failed to regenerate store files:`, error);
+      console.error(`❌ Error stack:`, error.stack);
+      // Don't fail the save if regeneration fails
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `${pageType.charAt(0).toUpperCase() + pageType.slice(1)} page updated and deployed successfully!` 
+    });
+    
+  } catch (error) {
+    console.error('Content save error:', error);
+    res.status(500).json({ success: false, message: 'Failed to save content' });
+  }
+});
+
+// Store Pages Manager - Manage which pages are enabled/disabled
+router.get('/admin/store/:uuid/pages', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const store = await Store.findByUuid(storeUuid);
+    
+    if (!store) {
+      return res.status(404).render('error', {
+        title: 'Store Not Found',
+        message: 'The store you are looking for does not exist.'
+      });
+    }
+    
+    // TODO: Get store pages with enable/disable status
+    res.render('admin/page-manager', {
+      title: `Manage Pages - ${store.name}`,
+      store: store,
+      pages: [] // Will be populated with store pages
+    });
+  } catch (error) {
+    console.error('Page manager error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load page manager'
+    });
+  }
 });
 
 // Complete Automation Status Dashboard

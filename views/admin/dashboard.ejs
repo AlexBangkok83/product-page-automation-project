@@ -201,46 +201,34 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="btn-group btn-group-sm">
-                                                        <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary" title="View Live Store">
-                                                            <i class="bi bi-eye"></i>
+                                                    <div class="d-flex gap-1">
+                                                        <a href="/admin/store/<%= store.uuid %>/content" class="btn btn-primary btn-sm">
+                                                            <i class="bi bi-pencil-square me-1"></i>Edit
                                                         </a>
-                                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                                                            <span class="visually-hidden">Toggle Dropdown</span>
-                                                        </button>
-                                                        <ul class="dropdown-menu dropdown-menu-end">
-                                                            <!-- STORE MANAGEMENT -->
-                                                            <li><h6 class="dropdown-header text-muted small">
-                                                                <i class="bi bi-shop me-1"></i>Store Management
-                                                            </h6></li>
-                                                            <li><a class="dropdown-item" href="/admin/stores/<%= store.uuid %>">
-                                                                <i class="bi bi-info-circle me-2"></i>View Details
-                                                            </a></li>
-                                                            <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
-                                                                <i class="bi bi-pencil me-2"></i>Edit Store
-                                                            </a></li>
-                                                            
-                                                            <!-- CONTENT & DEPLOYMENT -->
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li><h6 class="dropdown-header text-muted small">
-                                                                <i class="bi bi-cloud me-1"></i>Deployment
-                                                            </h6></li>
-                                                            <li><a class="dropdown-item text-primary" href="#" onclick="deployStore('<%= store.uuid %>')">
-                                                                <i class="bi bi-cloud-upload me-2"></i>Deploy Store
-                                                            </a></li>
-                                                            
-                                                            <!-- DANGER ZONE -->
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li><h6 class="dropdown-header text-danger small">
-                                                                <i class="bi bi-exclamation-triangle me-1"></i>Danger Zone
-                                                            </h6></li>
-                                                            <li><a class="dropdown-item text-warning" href="#" onclick="deleteFromVercel('<%= store.uuid %>', '<%= store.domain %>')">
-                                                                <i class="bi bi-cloud-slash me-2"></i>Delete from Vercel Only
-                                                            </a></li>
-                                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteStore('<%= store.uuid %>')">
-                                                                <i class="bi bi-trash me-2"></i>Delete Store
-                                                            </a></li>
-                                                        </ul>
+                                                        <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-success btn-sm" title="View Live Store">
+                                                            <i class="bi bi-box-arrow-up-right"></i>
+                                                        </a>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                <i class="bi bi-three-dots"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                                <li><a class="dropdown-item" href="/admin/store/<%= store.uuid %>/pages">
+                                                                    <i class="bi bi-files me-2"></i>Manage Pages
+                                                                </a></li>
+                                                                <li><a class="dropdown-item" href="/admin/stores/<%= store.uuid %>">
+                                                                    <i class="bi bi-info-circle me-2"></i>Store Details
+                                                                </a></li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
+                                                                    <i class="bi bi-gear me-2"></i>Store Settings
+                                                                </a></li>
+                                                                <li><hr class="dropdown-divider"></li>
+                                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteStore('<%= store.uuid %>')">
+                                                                    <i class="bi bi-trash me-2"></i>Delete Store
+                                                                </a></li>
+                                                            </ul>
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
