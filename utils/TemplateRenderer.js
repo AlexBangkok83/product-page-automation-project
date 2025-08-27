@@ -1534,9 +1534,26 @@ class TemplateRenderer {
             </div>
 
             <div class="content">
-                ${contentBlocks.length > 0 ? contentBlocks.map(block => `
-                    <p>${block.content || ''}</p>
-                `).join('') : `
+                ${contentBlocks.length > 0 ? contentBlocks.map(block => {
+                    // Get original content
+                    let content = block.content || '';
+                    
+                    // Always decode HTML entities first
+                    content = content.replace(/&lt;/g, '<')
+                                   .replace(/&gt;/g, '>')
+                                   .replace(/&amp;/g, '&')
+                                   .replace(/&quot;/g, '"')
+                                   .replace(/&#x2F;/g, '/')
+                                   .replace(/&#39;/g, "'");
+                    
+                    // If content contains HTML tags after decoding, return as HTML
+                    // Otherwise wrap in paragraph
+                    if (content.includes('<') && (content.includes('<h') || content.includes('<p') || content.includes('<div') || content.includes('<strong') || content.includes('<em'))) {
+                        return content;
+                    } else {
+                        return `<p>${content}</p>`;
+                    }
+                }).join('') : `
                     <p>Welcome to the ${page.page_type} page of ${store.name}.</p>
                     <p>This page is currently being built. Please check back soon for updates!</p>
                 `}

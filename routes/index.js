@@ -674,26 +674,34 @@ router.post('/admin/store/:uuid/content', async (req, res) => {
     
     const { pageType, title, subtitle, content, meta_title, meta_description } = req.body;
     
+    // Decode HTML entities that might have been escaped during JSON transport
+    const decodedContent = content ? content
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x2F;/g, '/') : content;
+    
     // Update the page content
     await store.updatePage(pageType, {
       title,
       subtitle, 
-      content,
+      content: decodedContent,
       meta_title,
       meta_description
     });
     
     console.log(`💾 Updated ${pageType} page content for store ${store.name}`);
     
-    // Regenerate store files with new content
+    // Deploy to live with new content (includes regeneration + git automation)
     try {
-      console.log(`🚀 Starting regeneration for ${store.name}...`);
-      await store.regenerateStoreFiles();
-      console.log(`✅ Store files regenerated for ${store.name} with updated content`);
+      console.log(`🚀 Starting deployment for ${store.name}...`);
+      await store.deploy(null, true); // Force deployment to ensure changes go live
+      console.log(`✅ Store deployed for ${store.name} with updated content`);
     } catch (error) {
-      console.error(`❌ Failed to regenerate store files:`, error);
+      console.error(`❌ Failed to deploy store:`, error);
       console.error(`❌ Error stack:`, error.stack);
-      // Don't fail the save if regeneration fails
+      // Don't fail the save if deployment fails
     }
     
     res.json({ 

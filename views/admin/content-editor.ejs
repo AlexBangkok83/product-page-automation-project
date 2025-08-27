@@ -116,7 +116,7 @@
                             <div class="mb-3">
                                 <label for="content" class="form-label">Main Content</label>
                                 <textarea class="form-control" id="content" name="content" rows="10" 
-                                          placeholder="Enter the main content for this page..."><%= currentPageData ? currentPageData.content : '' %></textarea>
+                                          placeholder="Enter the main content for this page..."><%- currentPageData ? currentPageData.content : '' %></textarea>
                                 <small class="form-text text-muted">
                                     <i class="bi bi-info-circle me-1"></i>
                                     Use the visual editor above to format your content. Click "Source Code" button for HTML editing.
@@ -161,7 +161,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Initialize TinyMCE
+        // Initialize TinyMCE with proper content loading
         tinymce.init({
             selector: '#content',
             height: 400,
@@ -173,7 +173,7 @@
             toolbar: 'undo redo | blocks | ' +
                 'bold italic backcolor | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
+                'removeformat | code | help',
             content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px }',
             branding: false,
             menubar: false,
@@ -184,6 +184,13 @@
             // Allow only content-safe styles
             valid_styles: {
                 '*': 'color,background-color,text-align,font-weight,font-style,text-decoration,margin,padding'
+            },
+            // Ensure content loads properly
+            setup: function(editor) {
+                editor.on('init', function() {
+                    // Content should already be loaded from the textarea
+                    console.log('TinyMCE initialized with content:', editor.getContent().length, 'characters');
+                });
             }
         });
 
@@ -208,7 +215,9 @@
                 const data = Object.fromEntries(formData.entries());
                 
                 // Override content with TinyMCE content
-                data.content = tinymce.get('content').getContent();
+                const tinyMceContent = tinymce.get('content').getContent();
+                console.log('🔍 CLIENT DEBUG - TinyMCE content:', tinyMceContent);
+                data.content = tinyMceContent;
                 
                 const response = await fetch(window.location.pathname, {
                     method: 'POST',
@@ -230,14 +239,28 @@
                                 <strong>${result.message}</strong>
                                 <div class="small mt-1">
                                     <i class="bi bi-rocket me-1"></i>Your changes are being deployed to the live store...
-                                    <a href="<%= store.deployment_url.startsWith('http') ? store.deployment_url : 'https://' + store.deployment_url %>" target="_blank" class="ms-2 text-decoration-none">
-                                        View Live Store <i class="bi bi-box-arrow-up-right"></i>
+                                    <a href="#" id="viewLivePageLink" target="_blank" class="ms-2 text-decoration-none">
+                                        View Live Page <i class="bi bi-box-arrow-up-right"></i>
                                     </a>
                                 </div>
                             </div>
                         </div>
                     `;
                     saveMessage.classList.remove('d-none');
+                    
+                    // Set the correct URL for the live page link
+                    const pageSlugMap = {
+                        <% pages.forEach(function(page) { %>
+                        '<%= page.page_type %>': '<%= page.slug || page.page_type %>',
+                        <% }); %>
+                    };
+                    
+                    const currentPageType = '<%= currentPage %>';
+                    const pageSlug = pageSlugMap[currentPageType] || currentPageType;
+                    const baseUrl = '<%= store.deployment_url.startsWith("http") ? store.deployment_url : "https://" + store.deployment_url %>';
+                    const pageUrl = currentPageType === 'home' ? baseUrl : `${baseUrl}/${pageSlug}`;
+                    
+                    document.getElementById('viewLivePageLink').href = pageUrl;
                     
                     // Scroll to top to show message
                     window.scrollTo(0, 0);
