@@ -38,6 +38,8 @@ const simpleDomainRouter = (req, res, next) => {
     let requestedPath = req.path;
     let filePath;
     
+    console.log(`DEBUG: Domain ${cleanDomain}, Path: ${requestedPath}`);
+    
     if (!requestedPath || requestedPath === '/' || requestedPath === '') {
       // Serve homepage
       filePath = path.join(storePath, 'index.html');
@@ -56,7 +58,10 @@ const simpleDomainRouter = (req, res, next) => {
           path.join(storePath, cleanPath)
         ];
         
+        console.log(`DEBUG: Trying paths for ${cleanPath}:`, possiblePaths);
+        
         for (const possiblePath of possiblePaths) {
+          console.log(`DEBUG: Checking ${possiblePath} - exists: ${fs.existsSync(possiblePath)}`);
           if (fs.existsSync(possiblePath)) {
             filePath = possiblePath;
             break;
