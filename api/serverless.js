@@ -38,21 +38,19 @@ const simpleDomainRouter = (req, res, next) => {
     let requestedPath = req.path;
     let filePath;
     
-    console.log(`[${cleanDomain}] Processing path: ${requestedPath}`);
+    // Processing path for domain routing
     
     if (!requestedPath || requestedPath === '/' || requestedPath === '') {
       // Serve homepage
       filePath = path.join(storePath, 'index.html');
-      console.log(`[${cleanDomain}] Serving homepage: ${filePath}`);
+      // Serving homepage
     } else {
       // Clean the path
       const cleanPath = requestedPath.replace(/^\/+/, '').replace(/\/+$/, '');
-      console.log(`[${cleanDomain}] Clean path: ${cleanPath}`);
       
       if (cleanPath.includes('.')) {
         // Direct file request
         filePath = path.join(storePath, cleanPath);
-        console.log(`[${cleanDomain}] Direct file request: ${filePath}`);
       } else {
         // Page request - try to find corresponding HTML file
         const possiblePaths = [
@@ -61,41 +59,42 @@ const simpleDomainRouter = (req, res, next) => {
           path.join(storePath, cleanPath)
         ];
         
-        console.log(`[${cleanDomain}] Trying paths:`, possiblePaths);
-        
         for (const possiblePath of possiblePaths) {
-          console.log(`[${cleanDomain}] Checking ${possiblePath}: exists=${fs.existsSync(possiblePath)}`);
           if (fs.existsSync(possiblePath)) {
             filePath = possiblePath;
-            console.log(`[${cleanDomain}] Found file: ${filePath}`);
             break;
           }
         }
         
         // If no file found, serve 404
         if (!filePath) {
-          console.log(`[${cleanDomain}] No file found for path: ${cleanPath}`);
           return res.status(404).send(`
             <!DOCTYPE html>
             <html>
             <head>
-              <title>Page Not Found</title>
+              <title>Page Not Found - Clipia</title>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
                 body { 
-                  font-family: Arial, sans-serif; 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
                   text-align: center; 
                   padding: 50px; 
-                  background: #f8f9fa; 
+                  background: #f8f9fa;
+                  color: #333;
                 }
+                .container { max-width: 500px; margin: 0 auto; }
+                h1 { color: #007cba; margin-bottom: 1rem; }
+                a { color: #007cba; text-decoration: none; }
+                a:hover { text-decoration: underline; }
               </style>
             </head>
             <body>
-              <h1>Page Not Found</h1>
-              <p>The page "${cleanPath}" could not be found.</p>
-              <p>Store path: ${storePath}</p>
-              <p><a href="/">Return to homepage</a></p>
+              <div class="container">
+                <h1>Page Not Found</h1>
+                <p>The page you're looking for could not be found.</p>
+                <p><a href="/">← Return to homepage</a></p>
+              </div>
             </body>
             </html>
           `);
