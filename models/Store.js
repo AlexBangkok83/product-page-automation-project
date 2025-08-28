@@ -6,6 +6,7 @@ const { PageTemplate } = require('./PageTemplate');
 const LegalPageLoader = require('../utils/LegalPageLoader');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 class Store {
   constructor(data = {}) {
@@ -315,7 +316,7 @@ class Store {
       'meta_title', 'meta_description', 'favicon_url',
       'shipping_info', 'shipping_time', 'return_policy', 'return_period',
       'support_email', 'support_phone', 'business_address', 'business_orgnr',
-      'gdpr_compliant', 'cookie_consent', 'selected_pages',
+      'gdpr_compliant', 'cookie_consent', 'selected_pages', 'selected_products',
       // Pre-footer content fields
       'prefooter_enabled', 'prefooter_card1_image', 'prefooter_card1_title', 'prefooter_card1_text',
       'prefooter_card2_image', 'prefooter_card2_title', 'prefooter_card2_text',
@@ -1241,6 +1242,318 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
          WHERE store_id = ? AND page_type = ?`,
         updateValues
       );
+    }
+  }
+
+  /**
+   * Fetch products from Shopify API
+   */
+  async fetchShopifyProducts(limit = 50) {
+    if (!this.shopify_domain || !this.shopify_access_token) {
+      console.log(`⚠️ No Shopify connection configured for ${this.name}`);
+      return [];
+    }
+
+    try {
+      console.log(`🛒 Fetching products from ${this.shopify_domain}...`);
+      
+      let products = [];
+      
+      if (this.shopify_access_token.startsWith('shpat_') || this.shopify_access_token.startsWith('shpca_')) {
+        // Admin API
+        const response = await axios.get(`https://${this.shopify_domain}/admin/api/2023-10/products.json`, {
+          headers: {
+            'X-Shopify-Access-Token': this.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          params: {
+            limit: limit,
+            status: 'active'
+          },
+          timeout: 15000
+        });
+
+        products = response.data.products.map(product => ({
+          id: product.id,
+          handle: product.handle,
+          title: product.title,
+          description: product.body_html || '',
+          vendor: product.vendor || '',
+          product_type: product.product_type || '',
+          tags: product.tags ? product.tags.split(',').map(tag => tag.trim()) : [],
+          images: product.images.map(img => ({
+            id: img.id,
+            src: img.src,
+            alt: img.alt || product.title
+          })),
+          variants: product.variants.map(variant => ({
+            id: variant.id,
+            title: variant.title,
+            price: parseFloat(variant.price),
+            compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
+            available: variant.inventory_quantity > 0,
+            inventory_quantity: variant.inventory_quantity,
+            sku: variant.sku || ''
+          })),
+          created_at: product.created_at,
+          updated_at: product.updated_at
+        }));
+
+      } else {
+        // Storefront API
+        const query = `
+          query getProducts($first: Int!) {
+            products(first: $first) {
+              edges {
+                node {
+                  id
+                  handle
+                  title
+                  description
+                  vendor
+                  productType
+                  tags
+                  images(first: 10) {
+                    edges {
+                      node {
+                        id
+                        url
+                        altText
+                      }
+                    }
+                  }
+                  variants(first: 10) {
+                    edges {
+                      node {
+                        id
+                        title
+                        price {
+                          amount
+                          currencyCode
+                        }
+                        compareAtPrice {
+                          amount
+                          currencyCode
+                        }
+                        availableForSale
+                        quantityAvailable
+                        sku
+                      }
+                    }
+                  }
+                  createdAt
+                  updatedAt
+                }
+              }
+            }
+          }
+        `;
+
+        const response = await axios.post(`https://${this.shopify_domain}/api/2023-10/graphql.json`, {
+          query,
+          variables: { first: limit }
+        }, {
+          headers: {
+            'X-Shopify-Storefront-Access-Token': this.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        });
+
+        products = response.data.data.products.edges.map(edge => {
+          const product = edge.node;
+          return {
+            id: product.id,
+            handle: product.handle,
+            title: product.title,
+            description: product.description || '',
+            vendor: product.vendor || '',
+            product_type: product.productType || '',
+            tags: product.tags || [],
+            images: product.images.edges.map(imgEdge => ({
+              id: imgEdge.node.id,
+              src: imgEdge.node.url,
+              alt: imgEdge.node.altText || product.title
+            })),
+            variants: product.variants.edges.map(varEdge => {
+              const variant = varEdge.node;
+              return {
+                id: variant.id,
+                title: variant.title,
+                price: parseFloat(variant.price.amount),
+                compare_at_price: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
+                available: variant.availableForSale,
+                inventory_quantity: variant.quantityAvailable,
+                sku: variant.sku || ''
+              };
+            }),
+            created_at: product.createdAt,
+            updated_at: product.updatedAt
+          };
+        });
+      }
+
+      console.log(`✅ Fetched ${products.length} products from ${this.shopify_domain}`);
+      return products;
+
+    } catch (error) {
+      console.error(`❌ Error fetching products from ${this.shopify_domain}:`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Get product by handle
+   */
+  async getShopifyProduct(handle) {
+    if (!this.shopify_domain || !this.shopify_access_token) {
+      console.log(`⚠️ No Shopify connection configured for ${this.name}`);
+      return null;
+    }
+
+    try {
+      console.log(`🔍 Fetching product ${handle} from ${this.shopify_domain}...`);
+      
+      if (this.shopify_access_token.startsWith('shpat_') || this.shopify_access_token.startsWith('shpca_')) {
+        // Admin API
+        const response = await axios.get(`https://${this.shopify_domain}/admin/api/2023-10/products.json`, {
+          headers: {
+            'X-Shopify-Access-Token': this.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          params: {
+            handle: handle,
+            status: 'active'
+          },
+          timeout: 10000
+        });
+
+        if (response.data.products.length === 0) {
+          return null;
+        }
+
+        const product = response.data.products[0];
+        return {
+          id: product.id,
+          handle: product.handle,
+          title: product.title,
+          description: product.body_html || '',
+          vendor: product.vendor || '',
+          product_type: product.product_type || '',
+          tags: product.tags ? product.tags.split(',').map(tag => tag.trim()) : [],
+          images: product.images.map(img => ({
+            id: img.id,
+            src: img.src,
+            alt: img.alt || product.title
+          })),
+          variants: product.variants.map(variant => ({
+            id: variant.id,
+            title: variant.title,
+            price: parseFloat(variant.price),
+            compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
+            available: variant.inventory_quantity > 0,
+            inventory_quantity: variant.inventory_quantity,
+            sku: variant.sku || ''
+          })),
+          created_at: product.created_at,
+          updated_at: product.updated_at
+        };
+
+      } else {
+        // Storefront API  
+        const query = `
+          query getProduct($handle: String!) {
+            product(handle: $handle) {
+              id
+              handle
+              title
+              description
+              vendor
+              productType
+              tags
+              images(first: 10) {
+                edges {
+                  node {
+                    id
+                    url
+                    altText
+                  }
+                }
+              }
+              variants(first: 10) {
+                edges {
+                  node {
+                    id
+                    title
+                    price {
+                      amount
+                      currencyCode
+                    }
+                    compareAtPrice {
+                      amount
+                      currencyCode
+                    }
+                    availableForSale
+                    quantityAvailable
+                    sku
+                  }
+                }
+              }
+              createdAt
+              updatedAt
+            }
+          }
+        `;
+
+        const response = await axios.post(`https://${this.shopify_domain}/api/2023-10/graphql.json`, {
+          query,
+          variables: { handle }
+        }, {
+          headers: {
+            'X-Shopify-Storefront-Access-Token': this.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+
+        const product = response.data.data.product;
+        if (!product) {
+          return null;
+        }
+
+        return {
+          id: product.id,
+          handle: product.handle,
+          title: product.title,
+          description: product.description || '',
+          vendor: product.vendor || '',
+          product_type: product.productType || '',
+          tags: product.tags || [],
+          images: product.images.edges.map(edge => ({
+            id: edge.node.id,
+            src: edge.node.url,
+            alt: edge.node.altText || product.title
+          })),
+          variants: product.variants.edges.map(edge => {
+            const variant = edge.node;
+            return {
+              id: variant.id,
+              title: variant.title,
+              price: parseFloat(variant.price.amount),
+              compare_at_price: variant.compareAtPrice ? parseFloat(variant.compareAtPrice.amount) : null,
+              available: variant.availableForSale,
+              inventory_quantity: variant.quantityAvailable,
+              sku: variant.sku || ''
+            };
+          }),
+          created_at: product.createdAt,
+          updated_at: product.updatedAt
+        };
+      }
+
+    } catch (error) {
+      console.error(`❌ Error fetching product ${handle} from ${this.shopify_domain}:`, error.message);
+      return null;
     }
   }
 }

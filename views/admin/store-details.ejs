@@ -311,6 +311,67 @@
             </div>
         </div>
 
+        <!-- Product Management -->
+        <% if (store.shopify_connected) { %>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-box me-2"></i>Product Management
+                        </h5>
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadShopifyProducts()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Products
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="text-muted mb-2">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Select products to display on this store from your Shopify catalog.
+                                </p>
+                                <div class="d-flex gap-2 mb-3">
+                                    <span class="badge bg-success">Connected to <%= store.shopify_shop_name || store.shopify_domain %></span>
+                                    <span class="badge bg-secondary" id="productCount">Loading products...</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <button class="btn btn-sm btn-outline-success me-2" onclick="selectAllProducts()">
+                                    <i class="bi bi-check-all me-1"></i>Select All
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deselectAllProducts()">
+                                    <i class="bi bi-x-circle me-1"></i>Deselect All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="productsList" class="row">
+                            <div class="col-12 text-center p-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading products...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Loading products from Shopify...</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button class="btn btn-primary me-2" onclick="saveSelectedProducts()" disabled id="saveProductsBtn">
+                                    <i class="bi bi-check-circle me-2"></i>Save Product Selection
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="showProductManager()">
+                                    <i class="bi bi-pencil-square me-2"></i>Manage Product Pages
+                                </button>
+                                <small class="text-muted ms-3 d-block mt-2">Changes will be applied when you regenerate the store.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
         <!-- Actions -->
         <div class="row">
             <div class="col-12">
@@ -380,6 +441,243 @@
                 });
             }
         }
+
+        // Product Management Functions
+        let availableProducts = [];
+        let selectedProductIds = [];
+
+        async function loadShopifyProducts() {
+            try {
+                const response = await fetch('/api/store/<%= store.uuid %>/products');
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableProducts = data.products;
+                    document.getElementById('productCount').textContent = `${data.products.length} products available`;
+                    renderProductsList();
+                } else {
+                    document.getElementById('productsList').innerHTML = `
+                        <div class="col-12 text-center p-4">
+                            <i class="bi bi-exclamation-triangle text-warning fs-1"></i>
+                            <p class="mt-2 text-danger">Failed to load products: ${data.error}</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="loadShopifyProducts()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Try Again
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('productsList').innerHTML = `
+                    <div class="col-12 text-center p-4">
+                        <i class="bi bi-wifi-off text-danger fs-1"></i>
+                        <p class="mt-2 text-danger">Connection error. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderProductsList() {
+            const container = document.getElementById('productsList');
+            
+            if (availableProducts.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center p-4">
+                        <i class="bi bi-box text-muted fs-1"></i>
+                        <p class="mt-2 text-muted">No products found in your Shopify store.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = availableProducts.map(product => {
+                const mainImage = product.images && product.images.length > 0 ? product.images[0].src : null;
+                const mainVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+                const price = mainVariant ? mainVariant.price : 0;
+                const isSelected = selectedProductIds.includes(product.id);
+
+                return `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100 ${isSelected ? 'border-primary' : ''}">
+                            <div class="position-relative">
+                                ${mainImage ? 
+                                    `<img src="${mainImage}" class="card-img-top" style="height: 150px; object-fit: cover;" alt="${product.title}">` :
+                                    `<div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 150px;">
+                                        <i class="bi bi-image text-muted fs-1"></i>
+                                    </div>`
+                                }
+                                <div class="position-absolute top-0 end-0 p-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="product_${product.id}" 
+                                               ${isSelected ? 'checked' : ''}
+                                               onchange="toggleProduct('${product.id}')">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title">${product.title}</h6>
+                                ${product.vendor ? `<small class="text-muted">by ${product.vendor}</small>` : ''}
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold text-primary">$${price}</span>
+                                        <small class="text-muted">${product.variants ? product.variants.length : 0} variant(s)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('saveProductsBtn').disabled = false;
+        }
+
+        function toggleProduct(productId) {
+            if (selectedProductIds.includes(productId)) {
+                selectedProductIds = selectedProductIds.filter(id => id !== productId);
+            } else {
+                selectedProductIds.push(productId);
+            }
+            renderProductsList();
+        }
+
+        function selectAllProducts() {
+            selectedProductIds = availableProducts.map(p => p.id);
+            renderProductsList();
+        }
+
+        function deselectAllProducts() {
+            selectedProductIds = [];
+            renderProductsList();
+        }
+
+        async function saveSelectedProducts() {
+            try {
+                const response = await fetch('/api/store/<%= store.uuid %>/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        selectedProducts: selectedProductIds
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Successfully saved selection of ${selectedProductIds.length} products!`);
+                } else {
+                    alert('Failed to save product selection: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error saving products:', error);
+                alert('Failed to save product selection');
+            }
+        }
+
+        // Show product management modal
+        function showProductManager() {
+            if (availableProducts.length === 0) {
+                alert('Please load products first by clicking "Refresh Products"');
+                return;
+            }
+
+            // Create modal content
+            const modalContent = `
+                <div class="modal fade" id="productManagerModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="bi bi-pencil-square me-2"></i>Manage Product Pages
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Status</th>
+                                                <th>Custom Content</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${availableProducts.map(product => {
+                                                const mainImage = product.images && product.images.length > 0 ? product.images[0].src : null;
+                                                const mainVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+                                                const price = mainVariant ? mainVariant.price : 0;
+                                                
+                                                return `
+                                                    <tr>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                ${mainImage ? 
+                                                                    `<img src="${mainImage}" class="me-3" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" alt="${product.title}">` :
+                                                                    `<div class="me-3 bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 4px;">
+                                                                        <i class="bi bi-image text-muted"></i>
+                                                                    </div>`
+                                                                }
+                                                                <div>
+                                                                    <h6 class="mb-0">${product.title}</h6>
+                                                                    <small class="text-muted">$${price} • ${product.handle}</small>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-success">Active</span>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-secondary">Default</span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <a href="/admin/store/<%= store.uuid %>/product/${product.handle}/edit" class="btn btn-sm btn-outline-primary">
+                                                                    <i class="bi bi-pencil me-1"></i>Edit Page
+                                                                </a>
+                                                                <a href="/products/${product.handle}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                                                    <i class="bi bi-eye me-1"></i>View
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                            }).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existingModal = document.getElementById('productManagerModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalContent);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('productManagerModal'));
+            modal.show();
+        }
+
+        // Load products on page load if Shopify is connected
+        <% if (store.shopify_connected) { %>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadShopifyProducts();
+        });
+        <% } %>
     </script>
 </body>
 </html>

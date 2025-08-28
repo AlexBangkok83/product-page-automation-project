@@ -925,6 +925,207 @@ router.get('/admin/stores/:uuid', async (req, res) => {
   }
 });
 
+// === PRODUCT MANAGEMENT ROUTES ===
+
+// Product page editor for store admin
+router.get('/admin/stores/:uuid/product/:handle/edit', async (req, res) => {
+  try {
+    console.log('🎯 Product edit route accessed:', req.params);
+    const storeUuid = req.params.uuid;
+    const productHandle = req.params.handle;
+    const store = await Store.findByUuid(storeUuid);
+    
+    if (!store) {
+      return res.status(404).render('error', {
+        title: 'Store Not Found',
+        message: 'The store you are looking for does not exist.'
+      });
+    }
+
+    if (!store.shopify_domain || !store.shopify_access_token) {
+      return res.status(400).render('error', {
+        title: 'Shopify Not Connected',
+        message: 'This store is not connected to Shopify.'
+      });
+    }
+
+    // Fetch the product from Shopify
+    const shopifyProduct = await store.getShopifyProduct(productHandle);
+    
+    if (!shopifyProduct) {
+      return res.status(404).render('error', {
+        title: 'Product Not Found',
+        message: 'The product you are trying to edit does not exist in Shopify.'
+      });
+    }
+
+    // Check if custom product page content exists
+    const db = require('../database/db');
+    let customContent = await db.get(
+      'SELECT * FROM store_product_pages WHERE store_id = ? AND product_handle = ?',
+      [store.id, productHandle]
+    );
+
+    // If no custom content exists, create default structure
+    if (!customContent) {
+      customContent = {
+        custom_title: shopifyProduct.title,
+        custom_description: shopifyProduct.description,
+        custom_content: '',
+        meta_title: shopifyProduct.title + ' - ' + store.name,
+        meta_description: shopifyProduct.description ? 
+          shopifyProduct.description.replace(/<[^>]*>/g, '').substring(0, 160) + '...' :
+          `${shopifyProduct.title} - Available at ${store.name}`,
+        seo_slug: productHandle,
+        is_active: true
+      };
+    }
+
+    res.render('admin/product-edit', {
+      title: `Edit ${shopifyProduct.title} - ${store.name}`,
+      store: store,
+      product: shopifyProduct,
+      customContent: customContent,
+      productHandle: productHandle
+    });
+
+  } catch (error) {
+    console.error('Product edit page error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load product editor'
+    });
+  }
+});
+
+// Save product page content
+router.post('/admin/stores/:uuid/product/:handle/edit', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const productHandle = req.params.handle;
+    const store = await Store.findByUuid(storeUuid);
+    
+    if (!store) {
+      return res.status(404).json({ success: false, error: 'Store not found' });
+    }
+
+    const {
+      custom_title,
+      custom_description,
+      custom_content,
+      meta_title,
+      meta_description,
+      seo_slug,
+      is_active
+    } = req.body;
+
+    const db = require('../database/db');
+    
+    // Upsert the custom content
+    await db.run(`
+      INSERT OR REPLACE INTO store_product_pages 
+      (store_id, product_handle, custom_title, custom_description, custom_content, 
+       meta_title, meta_description, seo_slug, is_active, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `, [
+      store.id,
+      productHandle,
+      custom_title,
+      custom_description,
+      custom_content,
+      meta_title,
+      meta_description,
+      seo_slug || productHandle,
+      is_active ? 1 : 0
+    ]);
+
+    console.log(`✅ Updated product page content for ${productHandle} in store ${store.name}`);
+
+    res.json({
+      success: true,
+      message: 'Product page updated successfully!'
+    });
+
+  } catch (error) {
+    console.error('Save product page error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save product page: ' + error.message
+    });
+  }
+});
+
+// === PRODUCT DETAIL ROUTES ===
+
+// Product detail page for specific stores
+router.get('/products/:handle', async (req, res) => {
+  try {
+    console.log('🛒 Product detail route hit:', req.params.handle);
+    const productHandle = req.params.handle;
+    const hostname = req.get('host');
+    console.log('🌐 Hostname:', hostname);
+    
+    // Find store by domain/hostname
+    let store = await Store.findByDomain(hostname);
+    
+    if (!store) {
+      // Try to find by subdomain if not found by main domain
+      const subdomain = hostname.split('.')[0];
+      store = await Store.findBySubdomain(subdomain);
+    }
+    
+    if (!store) {
+      return res.status(404).render('error', {
+        title: 'Store Not Found',
+        message: 'The store you are looking for does not exist.',
+        statusCode: 404
+      });
+    }
+
+    if (!store.shopify_domain || !store.shopify_access_token) {
+      return res.status(404).render('error', {
+        title: 'Product Not Found',
+        message: 'This store is not connected to Shopify.',
+        statusCode: 404
+      });
+    }
+
+    // Fetch the specific product from Shopify
+    const product = await store.getShopifyProduct(productHandle);
+    
+    if (!product) {
+      return res.status(404).render('error', {
+        title: 'Product Not Found',
+        message: 'The product you are looking for does not exist.',
+        statusCode: 404
+      });
+    }
+
+    // Get all pages for navigation
+    const allPages = await store.getPages();
+
+    // Render product detail template
+    res.render('product-detail', {
+      title: `${product.title} - ${store.name}`,
+      store: store,
+      product: product,
+      allPages: allPages,
+      metaDescription: product.description ? 
+        product.description.replace(/<[^>]*>/g, '').substring(0, 160) + '...' :
+        `${product.title} - Available at ${store.name}`
+    });
+
+  } catch (error) {
+    console.error('Product detail error:', error.message);
+    console.error('Product detail stack:', error.stack);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load product details: ' + error.message,
+      statusCode: 500
+    });
+  }
+});
+
 // === LEGACY ROUTES (for backward compatibility) ===
 
 // Redirect old site-setup to new admin path

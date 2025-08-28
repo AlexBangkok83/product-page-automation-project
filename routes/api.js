@@ -1555,8 +1555,131 @@ router.patch('/company-shopify-stores/:uuid/toggle-status', async (req, res) => 
   }
 });
 
-// Regenerate legal pages for a specific store
+// Product Management for Store-specific Product Selection
 
+// Get products for a store (fetch from Shopify)
+router.get('/store/:uuid/products', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const store = await Store.findByUuid(storeUuid);
 
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Store not found' 
+      });
+    }
+
+    if (!store.shopify_domain || !store.shopify_access_token) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Store is not connected to Shopify' 
+      });
+    }
+
+    // Fetch products using the store's fetchShopifyProducts method
+    const products = await store.fetchShopifyProducts(50); // Get up to 50 products
+
+    res.json({
+      success: true,
+      products: products,
+      total: products.length,
+      store: {
+        name: store.name,
+        domain: store.domain,
+        shopify_domain: store.shopify_domain
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching store products:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to fetch products from Shopify: ' + error.message 
+    });
+  }
+});
+
+// Save selected products for a store
+router.post('/store/:uuid/products', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const { selectedProducts } = req.body;
+
+    if (!Array.isArray(selectedProducts)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'selectedProducts must be an array' 
+      });
+    }
+
+    const store = await Store.findByUuid(storeUuid);
+
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Store not found' 
+      });
+    }
+
+    // Store the selected product IDs in the store's settings
+    // We'll add a new field to track selected products
+    await store.update({
+      selected_products: JSON.stringify(selectedProducts)
+    });
+
+    console.log(`✅ Saved ${selectedProducts.length} selected products for store ${store.name}`);
+
+    res.json({
+      success: true,
+      message: `Successfully saved ${selectedProducts.length} selected products`,
+      selectedProducts: selectedProducts.length
+    });
+
+  } catch (error) {
+    console.error('Error saving store products:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to save product selection: ' + error.message 
+    });
+  }
+});
+
+// Get currently selected products for a store
+router.get('/store/:uuid/products/selected', async (req, res) => {
+  try {
+    const storeUuid = req.params.uuid;
+    const store = await Store.findByUuid(storeUuid);
+
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Store not found' 
+      });
+    }
+
+    let selectedProducts = [];
+    if (store.selected_products) {
+      try {
+        selectedProducts = JSON.parse(store.selected_products);
+      } catch (error) {
+        console.warn('Invalid selected_products JSON:', error);
+      }
+    }
+
+    res.json({
+      success: true,
+      selectedProducts: selectedProducts,
+      total: selectedProducts.length
+    });
+
+  } catch (error) {
+    console.error('Error getting selected products:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to get selected products: ' + error.message 
+    });
+  }
+});
 
 module.exports = router;

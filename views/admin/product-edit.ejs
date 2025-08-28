@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product Page - <%= product.title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.3/tinymce.min.js"></script>
+    <style>
+        .product-preview {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+        .product-image {
+            max-width: 100px;
+            height: auto;
+            border-radius: 4px;
+        }
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .form-section h4 {
+            color: #495057;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .save-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/admin">Admin Dashboard</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin/stores/<%= store.uuid %>">← Back to Store</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-8">
+                <h2>Edit Product Page</h2>
+                
+                <!-- Product Preview -->
+                <div class="form-section">
+                    <h4>Product Information</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <% if (product.images && product.images.length > 0) { %>
+                                <img src="<%= product.images[0].src %>" alt="<%= product.title %>" class="product-image">
+                            <% } else { %>
+                                <div class="bg-light p-3 text-center text-muted">No Image</div>
+                            <% } %>
+                        </div>
+                        <div class="col-md-9">
+                            <h5><%= product.title %></h5>
+                            <p class="text-muted">Handle: <%= product.handle %></p>
+                            <% if (product.vendor) { %>
+                                <p class="text-muted">Vendor: <%= product.vendor %></p>
+                            <% } %>
+                            <% if (product.variants && product.variants.length > 0) { %>
+                                <p class="text-success fw-bold">$<%= product.variants[0].price.toFixed(2) %></p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Form -->
+                <form id="productEditForm">
+                    <!-- SEO Section -->
+                    <div class="form-section">
+                        <h4>SEO & Meta Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="customTitle" class="form-label">Custom Page Title</label>
+                                <input type="text" class="form-control" id="customTitle" name="custom_title" 
+                                       value="<%= customContent ? customContent.custom_title || '' : '' %>" 
+                                       placeholder="<%= product.title %>">
+                                <small class="form-text text-muted">Leave empty to use original title</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="metaDescription" class="form-label">Meta Description</label>
+                                <textarea class="form-control" id="metaDescription" name="meta_description" rows="3" 
+                                          placeholder="Enter SEO meta description"><%= customContent ? customContent.meta_description || '' : '' %></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Description -->
+                    <div class="form-section">
+                        <h4>Custom Product Description</h4>
+                        <label for="customDescription" class="form-label">Override Product Description</label>
+                        <textarea id="customDescription" name="custom_description" class="form-control"><%= customContent ? customContent.custom_description || '' : '' %></textarea>
+                        <small class="form-text text-muted">This will replace the original Shopify description</small>
+                    </div>
+
+                    <!-- Additional Content Sections -->
+                    <div class="form-section">
+                        <h4>Additional Content Sections</h4>
+                        
+                        <div class="mb-3">
+                            <label for="beforeContent" class="form-label">Content Before Product Info</label>
+                            <textarea id="beforeContent" name="content_before" class="form-control"><%= customContent ? customContent.content_before || '' : '' %></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="afterContent" class="form-label">Content After Product Info</label>
+                            <textarea id="afterContent" name="content_after" class="form-control"><%= customContent ? customContent.content_after || '' : '' %></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="sidebarContent" class="form-label">Sidebar Content</label>
+                            <textarea id="sidebarContent" name="content_sidebar" class="form-control"><%= customContent ? customContent.content_sidebar || '' : '' %></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Display Options -->
+                    <div class="form-section">
+                        <h4>Display Options</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="hideOriginalDescription" name="hide_original_description"
+                                           <%= customContent && customContent.hide_original_description ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="hideOriginalDescription">
+                                        Hide Original Description
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="hidePrice" name="hide_price"
+                                           <%= customContent && customContent.hide_price ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="hidePrice">
+                                        Hide Price
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="hideAddToCart" name="hide_add_to_cart"
+                                           <%= customContent && customContent.hide_add_to_cart ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="hideAddToCart">
+                                        Hide Add to Cart Button
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="hideVendor" name="hide_vendor"
+                                           <%= customContent && customContent.hide_vendor ? 'checked' : '' %>>
+                                    <label class="form-check-label" for="hideVendor">
+                                        Hide Vendor
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-3 mb-4">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="previewChanges()">Preview</button>
+                        <button type="button" class="btn btn-outline-danger" onclick="resetToDefault()">Reset to Default</button>
+                        <a href="/products/<%= product.handle %>" class="btn btn-outline-info" target="_blank">View Live Page</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="col-md-4">
+                <div class="sticky-top" style="top: 2rem;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="/products/<%= product.handle %>" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    View Live Page
+                                </a>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="copyProductUrl()">
+                                    Copy Product URL
+                                </button>
+                                <hr>
+                                <small class="text-muted">
+                                    <strong>Last Modified:</strong><br>
+                                    <%= customContent ? new Date(customContent.updated_at).toLocaleString() : 'Never' %>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Original Shopify Data</h6>
+                        </div>
+                        <div class="card-body">
+                            <small class="text-muted">
+                                <strong>ID:</strong> <%= product.id %><br>
+                                <strong>Handle:</strong> <%= product.handle %><br>
+                                <strong>Type:</strong> <%= product.product_type || 'None' %><br>
+                                <strong>Status:</strong> <%= product.status %><br>
+                                <% if (product.tags && product.tags.length > 0) { %>
+                                    <strong>Tags:</strong> <%= product.tags.join(', ') %><br>
+                                <% } %>
+                                <strong>Variants:</strong> <%= product.variants ? product.variants.length : 0 %>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Status Alert -->
+    <div id="saveStatus" class="save-status"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize TinyMCE for rich text editing
+        tinymce.init({
+            selector: '#customDescription, #beforeContent, #afterContent, #sidebarContent',
+            height: 300,
+            menubar: false,
+            branding: false,
+            statusbar: false,
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | blocks | bold italic forecolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px }',
+            promotion: false,
+            license_key: 'gpl',
+            setup: function(editor) {
+                editor.on('change', function() {
+                    editor.save();
+                });
+            }
+        });
+
+        // Form submission
+        document.getElementById('productEditForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveChanges();
+        });
+
+        async function saveChanges() {
+            // Update TinyMCE content
+            tinymce.triggerSave();
+            
+            const formData = new FormData(document.getElementById('productEditForm'));
+            const data = Object.fromEntries(formData.entries());
+            
+            // Convert checkboxes to booleans
+            data.hide_original_description = document.getElementById('hideOriginalDescription').checked;
+            data.hide_price = document.getElementById('hidePrice').checked;
+            data.hide_add_to_cart = document.getElementById('hideAddToCart').checked;
+            data.hide_vendor = document.getElementById('hideVendor').checked;
+
+            try {
+                showStatus('Saving changes...', 'info');
+                
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showStatus('Changes saved successfully!', 'success');
+                } else {
+                    const error = await response.text();
+                    showStatus('Error saving changes: ' + error, 'danger');
+                }
+            } catch (error) {
+                showStatus('Error saving changes: ' + error.message, 'danger');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('saveStatus');
+            statusDiv.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Auto-hide success messages after 3 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    const alert = statusDiv.querySelector('.alert');
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 3000);
+            }
+        }
+
+        function previewChanges() {
+            // Save changes first, then open preview
+            saveChanges().then(() => {
+                window.open('/products/<%= product.handle %>', '_blank');
+            });
+        }
+
+        function resetToDefault() {
+            if (confirm('Are you sure you want to reset all custom content? This action cannot be undone.')) {
+                // Clear all form fields
+                document.getElementById('productEditForm').reset();
+                
+                // Clear TinyMCE editors
+                tinymce.activeEditor && tinymce.activeEditor.setContent('');
+                
+                // Save the reset
+                saveChanges();
+            }
+        }
+
+        function copyProductUrl() {
+            const url = window.location.origin + '/products/<%= product.handle %>';
+            navigator.clipboard.writeText(url).then(() => {
+                showStatus('Product URL copied to clipboard!', 'success');
+            }).catch(() => {
+                showStatus('Failed to copy URL', 'danger');
+            });
+        }
+
+        // Auto-save functionality (optional)
+        let saveTimeout;
+        document.getElementById('productEditForm').addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                showStatus('Auto-saving...', 'info');
+                saveChanges();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

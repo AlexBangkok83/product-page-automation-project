@@ -280,8 +280,21 @@ class TemplateRenderer {
         fileName = `${page.slug || page.page_type}.html`;
       }
 
-      // Generate HTML content with all pages for footer
-      const htmlContent = await this.renderPageHTML(store, page, allPages);
+      // Fetch products for products page
+      let products = [];
+      if (page.page_type === 'products' && store.shopify_domain && store.shopify_access_token) {
+        try {
+          console.log(`🛒 Fetching products for ${store.name}...`);
+          products = await store.fetchShopifyProducts(20); // Limit to 20 products
+          console.log(`✅ Fetched ${products.length} products for products page`);
+        } catch (error) {
+          console.error(`⚠️ Failed to fetch products for ${store.name}:`, error.message);
+          // Continue with empty products array - page will show "coming soon" message
+        }
+      }
+
+      // Generate HTML content with all pages for footer and products for products page
+      const htmlContent = await this.renderPageHTML(store, page, allPages, products);
       
       // Write file
       const filePath = path.join(storePath, fileName);
@@ -298,7 +311,7 @@ class TemplateRenderer {
   /**
    * Render HTML content for a page
    */
-  async renderPageHTML(store, page, allPages = []) {
+  async renderPageHTML(store, page, allPages = [], products = []) {
     try {
       // Parse content blocks
       let contentBlocks = [];
@@ -326,7 +339,7 @@ class TemplateRenderer {
         case 'home':
           return await this.renderHomePage(store, page, contentBlocks, templateData, allPages);
         case 'products':
-          return await this.renderProductsPage(store, page, contentBlocks, templateData, allPages);
+          return await this.renderProductsPage(store, page, contentBlocks, templateData, allPages, products);
         case 'about':
           return await this.renderAboutPage(store, page, contentBlocks, templateData, allPages);
         case 'contact':
@@ -593,7 +606,7 @@ class TemplateRenderer {
   /**
    * Render products page HTML
    */
-  async renderProductsPage(store, page, contentBlocks, templateData, allPages = []) {
+  async renderProductsPage(store, page, contentBlocks, templateData, allPages = [], products = []) {
     return `<!DOCTYPE html>
 <html lang="${store.language || 'en'}">
 <head>
@@ -727,37 +740,113 @@ class TemplateRenderer {
         }
         
         .product-image {
+            position: relative;
             width: 100%;
-            height: 250px;
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .product-image-placeholder {
             background: var(--secondary-color);
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        .placeholder-content {
             color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
-        
-        .product-info {
-            padding: var(--spacing-md);
-        }
-        
-        .product-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: var(--spacing-sm);
-            color: var(--text-primary);
-        }
-        
-        .product-description {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-sm);
             font-size: 0.9rem;
         }
         
+        .product-info {
+            padding: var(--spacing-sm);
+        }
+        
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        
+        .product-vendor {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        
         .product-price {
-            font-size: 1.3rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .price-regular {
+            font-size: 1.2rem;
             font-weight: bold;
             color: var(--primary-color);
+        }
+        
+        .price-compare {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-decoration: line-through;
+            margin-right: 0.5rem;
+        }
+        
+        .price-sale {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-add-to-cart, .btn-more-info {
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        .btn-add-to-cart {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-add-to-cart:hover:not(.disabled) {
+            background: #005a8d;
+            transform: translateY(-1px);
+        }
+        
+        .btn-add-to-cart.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-more-info {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-more-info:hover {
+            background: var(--primary-color);
+            color: white;
         }
         
         /* Coming Soon Message */
@@ -823,7 +912,53 @@ class TemplateRenderer {
                 <p>${page.subtitle || 'Discover our amazing collection of products'}</p>
             </div>
 
-            ${store.shopify_connected ? `
+            ${products && products.length > 0 ? `
+                <div class="products-grid">
+                    ${products.map(product => {
+                        const mainImage = product.images && product.images.length > 0 ? product.images[0] : null;
+                        const mainVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+                        const price = mainVariant ? mainVariant.price : 0;
+                        const comparePrice = mainVariant && mainVariant.compare_at_price ? mainVariant.compare_at_price : null;
+                        const isAvailable = mainVariant ? mainVariant.available : false;
+                        
+                        return `
+                            <div class="product-card">
+                                ${mainImage ? `
+                                    <div class="product-image">
+                                        <img src="${mainImage.src}" alt="${mainImage.alt || product.title}" loading="lazy">
+                                    </div>
+                                ` : `
+                                    <div class="product-image product-image-placeholder">
+                                        <div class="placeholder-content">
+                                            <span>No Image</span>
+                                        </div>
+                                    </div>
+                                `}
+                                <div class="product-info">
+                                    <h3 class="product-title">${product.title}</h3>
+                                    ${product.vendor ? `<p class="product-vendor">by ${product.vendor}</p>` : ''}
+                                    <div class="product-price">
+                                        ${comparePrice && comparePrice > price ? `
+                                            <span class="price-compare">$${comparePrice.toFixed(2)}</span>
+                                            <span class="price-sale">$${price.toFixed(2)}</span>
+                                        ` : `
+                                            <span class="price-regular">$${price.toFixed(2)}</span>
+                                        `}
+                                    </div>
+                                    <div class="product-actions">
+                                        <button class="btn-add-to-cart ${!isAvailable ? 'disabled' : ''}" 
+                                                ${!isAvailable ? 'disabled' : ''} 
+                                                onclick="addToCart('${product.handle}', '${mainVariant ? mainVariant.id : ''}')">
+                                            ${isAvailable ? 'Add to Cart' : 'Sold Out'}
+                                        </button>
+                                        <a href="/products/${product.handle}" class="btn-more-info">More Info</a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            ` : (store.shopify_connected ? `
                 <div class="coming-soon">
                     <h2>Products Loading</h2>
                     <p>Our products are being synced from Shopify. They will appear here soon!</p>
@@ -835,11 +970,26 @@ class TemplateRenderer {
                     <p>We're working hard to bring you an amazing selection of products.</p>
                     <p>Please check back soon or <a href="/contact">contact us</a> for more information.</p>
                 </div>
-            `}
+            `)}
         </div>
     </main>
 
     ${await this.generateFooter(store, allPages)}
+
+    <script>
+        // Simple add to cart functionality
+        function addToCart(productHandle, variantId) {
+            // For now, just show an alert - this can be enhanced with real cart functionality
+            alert('Product "' + productHandle + '" added to cart!\\nVariant ID: ' + variantId);
+            
+            // Here you would typically:
+            // 1. Send request to cart API
+            // 2. Update cart counter in header
+            // 3. Show cart notification/toast
+        }
+        
+        // Optional: Add loading states, error handling, etc.
+    </script>
 </body>
 </html>`;
   }
