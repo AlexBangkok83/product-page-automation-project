@@ -225,6 +225,41 @@
             text-decoration: underline;
         }
         
+        /* Thumbnail Gallery */
+        .thumbnail-images {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            margin-top: var(--spacing-md);
+        }
+        
+        .thumbnail {
+            width: 80px;
+            height: 80px;
+            background: var(--secondary-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            border: 2px solid transparent;
+        }
+        
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+        
+        .thumbnail.active {
+            border: 2px solid var(--primary-color);
+            transform: scale(1.05);
+        }
+        
+        .thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .product-grid {
@@ -287,7 +322,25 @@
             <div class="product-grid">
                 <div class="product-images">
                     <div class="main-image">
-                        <img src="https://cdn.shopify.com/s/files/1/0549/3086/6231/files/image_730_1748239474110-30109632-41444878-28183080_0.jpg?v=1748239855" alt="Elegante Solbriller for Alle" id="mainImage">
+                        <img src="https://cdn.shopify.com/s/files/1/0549/3086/6231/files/image_730_1748239474110-30109632-41444878-28183080_0.jpg?v=1748239855" alt="Elegante Solbriller for Alle - Main View" id="mainImage">
+                    </div>
+                    
+                    <div class="thumbnail-images">
+                        <div class="thumbnail active" onclick="changeMainImage('https://cdn.shopify.com/s/files/1/0549/3086/6231/files/image_730_1748239474110-30109632-41444878-28183080_0.jpg?v=1748239855', 'Elegante Solbriller for Alle - Main View')">
+                            <img src="https://cdn.shopify.com/s/files/1/0549/3086/6231/files/image_730_1748239474110-30109632-41444878-28183080_0.jpg?v=1748239855" alt="Main View">
+                        </div>
+                        <div class="thumbnail" onclick="changeMainImage('https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop&crop=center', 'Elegante Solbriller for Alle - Side View')">
+                            <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=500&h=500&fit=crop&crop=center" alt="Side View">
+                        </div>
+                        <div class="thumbnail" onclick="changeMainImage('https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&h=500&fit=crop&crop=center', 'Elegante Solbriller for Alle - Angle View')">
+                            <img src="https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&h=500&fit=crop&crop=center" alt="Angle View">
+                        </div>
+                        <div class="thumbnail" onclick="changeMainImage('https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=500&h=500&fit=crop&crop=center', 'Elegante Solbriller for Alle - Detail View')">
+                            <img src="https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=500&h=500&fit=crop&crop=center" alt="Detail View">
+                        </div>
+                        <div class="thumbnail" onclick="changeMainImage('https://images.unsplash.com/photo-1577803645773-f96470509666?w=500&h=500&fit=crop&crop=center', 'Elegante Solbriller for Alle - Lifestyle View')">
+                            <img src="https://images.unsplash.com/photo-1577803645773-f96470509666?w=500&h=500&fit=crop&crop=center" alt="Lifestyle View">
+                        </div>
                     </div>
                 </div>
 
@@ -299,7 +352,7 @@
                     </div>
                     
                     <div class="product-actions">
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary" onclick="addToCart('elegante-solbriller-for-alle', '12345')">
                             Add to Cart
                         </button>
                         <a href="/products.html" class="btn btn-secondary">Continue Shopping</a>
@@ -314,9 +367,76 @@
     </main>
 
     <script>
+        // Image gallery functionality
+        function changeMainImage(src, alt) {
+            const mainImage = document.getElementById('mainImage');
+            if (mainImage) {
+                mainImage.src = src;
+                mainImage.alt = alt;
+            }
+            
+            // Update active thumbnail
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            thumbnails.forEach(thumb => thumb.classList.remove('active'));
+            
+            // Find and activate the clicked thumbnail
+            const clickedThumbnail = event.target.closest('.thumbnail');
+            if (clickedThumbnail) {
+                clickedThumbnail.classList.add('active');
+            }
+        }
+        
         // Add to cart functionality
         function addToCart(productHandle, variantId) {
-            alert('Product "' + productHandle + '" added to cart!\nVariant ID: ' + variantId);
+            // Create a nice toast notification instead of alert
+            showToast('Product "' + productHandle + '" added to cart!', 'success');
+        }
+        
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <span class="toast-icon">${type === 'success' ? '✓' : 'ℹ'}</span>
+                    <span class="toast-message">${message}</span>
+                </div>
+            `;
+            
+            // Add styles
+            toast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#28a745' : '#007cba'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                opacity: 0;
+                transform: translateX(100px);
+                transition: all 0.3s ease;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100px)';
+                setTimeout(() => {
+                    if (document.body.contains(toast)) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
         }
     </script>
 </body>
