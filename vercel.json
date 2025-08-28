@@ -1,17 +1,14 @@
 {
   "version": 2,
-  "rewrites": [
+  "functions": {
+    "api/serverless.js": {
+      "maxDuration": 30
+    }
+  },
+  "routes": [
     {
-      "source": "/products/(.*)",
-      "destination": "/stores/clipia.fi/products/$1.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/stores/clipia.fi/$1.html"
-    },
-    {
-      "source": "/",
-      "destination": "/stores/clipia.fi/index.html"
+      "src": "/(.*)",
+      "dest": "/api/serverless.js"
     }
   ],
   "env": {
