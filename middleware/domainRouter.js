@@ -15,7 +15,6 @@ const domainRouter = async (req, res, next) => {
 
     // Get the hostname
     const hostname = req.get('host') || req.hostname;
-    console.log(`🌐 Domain router: ${hostname} requesting ${req.path}`);
     
     if (!hostname) {
       return next();
@@ -117,7 +116,6 @@ const domainRouter = async (req, res, next) => {
       // Check if this is a product detail request
       if (cleanPath.startsWith('products/') && cleanPath.split('/').length === 2) {
         const productHandle = cleanPath.split('/')[1];
-        console.log(`🛒 Domain router: Attempting to render product ${productHandle} for ${hostname}`);
         
         // Dynamically render product detail page
         try {

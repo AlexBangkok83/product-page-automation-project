@@ -19,80 +19,20 @@
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="adminNavbar">
             <ul class="navbar-nav me-auto">
-                <!-- Dashboard -->
+                <!-- Home -->
                 <li class="nav-item">
                     <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/admin">
-                        <i class="bi bi-speedometer2"></i>
-                        <span>Dashboard</span>
+                        <i class="bi bi-house"></i>
+                        <span>Home</span>
                     </a>
                 </li>
 
-                <!-- Store Management Dropdown -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <%= ['site-setup', 'stores'].includes(currentPage) ? 'active' : '' %>" 
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-shop"></i>
-                        <span>Store Management</span>
+                <!-- Template Builder -->
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPage === 'product-template' ? 'active' : '' %>" href="/admin/product-template">
+                        <i class="bi bi-palette"></i>
+                        <span>Template Builder</span>
                     </a>
-                    <ul class="dropdown-menu admin-dropdown">
-                        <li>
-                            <a class="dropdown-item <%= currentPage === 'site-setup' ? 'active' : '' %>" href="/admin/site-setup">
-                                <i class="bi bi-plus-circle"></i>
-                                Create New Store
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/admin" onclick="loadLiveStores(); return false;">
-                                <i class="bi bi-eye"></i>
-                                View Live Stores
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="/admin">
-                                <i class="bi bi-list-ul"></i>
-                                Manage All Stores
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Tools Dropdown -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <%= ['product-template', 'analytics', 'automation-status'].includes(currentPage) ? 'active' : '' %>" 
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-tools"></i>
-                        <span>Tools</span>
-                    </a>
-                    <ul class="dropdown-menu admin-dropdown">
-                        <li>
-                            <a class="dropdown-item <%= currentPage === 'product-template' ? 'active' : '' %>" href="/admin/product-template">
-                                <i class="bi bi-palette"></i>
-                                Template Builder
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item <%= currentPage === 'automation-status' ? 'active' : '' %>" href="/admin/automation-status">
-                                <i class="bi bi-lightning-charge"></i>
-                                Automation Status
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="#" onclick="alert('Analytics coming soon!'); return false;">
-                                <i class="bi bi-graph-up"></i>
-                                Analytics
-                                <span class="badge bg-primary ms-2">Soon</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" onclick="alert('Bulk operations coming soon!'); return false;">
-                                <i class="bi bi-lightning"></i>
-                                Bulk Operations
-                                <span class="badge bg-primary ms-2">Soon</span>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
 
                 <!-- Company Profile -->

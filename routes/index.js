@@ -896,7 +896,7 @@ router.post('/admin/deployment/redeploy/:storeId', async (req, res) => {
 
 // Agents work in Claude Code - no manual deployment needed
 
-// Store management - View/edit individual store
+// Store management - View/edit individual store (legacy)
 router.get('/admin/stores/:uuid', async (req, res) => {
   try {
     const store = await Store.findByUuid(req.params.uuid);
@@ -925,12 +925,55 @@ router.get('/admin/stores/:uuid', async (req, res) => {
   }
 });
 
+// Unified Store Edit Page - Main editing interface
+router.get('/admin/stores/:uuid/edit', async (req, res) => {
+  try {
+    const store = await Store.findByUuid(req.params.uuid);
+    if (!store) {
+      return res.status(404).render('error', {
+        title: 'Store Not Found',
+        message: 'The requested store could not be found.',
+        statusCode: 404
+      });
+    }
+    
+    // Get all pages for this store
+    const pages = await store.getPages();
+    
+    // Get products if Shopify is connected
+    let products = [];
+    let selectedProducts = [];
+    if (store.shopify_domain && store.shopify_access_token) {
+      try {
+        products = await store.fetchShopifyProducts(50);
+        selectedProducts = store.selected_products ? JSON.parse(store.selected_products) : [];
+      } catch (error) {
+        console.warn(`Could not fetch products for ${store.name}:`, error.message);
+      }
+    }
+    
+    res.render('admin/store-edit', {
+      title: `Edit ${store.name}`,
+      store: store,
+      pages: pages,
+      products: products,
+      selectedProducts: selectedProducts
+    });
+  } catch (error) {
+    console.error('Store edit error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load store editor',
+      statusCode: 500
+    });
+  }
+});
+
 // === PRODUCT MANAGEMENT ROUTES ===
 
 // Product page editor for store admin
 router.get('/admin/stores/:uuid/product/:handle/edit', async (req, res) => {
   try {
-    console.log('🎯 Product edit route accessed:', req.params);
     const storeUuid = req.params.uuid;
     const productHandle = req.params.handle;
     const store = await Store.findByUuid(storeUuid);
@@ -1060,10 +1103,8 @@ router.post('/admin/stores/:uuid/product/:handle/edit', async (req, res) => {
 // Product detail page for specific stores
 router.get('/products/:handle', async (req, res) => {
   try {
-    console.log('🛒 Product detail route hit:', req.params.handle);
     const productHandle = req.params.handle;
     const hostname = req.get('host');
-    console.log('🌐 Hostname:', hostname);
     
     // Find store by domain/hostname
     let store = await Store.findByDomain(hostname);

@@ -35,6 +35,9 @@ class TemplateRenderer {
         await this.generatePage(store, page, storePath, pages);
       }
 
+      // Generate individual product detail pages
+      await this.generateProductDetailPages(store, storePath, pages);
+
       // Generate additional assets
       await this.generateAssets(store, storePath);
       
@@ -285,8 +288,28 @@ class TemplateRenderer {
       if (page.page_type === 'products' && store.shopify_domain && store.shopify_access_token) {
         try {
           console.log(`🛒 Fetching products for ${store.name}...`);
-          products = await store.fetchShopifyProducts(20); // Limit to 20 products
-          console.log(`✅ Fetched ${products.length} products for products page`);
+          
+          // Get selected products list
+          let selectedProducts = [];
+          if (store.selected_products) {
+            try {
+              selectedProducts = JSON.parse(store.selected_products);
+            } catch (error) {
+              console.warn('Invalid selected_products JSON:', error);
+              selectedProducts = [];
+            }
+          }
+          
+          if (selectedProducts.length > 0) {
+            // Fetch all products and filter by selected ones
+            const allProducts = await store.fetchShopifyProducts(50);
+            products = allProducts.filter(product => selectedProducts.includes(product.handle));
+            console.log(`✅ Filtered to ${products.length} selected products from ${allProducts.length} total products`);
+          } else {
+            // No products selected - show empty array (will display "coming soon" message)
+            console.log(`ℹ️ No products selected for ${store.name} - showing empty products page`);
+            products = [];
+          }
         } catch (error) {
           console.error(`⚠️ Failed to fetch products for ${store.name}:`, error.message);
           // Continue with empty products array - page will show "coming soon" message
@@ -1825,6 +1848,104 @@ EOF
       
       // Don't throw error - store creation should succeed even if git fails
       // throw error;
+    }
+  }
+
+  /**
+   * Generate individual product detail pages as static HTML files
+   */
+  async generateProductDetailPages(store, storePath, allPages) {
+    try {
+      console.log(`🔍 DEBUG: Starting generateProductDetailPages for ${store.name}`);
+      
+      // Skip if no Shopify connection
+      if (!store.shopify_domain || !store.shopify_access_token) {
+        console.log(`ℹ️ No Shopify connection for ${store.name} - skipping product detail pages`);
+        return;
+      }
+      
+      console.log(`🔍 DEBUG: Shopify connection found - domain: ${store.shopify_domain}, has token: ${!!store.shopify_access_token}`);
+
+      // Get selected products
+      let selectedProducts = [];
+      console.log(`🔍 DEBUG: Raw selected_products: ${store.selected_products}`);
+      if (store.selected_products) {
+        try {
+          selectedProducts = JSON.parse(store.selected_products);
+          console.log(`🔍 DEBUG: Parsed selected_products:`, selectedProducts);
+        } catch (error) {
+          console.warn('Invalid selected_products JSON:', error);
+          selectedProducts = [];
+        }
+      }
+
+      if (selectedProducts.length === 0) {
+        console.log(`ℹ️ No products selected for ${store.name} - skipping product detail pages`);
+        return;
+      }
+
+      console.log(`🔍 DEBUG: Found ${selectedProducts.length} selected products, proceeding...`);
+
+      console.log(`📦 Generating product detail pages for ${selectedProducts.length} products...`);
+
+      // Create products directory
+      const productsDir = path.join(storePath, 'products');
+      if (!fs.existsSync(productsDir)) {
+        fs.mkdirSync(productsDir, { recursive: true });
+      }
+
+      // Fetch products from Shopify
+      const allProducts = await store.fetchShopifyProducts(50);
+      
+      // Filter to only selected products
+      const productsToGenerate = allProducts.filter(product => 
+        selectedProducts.includes(product.handle)
+      );
+
+      // Generate each product detail page
+      for (const product of productsToGenerate) {
+        await this.generateSingleProductPage(store, product, productsDir, allPages);
+      }
+
+      console.log(`✅ Generated ${productsToGenerate.length} product detail pages`);
+
+    } catch (error) {
+      console.error(`❌ Error generating product detail pages:`, error);
+      // Don't throw - let the main generation continue
+    }
+  }
+
+  /**
+   * Generate a single product detail page
+   */
+  async generateSingleProductPage(store, product, productsDir, allPages) {
+    try {
+      console.log(`📄 Generating product page: ${product.handle}`);
+
+      // Use the same template as the dynamic rendering in domainRouter.js
+      const ejs = require('ejs');
+      const templatePath = path.join(process.cwd(), 'views', 'product-detail.ejs');
+      
+      const html = await ejs.renderFile(templatePath, {
+        title: `${product.title} - ${store.name}`,
+        store: store,
+        product: product,
+        allPages: allPages,
+        metaDescription: product.description ? 
+          product.description.replace(/<[^>]*>/g, '').substring(0, 160) + '...' :
+          `${product.title} - Available at ${store.name}`
+      });
+
+      // Write the product page file
+      const fileName = `${product.handle}.html`;
+      const filePath = path.join(productsDir, fileName);
+      fs.writeFileSync(filePath, html, 'utf8');
+      
+      console.log(`✅ Generated product page: products/${fileName}`);
+
+    } catch (error) {
+      console.error(`❌ Error generating product page for ${product.handle}:`, error);
+      // Continue with other products
     }
   }
 }

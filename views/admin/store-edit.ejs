@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: #1a1a1a;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #333;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-nav li {
+            border-bottom: 1px solid #333;
+        }
+        
+        .sidebar-nav a {
+            display: block;
+            padding: 1rem 1.5rem;
+            color: #ccc;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background: #333;
+            color: white;
+            border-left: 3px solid #007cba;
+        }
+        
+        .sidebar-nav i {
+            margin-right: 0.75rem;
+            width: 1.2rem;
+        }
+        
+        .main-content {
+            flex: 1;
+            background: #f8f9fa;
+            overflow-x: hidden;
+        }
+        
+        .content-header {
+            background: white;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .content-section {
+            display: none;
+            padding: 2rem;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .status-deployed { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007cba;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .page-list, .product-list {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .list-item {
+            padding: 1rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background: white;
+        }
+        
+        .form-switch .form-check-input {
+            width: 2.5em;
+            height: 1.25em;
+        }
+        
+        .form-switch .form-check-input:checked {
+            background-color: #198754;
+            border-color: #198754;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-info h6 {
+            margin: 0 0 0.25rem 0;
+            color: #333;
+        }
+        
+        .item-info small {
+            color: #666;
+        }
+        
+        .item-actions .btn {
+            margin-left: 0.5rem;
+        }
+        
+        .shopify-connection {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .connected { background: #28a745; }
+        .disconnected { background: #dc3545; }
+        
+        .form-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h4><%= store.name %></h4>
+                <small class="text-muted">Store Management</small>
+            </div>
+            
+            <ul class="sidebar-nav">
+                <li><a href="/admin" class="nav-link">
+                    <i class="bi bi-house"></i>Home
+                </a></li>
+                <li><a href="#overview" class="nav-link active" onclick="showSection('overview')">
+                    <i class="bi bi-speedometer2"></i>Overview
+                </a></li>
+                <li><a href="#settings" class="nav-link" onclick="showSection('settings')">
+                    <i class="bi bi-gear"></i>Store Settings
+                </a></li>
+                <li><a href="#pages" class="nav-link" onclick="showSection('pages')">
+                    <i class="bi bi-file-text"></i>Pages (<%= pages.length %>)
+                </a></li>
+                <li><a href="#products" class="nav-link" onclick="showSection('products')">
+                    <i class="bi bi-box"></i>Products (<%= products.length %>)
+                </a></li>
+                <li><a href="#deployment" class="nav-link" onclick="showSection('deployment')">
+                    <i class="bi bi-rocket"></i>Deployment
+                </a></li>
+            </ul>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2><%= store.name %></h2>
+                        <p class="mb-0 text-muted">
+                            <i class="bi bi-globe me-2"></i><%= store.domain %>
+                            <span class="status-badge status-<%= store.deployment_status || 'pending' %> ms-3">
+                                <%= (store.deployment_status || 'pending').toUpperCase() %>
+                            </span>
+                        </p>
+                    </div>
+                    <div>
+                        <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary">
+                            <i class="bi bi-eye me-2"></i>View Live Site
+                        </a>
+                        <a href="/admin" class="btn btn-secondary ms-2">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Overview Section -->
+            <div id="overview" class="content-section active">
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-number"><%= pages.length %></div>
+                        <div class="stat-label">Pages</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><%= products.length %></div>
+                        <div class="stat-label">Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number"><%= selectedProducts.length %></div>
+                        <div class="stat-label">Selected Products</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">
+                            <% if (store.deployed_at) { %>
+                                <%= new Date(store.deployed_at).toLocaleDateString() %>
+                            <% } else { %>
+                                Never
+                            <% } %>
+                        </div>
+                        <div class="stat-label">Last Deployed</div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Store Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr><td><strong>Country:</strong></td><td><%= store.country %></td></tr>
+                                    <tr><td><strong>Language:</strong></td><td><%= store.language %></td></tr>
+                                    <tr><td><strong>Currency:</strong></td><td><%= store.currency %></td></tr>
+                                    <tr><td><strong>Template:</strong></td><td><%= store.template %></td></tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Shopify Connection</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="shopify-connection">
+                                    <div class="connection-status">
+                                        <div class="connection-dot <%= store.shopify_connected ? 'connected' : 'disconnected' %>"></div>
+                                        <span><%= store.shopify_connected ? 'Connected' : 'Not Connected' %></span>
+                                    </div>
+                                    <% if (store.shopify_domain) { %>
+                                        <small class="text-muted"><%= store.shopify_domain %></small>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Store Settings Section -->
+            <div id="settings" class="content-section">
+                <div class="form-section">
+                    <h5 class="section-title">Basic Information</h5>
+                    <form id="storeSettingsForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Store Name</label>
+                                    <input type="text" class="form-control" value="<%= store.name %>" name="name">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Domain</label>
+                                    <input type="text" class="form-control" value="<%= store.domain %>" name="domain">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Country</label>
+                                    <select class="form-select" name="country">
+                                        <option value="<%= store.country %>" selected><%= store.country %></option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Currency</label>
+                                    <select class="form-select" name="currency">
+                                        <option value="<%= store.currency %>" selected><%= store.currency %></option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+                
+                <div class="form-section">
+                    <h5 class="section-title">Shopify Integration</h5>
+                    <form id="shopifySettingsForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Shopify Domain</label>
+                                    <input type="text" class="form-control" value="<%= store.shopify_domain || '' %>" name="shopify_domain" placeholder="yourstore.myshopify.com">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Access Token</label>
+                                    <input type="password" class="form-control" value="<%= store.shopify_access_token || '' %>" name="shopify_access_token">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Shopify Connection</button>
+                        <% if (store.shopify_connected) { %>
+                            <button type="button" class="btn btn-outline-secondary ms-2" onclick="testShopifyConnection()">Test Connection</button>
+                        <% } %>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Pages Management Section -->
+            <div id="pages" class="content-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="section-title mb-0">Page Management</h5>
+                    <small class="text-muted">Click "Edit" to modify page content</small>
+                </div>
+                
+                <div class="page-list">
+                    <% pages.forEach(function(page) { %>
+                        <div class="list-item">
+                            <div class="item-info">
+                                <h6><%= page.title || page.page_type.charAt(0).toUpperCase() + page.page_type.slice(1) %></h6>
+                                <small><%= page.page_type %> • Last updated: <%= page.updated_at ? new Date(page.updated_at).toLocaleDateString() : 'Never' %></small>
+                            </div>
+                            <div class="item-actions">
+                                <a href="https://<%= store.domain %>/<%= page.slug || page.page_type %>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i> Preview
+                                </a>
+                                <a href="/admin/store/<%= store.uuid %>/content?page=<%= page.page_type %>" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+            
+            <!-- Products Management Section -->
+            <div id="products" class="content-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="section-title mb-0">Product Management</h5>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="syncProducts()">
+                            <i class="bi bi-arrow-clockwise"></i> Sync Products
+                        </button>
+                        <button class="btn btn-success btn-sm ms-2" onclick="deployStore()">
+                            <i class="bi bi-rocket"></i> Deploy Changes
+                        </button>
+                    </div>
+                </div>
+                
+                <% if (products.length === 0) { %>
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">No Products Found</h5>
+                            <p class="text-muted">
+                                <% if (!store.shopify_connected) { %>
+                                    Connect to Shopify to import products
+                                <% } else { %>
+                                    No products found in your Shopify store
+                                <% } %>
+                            </p>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="product-list">
+                        <% products.forEach(function(product, index) { %>
+                            <% const isSelected = selectedProducts.includes(product.handle); %>
+                            <div class="list-item">
+                                <div class="d-flex align-items-center">
+                                    <% if (product.images && product.images.length > 0) { %>
+                                        <img src="<%= product.images[0].src %>" alt="<%= product.title %>" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 1rem;">
+                                    <% } else { %>
+                                        <div style="width: 50px; height: 50px; background: #f0f0f0; border-radius: 4px; margin-right: 1rem; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-image text-muted"></i>
+                                        </div>
+                                    <% } %>
+                                    <div class="item-info flex-grow-1">
+                                        <h6><%= product.title %></h6>
+                                        <small>
+                                            <%= product.handle %> • 
+                                            <% if (product.variants && product.variants.length > 0) { %>
+                                                <%= product.variants[0].price.toFixed(2) %> <%= store.currency %> • 
+                                            <% } %>
+                                            <span class="<%= isSelected ? 'text-success' : 'text-muted' %>"><%= isSelected ? 'Published' : 'Not published' %></span>
+                                        </small>
+                                    </div>
+                                    <div class="d-flex align-items-center me-3">
+                                        <!-- iPhone-style toggle switch -->
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input product-toggle" type="checkbox" 
+                                                   id="product-<%= product.handle %>" 
+                                                   <%= isSelected ? 'checked' : '' %>
+                                                   data-handle="<%= product.handle %>"
+                                                   onchange="toggleProduct(this)">
+                                            <label class="form-check-label" for="product-<%= product.handle %>">
+                                                <span class="visually-hidden">Toggle product selection</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="item-actions mt-2">
+                                    <a href="https://<%= store.domain %>/products/<%= product.handle %>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-eye"></i> Preview
+                                    </a>
+                                    <a href="/admin/stores/<%= store.uuid %>/product/<%= product.handle %>/edit" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-pencil"></i> Edit Product
+                                    </a>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+            
+            <!-- Deployment Section -->
+            <div id="deployment" class="content-section">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Deployment Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <span class="status-badge status-<%= store.deployment_status || 'pending' %>">
+                                        <%= (store.deployment_status || 'pending').toUpperCase() %>
+                                    </span>
+                                    <% if (store.deployed_at) { %>
+                                        <small class="text-muted ms-3">
+                                            Last deployed: <%= new Date(store.deployed_at).toLocaleString() %>
+                                        </small>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-success" onclick="deployStore()">
+                                        <i class="bi bi-rocket"></i> Deploy Now
+                                    </button>
+                                    <button class="btn btn-outline-secondary" onclick="regenerateFiles()">
+                                        <i class="bi bi-arrow-clockwise"></i> Regenerate Files Only
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-primary">
+                                        <i class="bi bi-eye"></i> View Live Site
+                                    </a>
+                                    <button class="btn btn-outline-info" onclick="checkDeploymentStatus()">
+                                        <i class="bi bi-info-circle"></i> Check Status
+                                    </button>
+                                    <button class="btn btn-outline-warning" onclick="clearCache()">
+                                        <i class="bi bi-trash"></i> Clear Cache
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            console.log('showSection called with:', sectionId); // Debug log
+            
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                console.log('Section activated:', sectionId); // Debug log
+            } else {
+                console.error('Section not found:', sectionId); // Debug log
+            }
+            
+            // Add active class to the corresponding nav link  
+            const navLink = document.querySelector('a[href="#' + sectionId + '"]');
+            if (navLink) {
+                navLink.classList.add('active');
+                console.log('Nav link activated for:', sectionId); // Debug log
+            } else {
+                console.error('Nav link not found for:', sectionId); // Debug log
+            }
+        }
+        
+        // Store settings form
+        document.getElementById('storeSettingsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch(`/api/stores/<%= store.uuid %>`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('✅ Settings updated successfully!', 'success');
+                    location.reload();
+                } else {
+                    showToast('❌ Error: ' + result.message, 'error');
+                }
+            });
+        });
+        
+        // Shopify settings form
+        document.getElementById('shopifySettingsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch(`/api/stores/<%= store.uuid %>`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('✅ Shopify connection updated successfully!', 'success');
+                    location.reload();
+                } else {
+                    showToast('❌ Error: ' + result.message, 'error');
+                }
+            });
+        });
+        
+        // Product functions
+        function syncProducts() {
+            fetch(`/api/store/<%= store.uuid %>/products`, {
+                method: 'GET'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    location.reload();
+                } else {
+                    showToast('❌ Error syncing products: ' + result.message, 'error');
+                }
+            });
+        }
+        
+        function toggleProduct(toggle) {
+            const handle = toggle.getAttribute('data-handle');
+            const isSelected = toggle.checked;
+            
+            // Update UI immediately for better UX
+            const statusSpan = toggle.closest('.list-item').querySelector('.text-success, .text-muted');
+            if (isSelected) {
+                statusSpan.textContent = 'Published';
+                statusSpan.className = 'text-success';
+            } else {
+                statusSpan.textContent = 'Not published';
+                statusSpan.className = 'text-muted';
+            }
+            
+            // Send update to server
+            fetch(`/api/store/<%= store.uuid %>/products/toggle`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    productHandle: handle,
+                    selected: isSelected
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    // Revert UI change if server update failed
+                    toggle.checked = !isSelected;
+                    if (!isSelected) {
+                        statusSpan.textContent = 'Published';
+                        statusSpan.className = 'text-success';
+                    } else {
+                        statusSpan.textContent = 'Not published';
+                        statusSpan.className = 'text-muted';
+                    }
+                    showToast('❌ Error updating product selection: ' + result.message, 'error');
+                }
+            })
+            .catch(error => {
+                // Revert UI change on network error
+                toggle.checked = !isSelected;
+                showToast('❌ Network error. Please try again.', 'error');
+            });
+        }
+        
+        function selectProducts() {
+            // Legacy function - now handled by individual toggles
+            showToast('ℹ️ Use the toggle switches next to each product to select/deselect them.', 'info');
+        }
+        
+        // Deployment functions
+        function deployStore() {
+            // Show nice confirmation modal instead of ugly confirm()
+            showDeploymentConfirmation();
+        }
+        
+        function showDeploymentConfirmation() {
+            // Create confirmation modal
+            const confirmModal = document.createElement('div');
+            confirmModal.innerHTML = `
+                <div class="modal fade show" style="display: block; background: rgba(0,0,0,0.5);">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">🚀 Deploy to Live Site</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you ready to deploy your changes to the live website?</p>
+                                <p><strong>This will:</strong></p>
+                                <ul class="mb-0">
+                                    <li>Update product selections on clipia.fi</li>
+                                    <li>Regenerate all store files</li>
+                                    <li>Push changes to GitHub and Vercel</li>
+                                    <li>Take about 30-60 seconds</li>
+                                </ul>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" onclick="hideDeploymentConfirmation()">Cancel</button>
+                                <button type="button" class="btn btn-success" onclick="confirmDeployment()">
+                                    <i class="bi bi-rocket"></i> Deploy Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            confirmModal.id = 'deployment-confirmation-modal';
+            document.body.appendChild(confirmModal);
+        }
+        
+        function hideDeploymentConfirmation() {
+            const modal = document.getElementById('deployment-confirmation-modal');
+            if (modal) modal.remove();
+        }
+        
+        function confirmDeployment() {
+            // Hide confirmation modal
+            hideDeploymentConfirmation();
+            
+            // Show deployment progress
+            showDeploymentProgress();
+            
+            // Start deployment
+            fetch(`/api/stores/<%= store.uuid %>/deploy`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        force: true  // Force regeneration of all files
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showToast('🚀 Deployment completed successfully!', 'success');
+                        location.reload();
+                    } else {
+                        showToast('❌ Deployment failed: ' + result.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast('❌ Network error during deployment', 'error');
+                });
+        }
+        
+        // Enhanced deployment with progress
+        function deployWithProgress() {
+            showDeploymentProgress();
+            deployStore();
+        }
+        
+        function showDeploymentProgress() {
+            // Create progress notification
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            const progressToast = document.createElement('div');
+            progressToast.id = 'deployment-progress-toast';
+            progressToast.className = 'toast show align-items-center text-white bg-primary border-0';
+            progressToast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+                            <div>
+                                <div id="deployment-step">🔄 Starting deployment...</div>
+                                <div class="progress mt-2" style="height: 4px;">
+                                    <div id="deployment-progress-bar" class="progress-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            toastContainer.appendChild(progressToast);
+            
+            // Simulate deployment steps
+            const steps = [
+                { progress: 15, message: '📁 Generating pages...', delay: 2000 },
+                { progress: 35, message: '🛒 Processing products...', delay: 3000 },
+                { progress: 55, message: '🎨 Applying styles...', delay: 2000 },
+                { progress: 75, message: '📤 Pushing to GitHub...', delay: 4000 },
+                { progress: 90, message: '☁️ Deploying to Vercel...', delay: 5000 },
+                { progress: 100, message: '✅ Deployment complete!', delay: 2000 }
+            ];
+            
+            let currentStep = 0;
+            let totalDelay = 0;
+            
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    const stepElement = document.getElementById('deployment-step');
+                    const progressBar = document.getElementById('deployment-progress-bar');
+                    
+                    if (stepElement && progressBar) {
+                        stepElement.textContent = step.message;
+                        progressBar.style.width = step.progress + '%';
+                        
+                        if (step.progress === 100) {
+                            setTimeout(() => {
+                                const toast = document.getElementById('deployment-progress-toast');
+                                if (toast) toast.remove();
+                            }, 2000);
+                        }
+                    }
+                }, totalDelay);
+                
+                totalDelay += step.delay;
+            });
+        }
+        
+        function regenerateFiles() {
+            fetch(`/api/stores/<%= store.uuid %>/deploy-fast`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showToast('✅ Files regenerated successfully!', 'success');
+                    location.reload();
+                } else {
+                    showToast('❌ Error: ' + result.message, 'error');
+                }
+            });
+        }
+        
+        function testShopifyConnection() {
+            showToast('🔍 Testing Shopify connection...', 'info');
+        }
+        
+        function checkDeploymentStatus() {
+            fetch(`/admin/deployment/status/<%= store.uuid %>`)
+            .then(response => response.json())
+            .then(result => {
+                showToast(`📊 Deployment Status: ${result.store.deployment_status}<br>Last deployed: ${result.store.deployed_at || 'Never'}`, 'info');
+            });
+        }
+        
+        function clearCache() {
+            showToast('🔄 Cache clearing - to be implemented', 'warning');
+        }
+        
+        // Update selected product count in overview
+        function updateSelectedCount() {
+            const selectedCount = document.querySelectorAll('.product-toggle:checked').length;
+            const countElement = document.querySelector('.stat-card:nth-child(3) .stat-number');
+            if (countElement) {
+                countElement.textContent = selectedCount;
+            }
+        }
+        
+        // Listen for toggle changes to update count
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('product-toggle')) {
+                updateSelectedCount();
+            }
+        });
+        // Toast notification system
+        function showToast(message, type = 'info') {
+            // Create toast container if it doesn't exist
+            let toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 9999;
+                `;
+                document.body.appendChild(toastContainer);
+            }
+            
+            // Create toast element
+            const toast = document.createElement('div');
+            const toastId = 'toast-' + Date.now();
+            
+            const bgColors = {
+                'success': 'bg-success',
+                'error': 'bg-danger', 
+                'warning': 'bg-warning',
+                'info': 'bg-info'
+            };
+            
+            toast.id = toastId;
+            toast.className = `toast align-items-center text-white ${bgColors[type] || 'bg-info'} border-0`;
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Initialize and show toast
+            const bsToast = new bootstrap.Toast(toast, {
+                delay: type === 'error' ? 8000 : 5000
+            });
+            bsToast.show();
+            
+            // Remove from DOM after hiding
+            toast.addEventListener('hidden.bs.toast', function () {
+                toast.remove();
+            });
+        }
+    </script>
+</body>
+</html>

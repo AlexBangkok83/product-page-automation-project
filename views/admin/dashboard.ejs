@@ -116,7 +116,6 @@
                                             <th>Country</th>
                                             <th>Status</th>
                                             <th>Deployment</th>
-                                            <th>Legal Pages</th>
                                             <th>Shopify</th>
                                             <th>Created</th>
                                             <th>Actions</th>
@@ -168,16 +167,6 @@
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex flex-column">
-                                                        <small class="text-info">
-                                                            <i class="bi bi-file-earmark-text me-1"></i>Professional
-                                                        </small>
-                                                        <small class="text-muted">
-                                                            T&C, Privacy, Refund
-                                                        </small>
-                                                    </div>
-                                                </td>
-                                                <td>
                                                     <% if (store.shopify_connected) { %>
                                                         <span class="text-success">
                                                             <i class="bi bi-check-circle-fill me-1"></i>Connected
@@ -201,35 +190,9 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="d-flex gap-1">
-                                                        <a href="/admin/store/<%= store.uuid %>/content" class="btn btn-primary btn-sm">
-                                                            <i class="bi bi-pencil-square me-1"></i>Edit
-                                                        </a>
-                                                        <a href="https://<%= store.domain %>" target="_blank" class="btn btn-outline-success btn-sm" title="View Live Store">
-                                                            <i class="bi bi-box-arrow-up-right"></i>
-                                                        </a>
-                                                        <div class="btn-group btn-group-sm">
-                                                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                <i class="bi bi-three-dots"></i>
-                                                            </button>
-                                                            <ul class="dropdown-menu dropdown-menu-end">
-                                                                <li><a class="dropdown-item" href="/admin/store/<%= store.uuid %>/pages">
-                                                                    <i class="bi bi-files me-2"></i>Manage Pages
-                                                                </a></li>
-                                                                <li><a class="dropdown-item" href="/admin/stores/<%= store.uuid %>">
-                                                                    <i class="bi bi-info-circle me-2"></i>Store Details
-                                                                </a></li>
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li><a class="dropdown-item" href="/admin/site-setup?store=<%= store.uuid %>">
-                                                                    <i class="bi bi-gear me-2"></i>Store Settings
-                                                                </a></li>
-                                                                <li><hr class="dropdown-divider"></li>
-                                                                <li><a class="dropdown-item text-danger" href="#" onclick="deleteStore('<%= store.uuid %>')">
-                                                                    <i class="bi bi-trash me-2"></i>Delete Store
-                                                                </a></li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
+                                                    <a href="/admin/stores/<%= store.uuid %>/edit" class="btn btn-primary btn-sm">
+                                                        <i class="bi bi-pencil-square me-1"></i>Edit Store
+                                                    </a>
                                                 </td>
                                             </tr>
                                         <% }); %>

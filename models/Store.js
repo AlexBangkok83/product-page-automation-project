@@ -43,6 +43,7 @@ class Store {
     this.gdpr_compliant = data.gdpr_compliant || false;
     this.cookie_consent = data.cookie_consent || false;
     this.selected_pages = data.selected_pages;
+    this.selected_products = data.selected_products;
     
     // Pre-footer content
     this.prefooter_enabled = data.prefooter_enabled || false;

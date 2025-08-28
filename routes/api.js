@@ -1682,4 +1682,72 @@ router.get('/store/:uuid/products/selected', async (req, res) => {
   }
 });
 
+// Toggle product selection for a store
+router.post('/store/:uuid/products/toggle', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { productHandle, selected } = req.body;
+    
+    if (!productHandle) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Product handle is required' 
+      });
+    }
+    
+    // Find store by UUID
+    const store = await Store.findByUuid(uuid);
+    if (!store) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Store not found' 
+      });
+    }
+    
+    // Get current selected products
+    let selectedProducts = [];
+    if (store.selected_products) {
+      try {
+        selectedProducts = JSON.parse(store.selected_products);
+      } catch (error) {
+        console.warn('Invalid selected_products JSON:', error);
+        selectedProducts = [];
+      }
+    }
+    
+    // Update selection
+    if (selected) {
+      // Add to selected if not already present
+      if (!selectedProducts.includes(productHandle)) {
+        selectedProducts.push(productHandle);
+      }
+    } else {
+      // Remove from selected
+      selectedProducts = selectedProducts.filter(handle => handle !== productHandle);
+    }
+    
+    // Update store
+    const db = require('../database/db');
+    await db.run(
+      'UPDATE stores SET selected_products = ? WHERE uuid = ?',
+      [JSON.stringify(selectedProducts), uuid]
+    );
+    
+    console.log(`🔄 Product ${productHandle} ${selected ? 'added to' : 'removed from'} selection for store ${store.name}`);
+    
+    res.json({
+      success: true,
+      message: `Product ${selected ? 'added to' : 'removed from'} selection`,
+      selectedCount: selectedProducts.length
+    });
+    
+  } catch (error) {
+    console.error('Error toggling product selection:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to toggle product selection: ' + error.message 
+    });
+  }
+});
+
 module.exports = router;
