@@ -38,18 +38,21 @@ const simpleDomainRouter = (req, res, next) => {
     let requestedPath = req.path;
     let filePath;
     
-    // Debug logging removed
+    console.log(`[${cleanDomain}] Processing path: ${requestedPath}`);
     
     if (!requestedPath || requestedPath === '/' || requestedPath === '') {
       // Serve homepage
       filePath = path.join(storePath, 'index.html');
+      console.log(`[${cleanDomain}] Serving homepage: ${filePath}`);
     } else {
       // Clean the path
       const cleanPath = requestedPath.replace(/^\/+/, '').replace(/\/+$/, '');
+      console.log(`[${cleanDomain}] Clean path: ${cleanPath}`);
       
       if (cleanPath.includes('.')) {
         // Direct file request
         filePath = path.join(storePath, cleanPath);
+        console.log(`[${cleanDomain}] Direct file request: ${filePath}`);
       } else {
         // Page request - try to find corresponding HTML file
         const possiblePaths = [
@@ -58,15 +61,20 @@ const simpleDomainRouter = (req, res, next) => {
           path.join(storePath, cleanPath)
         ];
         
+        console.log(`[${cleanDomain}] Trying paths:`, possiblePaths);
+        
         for (const possiblePath of possiblePaths) {
+          console.log(`[${cleanDomain}] Checking ${possiblePath}: exists=${fs.existsSync(possiblePath)}`);
           if (fs.existsSync(possiblePath)) {
             filePath = possiblePath;
+            console.log(`[${cleanDomain}] Found file: ${filePath}`);
             break;
           }
         }
         
         // If no file found, serve 404
         if (!filePath) {
+          console.log(`[${cleanDomain}] No file found for path: ${cleanPath}`);
           return res.status(404).send(`
             <!DOCTYPE html>
             <html>
@@ -85,7 +93,8 @@ const simpleDomainRouter = (req, res, next) => {
             </head>
             <body>
               <h1>Page Not Found</h1>
-              <p>The page could not be found.</p>
+              <p>The page "${cleanPath}" could not be found.</p>
+              <p>Store path: ${storePath}</p>
               <p><a href="/">Return to homepage</a></p>
             </body>
             </html>
@@ -136,8 +145,13 @@ const simpleDomainRouter = (req, res, next) => {
     }
     
     // Read and serve the file
-    const fileContent = fs.readFileSync(filePath);
-    return res.status(200).send(fileContent);
+    try {
+      const fileContent = fs.readFileSync(filePath);
+      return res.status(200).send(fileContent);
+    } catch (readError) {
+      console.error('File read error:', readError.message);
+      return res.status(500).send(`File read error: ${readError.message}`);
+    }
     
   } catch (error) {
     console.error('Domain router error:', error.message, error.stack);
