@@ -51,6 +51,19 @@ class Database {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
 
+      // Themes table for theme management
+      `CREATE TABLE IF NOT EXISTS themes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        css_variables TEXT, -- JSON string containing color scheme
+        is_default BOOLEAN DEFAULT 0,
+        is_active BOOLEAN DEFAULT 1,
+        preview_image TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
       // Stores table - main entity for each created store
       `CREATE TABLE IF NOT EXISTS stores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,30 +72,32 @@ class Database {
         domain TEXT UNIQUE NOT NULL,
         subdomain TEXT UNIQUE,
         
-        -- Detected/configured settings
+        /* Detected/configured settings */
         country TEXT NOT NULL,
         language TEXT NOT NULL,
         currency TEXT NOT NULL,
         timezone TEXT DEFAULT 'UTC',
         
-        -- Shopify integration
+        /* Shopify integration */
         shopify_domain TEXT,
         shopify_access_token TEXT,
         shopify_shop_name TEXT,
         shopify_connected BOOLEAN DEFAULT 0,
         
-        -- Store configuration
+        /* Store configuration and theming */
         theme_id TEXT DEFAULT 'default',
+        theme_id_new INTEGER, /* New theme system reference */
+        template TEXT DEFAULT 'bootstrap-default',
         logo_url TEXT,
         primary_color TEXT DEFAULT '#007cba',
         secondary_color TEXT DEFAULT '#f8f9fa',
         
-        -- SEO and branding
+        /* SEO and branding */
         meta_title TEXT,
         meta_description TEXT,
         favicon_url TEXT,
         
-        -- Store settings
+        /* Store settings */
         shipping_info TEXT,
         shipping_time TEXT,
         return_policy TEXT,
@@ -90,19 +105,35 @@ class Database {
         support_email TEXT,
         support_phone TEXT,
         business_address TEXT,
+        business_orgnr TEXT, -- Organization number
         gdpr_compliant BOOLEAN DEFAULT 0,
         cookie_consent BOOLEAN DEFAULT 0,
         selected_pages TEXT, -- comma-separated list of selected page types
+        selected_products TEXT, -- JSON array of selected product handles
         
-        -- Status
+        /* Pre-footer content */
+        prefooter_enabled BOOLEAN DEFAULT 0,
+        prefooter_card1_image TEXT,
+        prefooter_card1_title TEXT,
+        prefooter_card1_text TEXT,
+        prefooter_card2_image TEXT,
+        prefooter_card2_title TEXT,
+        prefooter_card2_text TEXT,
+        prefooter_card3_image TEXT,
+        prefooter_card3_title TEXT,
+        prefooter_card3_text TEXT,
+        
+        /* Status */
         status TEXT DEFAULT 'setup', -- setup, active, suspended
         deployment_status TEXT DEFAULT 'pending', -- pending, deploying, deployed, failed
         deployment_url TEXT,
         
-        -- Timestamps
+        /* Timestamps */
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        deployed_at DATETIME
+        deployed_at DATETIME,
+        
+        FOREIGN KEY (theme_id_new) REFERENCES themes (id)
       )`,
 
       // Content defaults for different page types
@@ -112,7 +143,7 @@ class Database {
         language TEXT NOT NULL,
         industry TEXT DEFAULT 'general',
         
-        -- Content fields
+        /* Content fields */
         title TEXT,
         subtitle TEXT,
         description TEXT,
@@ -120,7 +151,7 @@ class Database {
         meta_title TEXT,
         meta_description TEXT,
         
-        -- Template configuration
+        /* Template configuration */
         template_config TEXT, -- JSON string
         
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -133,19 +164,19 @@ class Database {
         page_type TEXT NOT NULL,
         slug TEXT NOT NULL,
         
-        -- Content
+        /* Content */
         title TEXT NOT NULL,
         subtitle TEXT,
         content TEXT, -- Full HTML content
         meta_title TEXT,
         meta_description TEXT,
         
-        -- Page configuration
+        /* Page configuration */
         is_enabled BOOLEAN DEFAULT 1,
         sort_order INTEGER DEFAULT 0,
         template_data TEXT, -- JSON string
         
-        -- Timestamps
+        /* Timestamps */
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         
@@ -178,17 +209,17 @@ class Database {
         shopify_currency TEXT,
         shopify_timezone TEXT,
         
-        -- Connection status
+        /* Connection status */
         is_active BOOLEAN DEFAULT 1,
         connection_status TEXT DEFAULT 'pending', -- pending, connected, failed
         last_validated_at DATETIME,
         validation_error TEXT,
         
-        -- Metadata
+        /* Metadata */
         product_count INTEGER DEFAULT 0,
         last_sync_at DATETIME,
         
-        -- Timestamps
+        /* Timestamps */
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         
@@ -202,6 +233,90 @@ class Database {
   }
 
   async insertDefaultData() {
+    // Insert default themes first
+    const defaultThemes = [
+      {
+        name: 'Modern E-commerce',
+        description: 'Clean, professional theme perfect for modern e-commerce stores',
+        css_variables: JSON.stringify({
+          primary: '#667eea',
+          secondary: '#764ba2',
+          accent: '#f093fb',
+          background: '#ffffff',
+          surface: '#f8f9fa'
+        }),
+        is_default: true,
+        is_active: true
+      },
+      {
+        name: 'Bold Red Commerce',
+        description: 'Dynamic red theme that makes your products stand out',
+        css_variables: JSON.stringify({
+          primary: '#dc2626',
+          secondary: '#991b1b',
+          accent: '#f59e0b',
+          background: '#ffffff',
+          surface: '#fef2f2'
+        }),
+        is_default: false,
+        is_active: true
+      },
+      {
+        name: 'Elegant Red Luxury',
+        description: 'Sophisticated red theme for luxury and premium brands',
+        css_variables: JSON.stringify({
+          primary: '#b91c1c',
+          secondary: '#7f1d1d',
+          accent: '#d97706',
+          background: '#ffffff',
+          surface: '#fef2f2'
+        }),
+        is_default: false,
+        is_active: true
+      },
+      {
+        name: 'Ocean Blue Fresh',
+        description: 'Fresh ocean-inspired blue theme for clean, trustworthy brands',
+        css_variables: JSON.stringify({
+          primary: '#0ea5e9',
+          secondary: '#0284c7',
+          accent: '#06b6d4',
+          background: '#ffffff',
+          surface: '#f0f9ff'
+        }),
+        is_default: false,
+        is_active: true
+      },
+      {
+        name: 'Forest Green Nature',
+        description: 'Natural green theme perfect for eco-friendly and organic brands',
+        css_variables: JSON.stringify({
+          primary: '#059669',
+          secondary: '#047857',
+          accent: '#10b981',
+          background: '#ffffff',
+          surface: '#f0fdf4'
+        }),
+        is_default: false,
+        is_active: true
+      }
+    ];
+
+    for (const theme of defaultThemes) {
+      await this.run(
+        `INSERT OR IGNORE INTO themes 
+         (name, description, css_variables, is_default, is_active)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          theme.name,
+          theme.description,
+          theme.css_variables,
+          theme.is_default ? 1 : 0,
+          theme.is_active ? 1 : 0
+        ]
+      );
+    }
+
     // Insert default content templates
     const defaultContent = [
       {

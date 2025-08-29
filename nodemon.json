@@ -1,0 +1,4 @@
+{
+  "ignore": ["stores/**/*", "database/**/*", "node_modules/**/*", "vercel.json"],
+  "verbose": true
+}

@@ -24,6 +24,7 @@ class Store {
     this.shopify_shop_name = data.shopify_shop_name;
     this.shopify_connected = data.shopify_connected || false;
     this.theme_id = data.theme_id || 'default';
+    this.theme_id_new = data.theme_id_new || null;
     this.template = data.template || 'bootstrap-default';
     this.logo_url = data.logo_url;
     this.primary_color = data.primary_color || '#007cba';
@@ -110,22 +111,28 @@ class Store {
         `INSERT INTO stores (
           uuid, name, domain, subdomain, country, language, currency, timezone,
           shopify_domain, shopify_access_token, shopify_shop_name, shopify_connected,
-          theme_id, template, logo_url, primary_color, secondary_color,
+          theme_id, theme_id_new, template, logo_url, primary_color, secondary_color,
           meta_title, meta_description, favicon_url,
           business_address, business_orgnr, support_email, support_phone,
           shipping_info, shipping_time, return_policy, return_period,
-          gdpr_compliant, cookie_consent, selected_pages,
+          gdpr_compliant, cookie_consent, selected_pages, selected_products,
+          prefooter_enabled, prefooter_card1_image, prefooter_card1_title, prefooter_card1_text,
+          prefooter_card2_image, prefooter_card2_title, prefooter_card2_text,
+          prefooter_card3_image, prefooter_card3_title, prefooter_card3_text,
           status, deployment_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           store.uuid, store.name, store.domain, store.subdomain,
           store.country, store.language, store.currency, store.timezone,
           store.shopify_domain, store.shopify_access_token, store.shopify_shop_name, store.shopify_connected ? 1 : 0,
-          store.theme_id, store.template, store.logo_url, store.primary_color, store.secondary_color,
+          store.theme_id, store.theme_id_new, store.template, store.logo_url, store.primary_color, store.secondary_color,
           store.meta_title, store.meta_description, store.favicon_url,
           store.business_address, store.business_orgnr, store.support_email, store.support_phone,
           store.shipping_info, store.shipping_time, store.return_policy, store.return_period,
-          store.gdpr_compliant ? 1 : 0, store.cookie_consent ? 1 : 0, store.selected_pages,
+          store.gdpr_compliant ? 1 : 0, store.cookie_consent ? 1 : 0, store.selected_pages, store.selected_products,
+          store.prefooter_enabled ? 1 : 0, store.prefooter_card1_image, store.prefooter_card1_title, store.prefooter_card1_text,
+          store.prefooter_card2_image, store.prefooter_card2_title, store.prefooter_card2_text,
+          store.prefooter_card3_image, store.prefooter_card3_title, store.prefooter_card3_text,
           store.status, store.deployment_status
         ]
       );
@@ -174,6 +181,9 @@ class Store {
 
   static async findByUuid(uuid) {
     const row = await db.get('SELECT * FROM stores WHERE uuid = ?', [uuid]);
+    if (row) {
+      console.log('🔍 DEBUG Store data loaded:', { name: row.name, theme_id: row.theme_id, theme_id_new: row.theme_id_new });
+    }
     return row ? new Store(row) : null;
   }
 
@@ -313,7 +323,7 @@ class Store {
     const allowedFields = [
       'name', 'domain', 'subdomain', 'country', 'language', 'currency', 'timezone',
       'shopify_domain', 'shopify_access_token', 'shopify_shop_name', 'shopify_connected',
-      'theme_id', 'template', 'logo_url', 'primary_color', 'secondary_color',
+      'theme_id', 'theme_id_new', 'template', 'logo_url', 'primary_color', 'secondary_color',
       'meta_title', 'meta_description', 'favicon_url',
       'shipping_info', 'shipping_time', 'return_policy', 'return_period',
       'support_email', 'support_phone', 'business_address', 'business_orgnr',
@@ -1128,6 +1138,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       shopify_shop_name: this.shopify_shop_name,
       shopify_connected: this.shopify_connected,
       theme_id: this.theme_id,
+      theme_id_new: this.theme_id_new,
       template: this.template,
       logo_url: this.logo_url,
       primary_color: this.primary_color,
@@ -1146,6 +1157,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       gdpr_compliant: this.gdpr_compliant,
       cookie_consent: this.cookie_consent,
       selected_pages: this.selected_pages,
+      selected_products: this.selected_products,
       // Pre-footer fields
       prefooter_enabled: this.prefooter_enabled,
       prefooter_card1_image: this.prefooter_card1_image,

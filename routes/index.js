@@ -1678,9 +1678,23 @@ router.post('/admin/store/:id/theme', async (req, res) => {
     
     console.log(`✅ Store "${store.name}" theme updated to "${theme.name}"`);
     
+    // ✅ FIXED: Use SAME deployment method as content updates (api.js:300)
+    const Store = require('../models/Store');
+    const storeInstance = await Store.findById(storeId);
+    
+    setImmediate(async () => {
+      try {
+        // ✅ Use complete deployment pipeline (not just regeneration)
+        await storeInstance.deploy(null, true); // Force deployment like content updates
+        console.log(`🚀 Store deployed for ${store.name} after theme update - COMPLETE PIPELINE`);
+      } catch (deployError) {
+        console.warn(`⚠️ Failed to deploy store after theme update for ${store.name}:`, deployError.message);
+      }
+    });
+    
     res.json({ 
       success: true, 
-      message: `Theme updated to "${theme.name}" successfully!`,
+      message: `Theme updated to "${theme.name}" successfully and deployment started!`,
       theme: theme
     });
     

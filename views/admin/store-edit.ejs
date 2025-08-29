@@ -498,74 +498,6 @@
                     </div>
                 </div>
                 
-                <div class="form-section">
-                    <h5 class="section-title">Content Injection Areas</h5>
-                    <p class="text-muted mb-4">These are the dynamic areas where admin content will be injected into your theme</p>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="list-item">
-                                <div class="item-info">
-                                    <h6><i class="bi bi-layout-navbar me-1"></i> Header Area</h6>
-                                    <small class="text-muted">Logo, Navigation, Cart & Search<br>Dynamically populated from store settings</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <div class="list-item">
-                                <div class="item-info">
-                                    <h6><i class="bi bi-grid-3x3 me-1"></i> Main Content Area</h6>
-                                    <small class="text-muted">Product Pages, Collections, CMS Pages<br>Product templates and page content inject here</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <div class="list-item">
-                                <div class="item-info">
-                                    <h6><i class="bi bi-collection me-1"></i> Product Template Area</h6>
-                                    <small class="text-muted">Product Images, Info, Add to Cart, etc.<br>Selected product templates render here</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <div class="list-item">
-                                <div class="item-info">
-                                    <h6><i class="bi bi-layout-footer me-1"></i> Footer Area</h6>
-                                    <small class="text-muted">Links, Social, Newsletter, Copyright<br>Configured through theme footer settings</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-section">
-                    <h5 class="section-title">Live Preview</h5>
-                    <p class="text-muted mb-4">See how your selected theme will look with content injection areas highlighted</p>
-                    
-                    <div class="border rounded" style="min-height: 300px; background: #f8f9fa;">
-                        <div id="livePreview" style="font-family: Arial, sans-serif;">
-                            <div style="background: var(--selected-primary, #667eea); color: white; padding: 1rem; text-align: center;">
-                                <strong>🎨 HEADER INJECTION AREA</strong> - Logo, Navigation, Cart
-                            </div>
-                            <div style="padding: 1.5rem; background: white;">
-                                <div style="border: 2px dashed #007bff; padding: 1.5rem; margin: 0.5rem 0; background: rgba(0,123,255,0.05); text-align: center; color: #007bff;">
-                                    <strong>📄 MAIN CONTENT INJECTION AREA</strong><br>
-                                    <small>Product pages, collections, and CMS content appear here</small>
-                                </div>
-                                <div style="border: 2px dashed #28a745; padding: 1.5rem; margin: 0.5rem 0; background: rgba(40,167,69,0.05); text-align: center; color: #28a745;">
-                                    <strong>🛍️ PRODUCT TEMPLATE INJECTION AREA</strong><br>
-                                    <small>Selected product templates with configured sections render here</small>
-                                </div>
-                            </div>
-                            <div style="background: var(--selected-secondary, #764ba2); color: white; padding: 1rem; text-align: center;">
-                                <strong>🔗 FOOTER INJECTION AREA</strong> - Links, Social, Newsletter
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 
                 <div class="text-center">
                     <button class="btn btn-success" onclick="saveThemeAndDeploy()">
@@ -928,6 +860,30 @@
             if (modal) modal.remove();
         }
         
+        function executeDeployment() {
+            // Start deployment directly without modal
+            fetch(`/api/stores/<%= store.uuid %>/deploy`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        force: true  // Force regeneration of all files
+                    })
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showToast('✅ Deployment completed successfully!', 'success');
+                    } else {
+                        showToast('❌ Deployment failed: ' + result.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    showToast('❌ Deployment failed: ' + error.message, 'error');
+                });
+        }
+        
         function confirmDeployment() {
             // Hide confirmation modal
             hideDeploymentConfirmation();
@@ -1180,6 +1136,7 @@
                 }
                 
                 const isSelected = selectedThemeId === theme.id;
+                console.log(`Theme ${theme.id} (${theme.name}): selectedThemeId=${selectedThemeId}, theme.id=${theme.id}, isSelected=${isSelected}`);
                 
                 const themeCard = document.createElement('div');
                 themeCard.className = 'col-lg-3 col-md-4 col-sm-6 mb-3';
@@ -1208,7 +1165,6 @@
                                 <div class="theme-color-dot" style="background-color: ${colors.accent || '#f093fb'}"></div>
                             </div>
                             
-                            ${theme.is_default ? '<small class="text-success"><i class="bi bi-star-fill me-1"></i>Default</small>' : ''}
                         </div>
                     </div>
                 `;
@@ -1310,10 +1266,10 @@
                 if (result.success) {
                     showToast('✅ Theme updated successfully!', 'success');
                     
-                    // Auto-deploy the changes
+                    // Auto-deploy the changes directly without modal
                     setTimeout(() => {
                         showToast('🚀 Deploying changes to live site...', 'info');
-                        deployStore();
+                        executeDeployment();
                     }, 1000);
                 } else {
                     showToast('❌ Failed to save theme: ' + result.error, 'error');
@@ -1335,6 +1291,7 @@
                 
                 // Set current theme as selected
                 selectedThemeId = <%= store.theme_id_new || 'null' %>;
+                console.log('Current theme ID from database:', selectedThemeId);
             }
         };
     </script>

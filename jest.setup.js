@@ -12,7 +12,7 @@ beforeAll(() => {
   // Reduce console noise during tests unless VERBOSE_TESTS is set
   if (!process.env.VERBOSE_TESTS) {
     console.log = jest.fn();
-    console.warn = jest.fn();1
+    console.warn = jest.fn();
     // Keep console.error for debugging test failures
   }
 });

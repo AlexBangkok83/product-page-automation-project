@@ -1,1952 +1,929 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const db = require('../database/db');
 
 class TemplateRenderer {
   constructor() {
-    this.templatesPath = path.join(__dirname, '../templates');
-    this.storesPath = path.join(process.cwd(), 'stores');
-    this.footerTemplate = null;
+    this.templatesPath = path.join(__dirname, '..', 'templates');
   }
 
   /**
-   * Generate all store files for a given store
+   * Generate all store files from database content
    */
   async generateStoreFiles(store, pages) {
     try {
       console.log(`🎨 Generating store files for ${store.name} (${store.domain})`);
       
-      // Ensure main stores directory exists
-      if (!fs.existsSync(this.storesPath)) {
-        fs.mkdirSync(this.storesPath, { recursive: true });
-        console.log(`✅ Created stores directory: ${this.storesPath}`);
-      }
-      
-      const storePath = path.join(this.storesPath, store.domain);
-      
-      // Create store directory if it doesn't exist
-      if (!fs.existsSync(storePath)) {
-        fs.mkdirSync(storePath, { recursive: true });
-        console.log(`✅ Created directory: ${storePath}`);
-      }
+      // Create store directory
+      const storePath = path.join(process.cwd(), 'stores', store.domain);
+      this.ensureDirectoryExists(storePath);
 
-      // Generate each page
+      // Get theme configuration
+      const themeConfig = await this.getThemeConfiguration(store);
+      console.log(`🎨 Using theme configuration:`, { theme_id: store.theme_id, theme_id_new: store.theme_id_new });
+
+      // Generate main pages
+      const generatedFiles = [];
+      
       for (const page of pages) {
-        await this.generatePage(store, page, storePath, pages);
+        try {
+          const fileName = this.getPageFileName(page);
+          const filePath = path.join(storePath, fileName);
+          
+          console.log(`📄 Generating ${fileName} for ${page.page_type} page...`);
+          
+          // Generate HTML content based on page type
+          let htmlContent;
+          
+          if (page.page_type === 'products') {
+            // Fetch products from Shopify and generate product pages
+            htmlContent = await this.generateProductsPage(store, page, themeConfig);
+          } else {
+            // Generate regular page
+            htmlContent = await this.generatePage(store, page, themeConfig);
+          }
+          
+          // Write file
+          fs.writeFileSync(filePath, htmlContent, 'utf8');
+          generatedFiles.push(fileName);
+          
+          console.log(`✅ Generated ${fileName} (${this.formatFileSize(htmlContent.length)})`);
+          
+        } catch (pageError) {
+          console.error(`❌ Error generating ${page.page_type} page:`, pageError.message);
+          // Continue with other pages
+        }
       }
 
-      // Generate individual product detail pages
-      await this.generateProductDetailPages(store, storePath, pages);
+      // Generate additional static files
+      await this.generateStaticFiles(store, storePath, themeConfig);
 
-      // Generate additional assets
-      await this.generateAssets(store, storePath);
-      
-      console.log(`✅ All files generated for ${store.name}`);
-      
-      // 🚀 GIT AUTOMATION: Add, commit, and push to GitHub
-      await this.autoCommitAndPush(store, storePath);
-      
+      console.log(`✅ Generated ${generatedFiles.length} pages for ${store.name}`);
       return storePath;
-      
+
     } catch (error) {
-      console.error(`❌ Error generating store files for ${store.name}:`, error);
+      console.error(`❌ Error generating store files for ${store.name}:`, error.message);
       throw error;
     }
   }
 
   /**
-   * Load the footer component template
+   * Get theme configuration from database or fallback to defaults
    */
-  loadFooterTemplate() {
-    if (this.footerTemplate) {
-      return this.footerTemplate;
-    }
-    
+  async getThemeConfiguration(store) {
     try {
-      const footerPath = path.join(this.templatesPath, 'ecommerce/components/footer.html');
-      this.footerTemplate = fs.readFileSync(footerPath, 'utf8');
-      return this.footerTemplate;
+      // First try to get theme from new theme system
+      if (store.theme_id_new) {
+        const theme = await db.get('SELECT * FROM themes WHERE id = ? AND is_active = 1', [store.theme_id_new]);
+        if (theme) {
+          console.log(`🎨 Using new theme system: ${theme.name} (ID: ${theme.id})`);
+          
+          let cssVariables = {};
+          try {
+            cssVariables = JSON.parse(theme.css_variables || '{}');
+          } catch (parseError) {
+            console.warn('⚠️ Failed to parse theme CSS variables, using defaults');
+            cssVariables = {};
+          }
+          
+          return {
+            id: theme.id,
+            name: theme.name,
+            description: theme.description,
+            primary: cssVariables.primary || store.primary_color || '#007cba',
+            secondary: cssVariables.secondary || store.secondary_color || '#f8f9fa',
+            accent: cssVariables.accent || '#007cba',
+            background: cssVariables.background || '#ffffff',
+            surface: cssVariables.surface || '#f8f9fa',
+            ...cssVariables
+          };
+        } else {
+          console.log(`⚠️ Theme ID ${store.theme_id_new} not found in database, falling back to legacy`);
+        }
+      }
+
+      // Fallback to legacy theme system
+      console.log(`🔄 Using legacy theme system: ${store.theme_id}`);
+      return this.getLegacyThemeConfiguration(store);
+
     } catch (error) {
-      console.warn('⚠️ Footer template not found, using basic footer');
-      return this.getBasicFooter();
+      console.error('❌ Error getting theme configuration:', error.message);
+      return this.getLegacyThemeConfiguration(store);
     }
   }
 
   /**
-   * Generate footer HTML with store data
+   * Get theme configuration from legacy system
    */
-  async generateFooter(store, pages) {
-    const footerTemplate = this.loadFooterTemplate();
-    
-    // Generate dynamic navigation based on existing pages
-    const pageMap = new Map(pages.map(page => [page.page_type, page]));
-    
-    // Information pages (legal/policy pages + FAQ + shipping)
-    const informationPageTypes = [
-      { type: 'delivery', fallbackTitle: 'Leveranspolicy' },
-      { type: 'privacy', fallbackTitle: 'Integritetspolicy' },
-      { type: 'refund', fallbackTitle: 'Returpolicy' },
-      { type: 'terms', fallbackTitle: 'Användarvillkor' },
-      { type: 'shipping', fallbackTitle: 'Shipping Information' },
-      { type: 'faq', fallbackTitle: 'FAQ' }
-    ];
-    
-    const informationPages = informationPageTypes
-      .filter(({ type }) => pageMap.has(type))
-      .map(({ type }) => {
-        const page = pageMap.get(type);
-        return {
-          title: page.title,
-          slug: page.slug || page.page_type
-        };
-      });
-    
-    // Quick Links (main navigation pages)
-    const quickLinkTypes = [
-      { type: 'home', fallbackTitle: 'Home', slug: '' },
-      { type: 'products', fallbackTitle: 'Products' },
-      { type: 'about', fallbackTitle: 'About Us' },
-      { type: 'contact', fallbackTitle: 'Contact' },
-      { type: 'blog', fallbackTitle: 'Blog' }
-    ];
-    
-    const quickLinks = quickLinkTypes
-      .filter(({ type }) => pageMap.has(type))
-      .map(({ type, slug: fallbackSlug }) => {
-        const page = pageMap.get(type);
-        return {
-          title: page.title,
-          slug: fallbackSlug !== undefined ? fallbackSlug : (page.slug || page.page_type)
-        };
-      });
+  getLegacyThemeConfiguration(store) {
+    return {
+      id: store.theme_id || 'default',
+      name: 'Legacy Theme',
+      description: 'Fallback legacy theme',
+      primary: store.primary_color || '#007cba',
+      secondary: store.secondary_color || '#f8f9fa',
+      accent: store.primary_color || '#007cba',
+      background: '#ffffff',
+      surface: '#f8f9fa'
+    };
+  }
 
-    // Generate about text from store info
-    const aboutText = store.meta_description || 
-      `${store.name} is your trusted e-commerce destination offering quality products with exceptional customer service. Based in ${store.country}, we serve customers with dedication and reliability.`;
-
-    // Generate store description
-    const storeDescription = store.meta_description || 
-      `Welcome to ${store.name} - your premier destination for quality products and exceptional service.`;
-
-    // Generate navigation HTML
-    const informationPagesHtml = informationPages.length > 0 
-      ? informationPages.map(page => 
-          `<li><a href="/${page.slug}">${page.title}</a></li>`
-        ).join('\n                            ')
-      : '<li><em>No information pages available</em></li>';
+  /**
+   * Generate HTML for a single page
+   */
+  async generatePage(store, page, themeConfig) {
+    const templateName = this.getTemplateName(page);
+    const template = await this.loadTemplate(templateName);
     
-    const quickLinksHtml = quickLinks.length > 0
-      ? quickLinks.map(page => 
-          `<li><a href="/${page.slug}">${page.title}</a></li>`
-        ).join('\n                            ')
-      : '<li><a href="/">Home</a></li>';
+    // Prepare template variables
+    const variables = {
+      // Store information
+      store_name: store.name,
+      store_domain: store.domain,
+      store_country: store.country,
+      store_language: store.language,
+      store_currency: store.currency,
+      support_email: store.support_email || `support@${store.domain}`,
+      support_phone: store.support_phone || '',
+      business_address: store.business_address || '',
+      business_orgnr: store.business_orgnr || '',
+      
+      // Page content
+      page_title: page.title,
+      page_subtitle: page.subtitle || '',
+      page_content: this.processPageContent(page.content),
+      meta_title: page.meta_title || page.title,
+      meta_description: page.meta_description || '',
+      
+      // Theme variables
+      theme_primary: themeConfig.primary,
+      theme_secondary: themeConfig.secondary,
+      theme_accent: themeConfig.accent || themeConfig.primary,
+      theme_background: themeConfig.background || '#ffffff',
+      theme_surface: themeConfig.surface || '#f8f9fa',
+      
+      // Additional styling
+      logo_url: store.logo_url || '',
+      favicon_url: store.favicon_url || '',
+      
+      // Navigation and footer
+      nav_links: this.generateNavLinks(store, page.page_type),
+      footer_content: this.generateFooterContent(store)
+    };
 
     // Replace template variables
-    let footerHtml = footerTemplate
-      .replace(/{{STORE_NAME}}/g, store.name || 'Store')
-      .replace(/{{STORE_LOGO_URL}}/g, store.logo_url || '')
-      .replace(/{{STORE_DESCRIPTION}}/g, storeDescription)
-      .replace(/{{SUPPORT_EMAIL}}/g, store.support_email || '')
-      .replace(/{{SUPPORT_PHONE}}/g, store.support_phone || '')
-      .replace(/{{BUSINESS_ADDRESS}}/g, store.business_address || '')
-      .replace(/{{ABOUT_TEXT}}/g, aboutText)
-      .replace(/{{CURRENT_YEAR}}/g, new Date().getFullYear().toString())
-      .replace(/{{COUNTRY}}/g, store.country || '')
-      // Dynamic navigation
-      .replace(/{{INFORMATION_PAGES}}/g, informationPagesHtml)
-      .replace(/{{QUICK_LINKS}}/g, quickLinksHtml)
-      // Pre-footer content variables
-      .replace(/{{PREFOOTER_ENABLED}}/g, store.prefooter_enabled ? 'true' : '')
-      .replace(/{{PREFOOTER_CARD1_IMAGE}}/g, store.prefooter_card1_image || '')
-      .replace(/{{PREFOOTER_CARD1_TITLE}}/g, store.prefooter_card1_title || '')
-      .replace(/{{PREFOOTER_CARD1_TEXT}}/g, store.prefooter_card1_text || '')
-      .replace(/{{PREFOOTER_CARD2_IMAGE}}/g, store.prefooter_card2_image || '')
-      .replace(/{{PREFOOTER_CARD2_TITLE}}/g, store.prefooter_card2_title || '')
-      .replace(/{{PREFOOTER_CARD2_TEXT}}/g, store.prefooter_card2_text || '')
-      .replace(/{{PREFOOTER_CARD3_IMAGE}}/g, store.prefooter_card3_image || '')
-      .replace(/{{PREFOOTER_CARD3_TITLE}}/g, store.prefooter_card3_title || '')
-      .replace(/{{PREFOOTER_CARD3_TEXT}}/g, store.prefooter_card3_text || '')
-      .replace(/{{BUSINESS_ORGNR}}/g, store.business_orgnr || '');
-
-    // Handle conditional blocks for logo
-    if (store.logo_url) {
-      footerHtml = footerHtml.replace(
-        /\{\{#if STORE_LOGO_URL\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, 
-        '$1'
-      );
-    } else {
-      footerHtml = footerHtml.replace(
-        /\{\{#if STORE_LOGO_URL\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, 
-        '$2'
-      );
+    let html = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(`{{${key}}}`, 'g');
+      html = html.replace(regex, value);
     }
 
-    // Process conditional fields in a specific order to handle nested conditions
-    // First process the most specific/nested conditions, then broader ones
-    const orderedFields = [
-      // Process nested prefooter card conditions first
-      { field: 'PREFOOTER_CARD1_IMAGE', value: store.prefooter_card1_image },
-      { field: 'PREFOOTER_CARD1_TEXT', value: store.prefooter_card1_text },
-      { field: 'PREFOOTER_CARD2_IMAGE', value: store.prefooter_card2_image },
-      { field: 'PREFOOTER_CARD2_TEXT', value: store.prefooter_card2_text },
-      { field: 'PREFOOTER_CARD3_IMAGE', value: store.prefooter_card3_image },
-      { field: 'PREFOOTER_CARD3_TEXT', value: store.prefooter_card3_text },
-      // Then process the card title conditions (which contain the nested conditions)
-      { field: 'PREFOOTER_CARD1_TITLE', value: store.prefooter_card1_title },
-      { field: 'PREFOOTER_CARD2_TITLE', value: store.prefooter_card2_title },
-      { field: 'PREFOOTER_CARD3_TITLE', value: store.prefooter_card3_title },
-      // Then the broader prefooter condition
-      { field: 'PREFOOTER_ENABLED', value: store.prefooter_enabled },
-      // Finally other conditions
-      { field: 'SUPPORT_EMAIL', value: store.support_email },
-      { field: 'SUPPORT_PHONE', value: store.support_phone },
-      { field: 'BUSINESS_ADDRESS', value: store.business_address },
-      { field: 'BUSINESS_ORGNR', value: store.business_orgnr }
-    ];
-
-    orderedFields.forEach(({ field, value }) => {
-      const regex = new RegExp(`{{#if ${field}}}([\\s\\S]*?){{/if}}`, 'g');
-      if (value) {
-        footerHtml = footerHtml.replace(regex, '$1');
-      } else {
-        footerHtml = footerHtml.replace(regex, '');
-      }
-    });
-
-    // Dynamic navigation is now handled above via {{INFORMATION_PAGES}} and {{QUICK_LINKS}}
-
-    return footerHtml;
+    return html;
   }
 
   /**
-   * Basic fallback footer if template is not available
+   * Generate products page with Shopify integration
    */
-  getBasicFooter() {
-    return `
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>{{STORE_NAME}}</h3>
-                    <p>{{STORE_DESCRIPTION}}</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Information</h4>
-                    <ul>
-                        <li><a href="/terms">Terms of Service</a></li>
-                        <li><a href="/privacy">Privacy Policy</a></li>
-                        <li><a href="/refund">Refund Policy</a></li>
-                        <li><a href="/delivery">Delivery Info</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Quick Links</h4>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/products">Products</a></li>
-                        <li><a href="/about">About</a></li>
-                        <li><a href="/contact">Contact</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; {{CURRENT_YEAR}} {{STORE_NAME}}. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-    
-    <style>
-    .footer { background: #1a1a1a; color: white; padding: 40px 0 20px; }
-    .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 30px; }
-    .footer-section h3, .footer-section h4 { color: var(--primary-color, #007cba); margin-bottom: 15px; }
-    .footer-section ul { list-style: none; padding: 0; }
-    .footer-section ul li { margin-bottom: 8px; }
-    .footer-section ul li a { color: rgba(255,255,255,0.7); text-decoration: none; }
-    .footer-section ul li a:hover { color: var(--primary-color, #007cba); }
-    .footer-bottom { border-top: 1px solid #333; padding-top: 20px; text-align: center; color: rgba(255,255,255,0.6); }
-    </style>
-    `;
-  }
-
-  /**
-   * Generate a single page HTML file
-   */
-  async generatePage(store, page, storePath, allPages) {
+  async generateProductsPage(store, page, themeConfig) {
     try {
-      console.log(`📄 Generating page: ${page.page_type}`);
+      // Fetch products from store
+      const products = await store.fetchShopifyProducts(50);
       
-      // Determine file name
-      let fileName;
-      if (page.page_type === 'home' || page.slug === '') {
-        fileName = 'index.html';
-      } else {
-        fileName = `${page.slug || page.page_type}.html`;
-      }
-
-      // Fetch products for products page
-      let products = [];
-      if (page.page_type === 'products' && store.shopify_domain && store.shopify_access_token) {
-        try {
-          console.log(`🛒 Fetching products for ${store.name}...`);
-          
-          // Get selected products list
-          let selectedProducts = [];
-          if (store.selected_products) {
-            try {
-              selectedProducts = JSON.parse(store.selected_products);
-            } catch (error) {
-              console.warn('Invalid selected_products JSON:', error);
-              selectedProducts = [];
-            }
-          }
-          
-          if (selectedProducts.length > 0) {
-            // Fetch all products and filter by selected ones
-            const allProducts = await store.fetchShopifyProducts(50);
-            products = allProducts.filter(product => selectedProducts.includes(product.handle));
-            console.log(`✅ Filtered to ${products.length} selected products from ${allProducts.length} total products`);
-          } else {
-            // No products selected - show empty array (will display "coming soon" message)
-            console.log(`ℹ️ No products selected for ${store.name} - showing empty products page`);
-            products = [];
-          }
-        } catch (error) {
-          console.error(`⚠️ Failed to fetch products for ${store.name}:`, error.message);
-          // Continue with empty products array - page will show "coming soon" message
-        }
-      }
-
-      // Generate HTML content with all pages for footer and products for products page
-      const htmlContent = await this.renderPageHTML(store, page, allPages, products);
-      
-      // Write file
-      const filePath = path.join(storePath, fileName);
-      fs.writeFileSync(filePath, htmlContent, 'utf8');
-      
-      console.log(`✅ Generated: ${fileName}`);
-      
-    } catch (error) {
-      console.error(`❌ Error generating page ${page.page_type}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Render HTML content for a page
-   */
-  async renderPageHTML(store, page, allPages = [], products = []) {
-    try {
-      // Parse content blocks
-      let contentBlocks = [];
-      if (page.content) {
-        try {
-          contentBlocks = JSON.parse(page.content);
-        } catch (parseError) {
-          console.warn(`Warning: Could not parse content blocks for ${page.page_type}`);
-          contentBlocks = [{ type: 'text', content: page.content }];
-        }
-      }
-
-      // Parse template data
-      let templateData = {};
-      if (page.template_data) {
-        try {
-          templateData = JSON.parse(page.template_data);
-        } catch (parseError) {
-          console.warn(`Warning: Could not parse template data for ${page.page_type}`);
-        }
-      }
-
-      // Generate page based on page type
-      switch (page.page_type) {
-        case 'home':
-          return await this.renderHomePage(store, page, contentBlocks, templateData, allPages);
-        case 'products':
-          return await this.renderProductsPage(store, page, contentBlocks, templateData, allPages, products);
-        case 'about':
-          return await this.renderAboutPage(store, page, contentBlocks, templateData, allPages);
-        case 'contact':
-          return await this.renderContactPage(store, page, contentBlocks, templateData, allPages);
-        default:
-          return await this.renderGenericPage(store, page, contentBlocks, templateData, allPages);
-      }
-      
-    } catch (error) {
-      console.error(`Error rendering page HTML for ${page.page_type}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Render homepage HTML
-   */
-  async renderHomePage(store, page, contentBlocks, templateData, allPages = []) {
-    const heroSection = contentBlocks.find(block => block.type === 'hero') || {};
-    const featuresSection = contentBlocks.find(block => block.type === 'features') || {};
-    
-    return `<!DOCTYPE html>
-<html lang="${store.language || 'en'}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${page.meta_title || page.title || store.name}</title>
-    <meta name="description" content="${page.meta_description || page.subtitle || ''}">
-    <link rel="icon" href="${store.favicon_url || '/favicon.ico'}">
-    
-    <style>
-        :root {
-            --primary-color: ${store.primary_color || '#007cba'};
-            --secondary-color: ${store.secondary_color || '#f8f9fa'};
-            --text-primary: #1a1a1a;
-            --text-secondary: #666;
-            --background: #ffffff;
-            --border-light: #e1e1e1;
-            --spacing-sm: 1rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2rem;
-            --spacing-xl: 3rem;
-            --container-max: 1200px;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--background);
-        }
-        
-        .container {
-            max-width: var(--container-max);
-            margin: 0 auto;
-            padding: 0 var(--spacing-sm);
-        }
-        
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--box-shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-sm) 0;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-        
-        .nav {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-        
-        .nav a {
-            color: var(--text-primary);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            transition: all 0.3s ease;
-        }
-        
-        .nav a:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-        
-        /* Hero Section */
-        .hero {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            padding: var(--spacing-xl) 0;
-            text-align: center;
-            color: white;
-        }
-        
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: var(--spacing-md);
-            font-weight: 700;
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: var(--spacing-lg);
-            opacity: 0.9;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: var(--primary-color);
-            padding: 1rem 2rem;
-            border-radius: var(--border-radius);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            box-shadow: var(--box-shadow);
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        /* Features Section */
-        .features {
-            padding: var(--spacing-xl) 0;
-            background: var(--secondary-color);
-        }
-        
-        .features h2 {
-            text-align: center;
-            margin-bottom: var(--spacing-lg);
-            font-size: 2.5rem;
-            color: var(--text-primary);
-        }
-        
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--spacing-lg);
-            margin-top: var(--spacing-lg);
-        }
-        
-        .feature-card {
-            background: white;
-            padding: var(--spacing-lg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .feature-card h3 {
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-sm);
-            font-size: 1.3rem;
-        }
-        
-        .feature-card p {
-            color: var(--text-secondary);
-        }
-        
-        /* Footer styles are included in the footer component */
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                display: none;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                ${store.logo_url 
-                  ? `<a href="/" class="logo"><img src="${store.logo_url}" alt="${store.name}"></a>`
-                  : `<a href="/" class="logo">${store.name}</a>`
-                }
-                <nav class="nav">
-                    <a href="/">Home</a>
-                    <a href="/products">Products</a>
-                    <a href="/about">About</a>
-                    <a href="/contact">Contact</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="container">
-            <h1>${heroSection.title || page.title || `Welcome to ${store.name}`}</h1>
-            <p>${heroSection.subtitle || page.subtitle || 'Discover amazing products crafted just for you'}</p>
-            <a href="/products" class="cta-button">${heroSection.cta || 'Shop Now'}</a>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features">
-        <div class="container">
-            <h2>Why Choose ${store.name}?</h2>
-            <div class="features-grid">
-                ${(featuresSection.items || [
-                    { title: 'Quality Products', description: 'Carefully curated selection of premium items' },
-                    { title: 'Fast Shipping', description: 'Quick and reliable delivery worldwide' },
-                    { title: 'Great Support', description: '24/7 customer service and support' }
-                ]).map(feature => `
-                    <div class="feature-card">
-                        <h3>${feature.title}</h3>
-                        <p>${feature.description}</p>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    </section>
-
-    ${await this.generateFooter(store, allPages)}
-</body>
-</html>`;
-  }
-
-  /**
-   * Render products page HTML
-   */
-  async renderProductsPage(store, page, contentBlocks, templateData, allPages = [], products = []) {
-    return `<!DOCTYPE html>
-<html lang="${store.language || 'en'}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${page.meta_title || page.title || `Products - ${store.name}`}</title>
-    <meta name="description" content="${page.meta_description || page.subtitle || ''}">
-    <link rel="icon" href="${store.favicon_url || '/favicon.ico'}">
-    
-    <style>
-        :root {
-            --primary-color: ${store.primary_color || '#007cba'};
-            --secondary-color: ${store.secondary_color || '#f8f9fa'};
-            --text-primary: #1a1a1a;
-            --text-secondary: #666;
-            --background: #ffffff;
-            --border-light: #e1e1e1;
-            --spacing-sm: 1rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2rem;
-            --spacing-xl: 3rem;
-            --container-max: 1200px;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--background);
-        }
-        
-        .container {
-            max-width: var(--container-max);
-            margin: 0 auto;
-            padding: 0 var(--spacing-sm);
-        }
-        
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--box-shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-sm) 0;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-        
-        .nav {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-        
-        .nav a {
-            color: var(--text-primary);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            transition: all 0.3s ease;
-        }
-        
-        .nav a:hover,
-        .nav a.active {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-        
-        /* Main Content */
-        .main {
-            padding: var(--spacing-xl) 0;
-        }
-        
-        .page-title {
-            text-align: center;
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .page-title h1 {
-            font-size: 2.5rem;
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .page-title p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-        
-        /* Products Grid */
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: var(--spacing-lg);
-        }
-        
-        .product-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .product-image {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            overflow: hidden;
-        }
-        
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .product-image-placeholder {
-            background: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .placeholder-content {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .product-info {
-            padding: var(--spacing-sm);
-        }
-        
-        .product-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: var(--spacing-sm);
-            color: var(--text-primary);
-            line-height: 1.3;
-        }
-        
-        .product-vendor {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .product-price {
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .price-regular {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-        
-        .price-compare {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            text-decoration: line-through;
-            margin-right: 0.5rem;
-        }
-        
-        .price-sale {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #e74c3c;
-        }
-        
-        .product-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .btn-add-to-cart, .btn-more-info {
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            text-decoration: none;
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            flex: 1;
-        }
-        
-        .btn-add-to-cart {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-        }
-        
-        .btn-add-to-cart:hover:not(.disabled) {
-            background: #005a8d;
-            transform: translateY(-1px);
-        }
-        
-        .btn-add-to-cart.disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
-        .btn-more-info {
-            background: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-        
-        .btn-more-info:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        /* Coming Soon Message */
-        .coming-soon {
-            text-align: center;
-            padding: var(--spacing-xl);
-            background: var(--secondary-color);
-            border-radius: var(--border-radius);
-            margin: var(--spacing-lg) 0;
-        }
-        
-        .coming-soon h2 {
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .coming-soon p {
-            color: var(--text-secondary);
-        }
-        
-        /* Footer styles are included in the footer component */
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .page-title h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                display: none;
-            }
-            
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                ${store.logo_url 
-                  ? `<a href="/" class="logo"><img src="${store.logo_url}" alt="${store.name}"></a>`
-                  : `<a href="/" class="logo">${store.name}</a>`
-                }
-                <nav class="nav">
-                    <a href="/">Home</a>
-                    <a href="/products" class="active">Products</a>
-                    <a href="/about">About</a>
-                    <a href="/contact">Contact</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
-            <div class="page-title">
-                <h1>${page.title || 'Our Products'}</h1>
-                <p>${page.subtitle || 'Discover our amazing collection of products'}</p>
-            </div>
-
-            ${products && products.length > 0 ? `
-                <div class="products-grid">
-                    ${products.map(product => {
-                        const mainImage = product.images && product.images.length > 0 ? product.images[0] : null;
-                        const mainVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
-                        const price = mainVariant ? mainVariant.price : 0;
-                        const comparePrice = mainVariant && mainVariant.compare_at_price ? mainVariant.compare_at_price : null;
-                        const isAvailable = mainVariant ? mainVariant.available : false;
-                        
-                        return `
-                            <div class="product-card">
-                                ${mainImage ? `
-                                    <div class="product-image">
-                                        <img src="${mainImage.src}" alt="${mainImage.alt || product.title}" loading="lazy">
-                                    </div>
-                                ` : `
-                                    <div class="product-image product-image-placeholder">
-                                        <div class="placeholder-content">
-                                            <span>No Image</span>
-                                        </div>
-                                    </div>
-                                `}
-                                <div class="product-info">
-                                    <h3 class="product-title">${product.title}</h3>
-                                    ${product.vendor ? `<p class="product-vendor">by ${product.vendor}</p>` : ''}
-                                    <div class="product-price">
-                                        ${comparePrice && comparePrice > price ? `
-                                            <span class="price-compare">$${comparePrice.toFixed(2)}</span>
-                                            <span class="price-sale">$${price.toFixed(2)}</span>
-                                        ` : `
-                                            <span class="price-regular">$${price.toFixed(2)}</span>
-                                        `}
-                                    </div>
-                                    <div class="product-actions">
-                                        <button class="btn-add-to-cart ${!isAvailable ? 'disabled' : ''}" 
-                                                ${!isAvailable ? 'disabled' : ''} 
-                                                onclick="addToCart('${product.handle}', '${mainVariant ? mainVariant.id : ''}')">
-                                            ${isAvailable ? 'Add to Cart' : 'Sold Out'}
-                                        </button>
-                                        <a href="/products/${product.handle}" class="btn-more-info">More Info</a>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            ` : (store.shopify_connected ? `
-                <div class="coming-soon">
-                    <h2>Products Loading</h2>
-                    <p>Our products are being synced from Shopify. They will appear here soon!</p>
-                    <p><strong>Store:</strong> ${store.shopify_shop_name || store.shopify_domain}</p>
-                </div>
-            ` : `
-                <div class="coming-soon">
-                    <h2>Products Coming Soon</h2>
-                    <p>We're working hard to bring you an amazing selection of products.</p>
-                    <p>Please check back soon or <a href="/contact">contact us</a> for more information.</p>
-                </div>
-            `)}
-        </div>
-    </main>
-
-    ${await this.generateFooter(store, allPages)}
-
-    <script>
-        // Simple add to cart functionality
-        function addToCart(productHandle, variantId) {
-            // For now, just show an alert - this can be enhanced with real cart functionality
-            alert('Product "' + productHandle + '" added to cart!\\nVariant ID: ' + variantId);
-            
-            // Here you would typically:
-            // 1. Send request to cart API
-            // 2. Update cart counter in header
-            // 3. Show cart notification/toast
-        }
-        
-        // Optional: Add loading states, error handling, etc.
-    </script>
-</body>
-</html>`;
-  }
-
-  /**
-   * Render about page HTML
-   */
-  async renderAboutPage(store, page, contentBlocks, templateData, allPages = []) {
-    const textBlocks = contentBlocks.filter(block => block.type === 'text');
-    
-    return `<!DOCTYPE html>
-<html lang="${store.language || 'en'}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${page.meta_title || page.title || `About - ${store.name}`}</title>
-    <meta name="description" content="${page.meta_description || page.subtitle || ''}">
-    <link rel="icon" href="${store.favicon_url || '/favicon.ico'}">
-    
-    <style>
-        :root {
-            --primary-color: ${store.primary_color || '#007cba'};
-            --secondary-color: ${store.secondary_color || '#f8f9fa'};
-            --text-primary: #1a1a1a;
-            --text-secondary: #666;
-            --background: #ffffff;
-            --border-light: #e1e1e1;
-            --spacing-sm: 1rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2rem;
-            --spacing-xl: 3rem;
-            --container-max: 1200px;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--background);
-        }
-        
-        .container {
-            max-width: var(--container-max);
-            margin: 0 auto;
-            padding: 0 var(--spacing-sm);
-        }
-        
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--box-shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-sm) 0;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-        
-        .nav {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-        
-        .nav a {
-            color: var(--text-primary);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            transition: all 0.3s ease;
-        }
-        
-        .nav a:hover,
-        .nav a.active {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-        
-        /* Main Content */
-        .main {
-            padding: var(--spacing-xl) 0;
-        }
-        
-        .page-title {
-            text-align: center;
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .page-title h1 {
-            font-size: 2.5rem;
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .page-title p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-        
-        .content {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .content-block {
-            background: white;
-            padding: var(--spacing-lg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .content-block h2 {
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-md);
-            font-size: 1.5rem;
-        }
-        
-        .content-block p {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-sm);
-            font-size: 1.1rem;
-        }
-        
-        /* Footer styles are included in the footer component */
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .page-title h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                display: none;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                ${store.logo_url 
-                  ? `<a href="/" class="logo"><img src="${store.logo_url}" alt="${store.name}"></a>`
-                  : `<a href="/" class="logo">${store.name}</a>`
-                }
-                <nav class="nav">
-                    <a href="/">Home</a>
-                    <a href="/products">Products</a>
-                    <a href="/about" class="active">About</a>
-                    <a href="/contact">Contact</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
-            <div class="page-title">
-                <h1>${page.title || `About ${store.name}`}</h1>
-                <p>${page.subtitle || 'Learn more about our story and mission'}</p>
-            </div>
-
-            <div class="content">
-                ${textBlocks.length > 0 ? textBlocks.map(block => `
-                    <div class="content-block">
-                        <p>${block.content}</p>
-                    </div>
-                `).join('') : `
-                    <div class="content-block">
-                        <h2>Our Story</h2>
-                        <p>Welcome to ${store.name}! We are dedicated to providing you with the highest quality products and exceptional customer service.</p>
-                        <p>Founded with a passion for excellence, our team works tirelessly to bring you carefully curated products that meet our strict standards for quality and value.</p>
-                        <p>Thank you for choosing ${store.name}. We look forward to serving you!</p>
-                    </div>
-                `}
-            </div>
-        </div>
-    </main>
-
-    ${await this.generateFooter(store, allPages)}
-</body>
-</html>`;
-  }
-
-  /**
-   * Render contact page HTML
-   */
-  async renderContactPage(store, page, contentBlocks, templateData, allPages = []) {
-    return `<!DOCTYPE html>
-<html lang="${store.language || 'en'}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${page.meta_title || page.title || `Contact - ${store.name}`}</title>
-    <meta name="description" content="${page.meta_description || page.subtitle || ''}">
-    <link rel="icon" href="${store.favicon_url || '/favicon.ico'}">
-    
-    <style>
-        :root {
-            --primary-color: ${store.primary_color || '#007cba'};
-            --secondary-color: ${store.secondary_color || '#f8f9fa'};
-            --text-primary: #1a1a1a;
-            --text-secondary: #666;
-            --background: #ffffff;
-            --border-light: #e1e1e1;
-            --spacing-sm: 1rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2rem;
-            --spacing-xl: 3rem;
-            --container-max: 1200px;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--background);
-        }
-        
-        .container {
-            max-width: var(--container-max);
-            margin: 0 auto;
-            padding: 0 var(--spacing-sm);
-        }
-        
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--box-shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-sm) 0;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-        
-        .nav {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-        
-        .nav a {
-            color: var(--text-primary);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            transition: all 0.3s ease;
-        }
-        
-        .nav a:hover,
-        .nav a.active {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-        
-        /* Main Content */
-        .main {
-            padding: var(--spacing-xl) 0;
-        }
-        
-        .page-title {
-            text-align: center;
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .page-title h1 {
-            font-size: 2.5rem;
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .page-title p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-        
-        .contact-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-xl);
-            margin-top: var(--spacing-lg);
-        }
-        
-        .contact-form {
-            background: white;
-            padding: var(--spacing-lg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-        }
-        
-        .contact-info {
-            background: var(--secondary-color);
-            padding: var(--spacing-lg);
-            border-radius: var(--border-radius);
-        }
-        
-        .form-group {
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .form-group input,
-        .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-light);
-            border-radius: var(--border-radius);
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-group input:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        
-        .form-group textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-        
-        .submit-button {
-            background: var(--primary-color);
-            color: white;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: var(--border-radius);
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        
-        .submit-button:hover {
-            background: color-mix(in srgb, var(--primary-color) 85%, black);
-            transform: translateY(-2px);
-        }
-        
-        .contact-info h3 {
-            color: var(--primary-color);
-            margin-bottom: var(--spacing-md);
-            font-size: 1.3rem;
-        }
-        
-        .contact-info p {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .contact-info a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .contact-info a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Footer styles are included in the footer component */
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .page-title h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                display: none;
-            }
-            
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                ${store.logo_url 
-                  ? `<a href="/" class="logo"><img src="${store.logo_url}" alt="${store.name}"></a>`
-                  : `<a href="/" class="logo">${store.name}</a>`
-                }
-                <nav class="nav">
-                    <a href="/">Home</a>
-                    <a href="/products">Products</a>
-                    <a href="/about">About</a>
-                    <a href="/contact" class="active">Contact</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
-            <div class="page-title">
-                <h1>${page.title || 'Contact Us'}</h1>
-                <p>${page.subtitle || 'Get in touch with us - we\'d love to hear from you'}</p>
-            </div>
-
-            <div class="contact-grid">
-                <div class="contact-form">
-                    <form action="#" method="POST">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="subject">Subject</label>
-                            <input type="text" id="subject" name="subject" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="message">Message</label>
-                            <textarea id="message" name="message" required placeholder="Tell us how we can help you..."></textarea>
-                        </div>
-                        
-                        <button type="submit" class="submit-button">Send Message</button>
-                    </form>
-                </div>
-                
-                <div class="contact-info">
-                    <h3>Get in Touch</h3>
-                    <p>We're here to help and answer any questions you might have. We look forward to hearing from you!</p>
-                    
-                    ${store.support_email ? `
-                        <p><strong>Email:</strong><br>
-                        <a href="mailto:${store.support_email}">${store.support_email}</a></p>
-                    ` : ''}
-                    
-                    ${store.support_phone ? `
-                        <p><strong>Phone:</strong><br>
-                        <a href="tel:${store.support_phone}">${store.support_phone}</a></p>
-                    ` : ''}
-                    
-                    ${store.business_address ? `
-                        <p><strong>Address:</strong><br>
-                        ${store.business_address}</p>
-                    ` : ''}
-                    
-                    <p><strong>Response Time:</strong><br>
-                    We typically respond within 24 hours</p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    ${await this.generateFooter(store, allPages)}
-</body>
-</html>`;
-  }
-
-  /**
-   * Render generic page HTML
-   */
-  async renderGenericPage(store, page, contentBlocks, templateData, allPages = []) {
-    return `<!DOCTYPE html>
-<html lang="${store.language || 'en'}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${page.meta_title || page.title || `${page.page_type} - ${store.name}`}</title>
-    <meta name="description" content="${page.meta_description || page.subtitle || ''}">
-    <link rel="icon" href="${store.favicon_url || '/favicon.ico'}">
-    
-    <style>
-        :root {
-            --primary-color: ${store.primary_color || '#007cba'};
-            --secondary-color: ${store.secondary_color || '#f8f9fa'};
-            --text-primary: #1a1a1a;
-            --text-secondary: #666;
-            --background: #ffffff;
-            --border-light: #e1e1e1;
-            --spacing-sm: 1rem;
-            --spacing-md: 1.5rem;
-            --spacing-lg: 2rem;
-            --spacing-xl: 3rem;
-            --container-max: 1200px;
-            --border-radius: 8px;
-            --box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.6;
-            color: var(--text-primary);
-            background: var(--background);
-        }
-        
-        .container {
-            max-width: var(--container-max);
-            margin: 0 auto;
-            padding: 0 var(--spacing-sm);
-        }
-        
-        /* Header */
-        .header {
-            background: white;
-            box-shadow: var(--box-shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-sm) 0;
-        }
-        
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .logo img {
-            height: 40px;
-            width: auto;
-        }
-        
-        .nav {
-            display: flex;
-            gap: var(--spacing-md);
-        }
-        
-        .nav a {
-            color: var(--text-primary);
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: var(--border-radius);
-            transition: all 0.3s ease;
-        }
-        
-        .nav a:hover {
-            background: var(--secondary-color);
-            color: var(--primary-color);
-        }
-        
-        /* Main Content */
-        .main {
-            padding: var(--spacing-xl) 0;
-        }
-        
-        .page-title {
-            text-align: center;
-            margin-bottom: var(--spacing-lg);
-        }
-        
-        .page-title h1 {
-            font-size: 2.5rem;
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .page-title p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-        
-        .content {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: var(--spacing-lg);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-        }
-        
-        .content p {
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-sm);
-            font-size: 1.1rem;
-        }
-        
-        /* Footer styles are included in the footer component */
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .page-title h1 {
-                font-size: 2rem;
-            }
-            
-            .nav {
-                display: none;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                ${store.logo_url 
-                  ? `<a href="/" class="logo"><img src="${store.logo_url}" alt="${store.name}"></a>`
-                  : `<a href="/" class="logo">${store.name}</a>`
-                }
-                <nav class="nav">
-                    <a href="/">Home</a>
-                    <a href="/products">Products</a>
-                    <a href="/about">About</a>
-                    <a href="/contact">Contact</a>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main">
-        <div class="container">
-            <div class="page-title">
-                <h1>${page.title || page.page_type.charAt(0).toUpperCase() + page.page_type.slice(1)}</h1>
-                ${page.subtitle ? `<p>${page.subtitle}</p>` : ''}
-            </div>
-
-            <div class="content">
-                ${contentBlocks.length > 0 ? contentBlocks.map(block => {
-                    // Get original content
-                    let content = block.content || '';
-                    
-                    // Always decode HTML entities first
-                    content = content.replace(/&lt;/g, '<')
-                                   .replace(/&gt;/g, '>')
-                                   .replace(/&amp;/g, '&')
-                                   .replace(/&quot;/g, '"')
-                                   .replace(/&#x2F;/g, '/')
-                                   .replace(/&#39;/g, "'");
-                    
-                    // If content contains HTML tags after decoding, return as HTML
-                    // Otherwise wrap in paragraph
-                    if (content.includes('<') && (content.includes('<h') || content.includes('<p') || content.includes('<div') || content.includes('<strong') || content.includes('<em'))) {
-                        return content;
-                    } else {
-                        return `<p>${content}</p>`;
-                    }
-                }).join('') : `
-                    <p>Welcome to the ${page.page_type} page of ${store.name}.</p>
-                    <p>This page is currently being built. Please check back soon for updates!</p>
-                `}
-            </div>
-        </div>
-    </main>
-
-    ${await this.generateFooter(store, allPages)}
-</body>
-</html>`;
-  }
-
-  /**
-   * Generate additional assets (CSS, robots.txt, sitemap, etc.)
-   */
-  async generateAssets(store, storePath) {
-    try {
-      // Generate robots.txt
-      const robotsTxt = `User-agent: *
-Allow: /
-
-Sitemap: https://${store.domain}/sitemap.xml`;
-      
-      fs.writeFileSync(path.join(storePath, 'robots.txt'), robotsTxt, 'utf8');
-      
-      // Generate basic sitemap.xml
-      const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://${store.domain}/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://${store.domain}/products</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://${store.domain}/about</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://${store.domain}/contact</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-</urlset>`;
-      
-      fs.writeFileSync(path.join(storePath, 'sitemap.xml'), sitemapXml, 'utf8');
-      
-      console.log('✅ Generated SEO assets (robots.txt, sitemap.xml)');
-      
-    } catch (error) {
-      console.error('Error generating assets:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Automatically commit and push store files to GitHub
-   */
-  async autoCommitAndPush(store, storePath) {
-    try {
-      console.log(`🔧 Auto-committing store files for ${store.name}...`);
-      
-      // Change to project root directory
-      const projectRoot = process.cwd();
-      
-      // Add the store directory to git
-      const relativePath = path.relative(projectRoot, storePath);
-      execSync(`git add "${relativePath}"`, { cwd: projectRoot });
-      console.log(`✅ Added store files to git: ${relativePath}`);
-      
-      // Also add database changes to the same commit
-      execSync('git add database/multistore.db', { cwd: projectRoot });
-      console.log('✅ Added database changes to git');
-      
-      // Create commit message
-      const commitMessage = `Add ${store.name} store files and deployment
-
-Domain: ${store.domain}
-Country: ${store.country}
-Language: ${store.language}
-Currency: ${store.currency}
-
-🤖 Generated with Claude Code
-
-Co-Authored-By: Claude <noreply@anthropic.com>`;
-      
-      // Commit the changes using HEREDOC to handle multi-line messages properly
-      execSync(`git commit -m "$(cat <<'EOF'
-${commitMessage}
-EOF
-)"`, { cwd: projectRoot });
-      console.log(`✅ Committed changes for ${store.name}`);
-      
-      // Push to GitHub
-      execSync('git push', { cwd: projectRoot });
-      console.log(`🚀 Pushed to GitHub successfully!`);
-      
-      console.log(`✅ Git automation completed for ${store.name}`);
-      console.log(`🌐 Files should now appear on GitHub and trigger Vercel deployment`);
-      
-    } catch (error) {
-      console.error(`❌ Git automation failed for ${store.name}:`, error.message);
-      console.error('Full error details:', error);
-      console.warn(`⚠️ Store files were created locally but not pushed to GitHub`);
-      console.warn(`🔧 Manual push required:`);
-      console.warn(`   git add stores/${store.domain}/`);
-      console.warn(`   git add database/multistore.db`);
-      console.warn(`   git commit -m "Add ${store.name} store files"`);
-      console.warn(`   git push`);
-      
-      // Don't throw error - store creation should succeed even if git fails
-      // throw error;
-    }
-  }
-
-  /**
-   * Generate individual product detail pages as static HTML files
-   */
-  async generateProductDetailPages(store, storePath, allPages) {
-    try {
-      console.log(`🔍 DEBUG: Starting generateProductDetailPages for ${store.name}`);
-      
-      // Skip if no Shopify connection
-      if (!store.shopify_domain || !store.shopify_access_token) {
-        console.log(`ℹ️ No Shopify connection for ${store.name} - skipping product detail pages`);
-        return;
-      }
-      
-      console.log(`🔍 DEBUG: Shopify connection found - domain: ${store.shopify_domain}, has token: ${!!store.shopify_access_token}`);
-
       // Get selected products
-      let selectedProducts = [];
-      console.log(`🔍 DEBUG: Raw selected_products: ${store.selected_products}`);
+      let selectedProductHandles = [];
       if (store.selected_products) {
         try {
-          selectedProducts = JSON.parse(store.selected_products);
-          console.log(`🔍 DEBUG: Parsed selected_products:`, selectedProducts);
-        } catch (error) {
-          console.warn('Invalid selected_products JSON:', error);
-          selectedProducts = [];
+          selectedProductHandles = typeof store.selected_products === 'string' 
+            ? JSON.parse(store.selected_products)
+            : store.selected_products;
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse selected_products, showing all products');
+          selectedProductHandles = [];
         }
       }
 
-      if (selectedProducts.length === 0) {
-        console.log(`ℹ️ No products selected for ${store.name} - skipping product detail pages`);
-        return;
+      // Filter products if selection exists
+      let displayProducts = products;
+      if (selectedProductHandles.length > 0) {
+        displayProducts = products.filter(product => selectedProductHandles.includes(product.handle));
+        console.log(`🛒 Showing ${displayProducts.length} selected products out of ${products.length} total`);
+      } else {
+        console.log(`🛒 Showing all ${displayProducts.length} products (no selection configured)`);
       }
 
-      console.log(`🔍 DEBUG: Found ${selectedProducts.length} selected products, proceeding...`);
+      // Generate product HTML
+      const productsHtml = displayProducts.map(product => this.generateProductCard(product, store, themeConfig)).join('\n');
 
-      console.log(`📦 Generating product detail pages for ${selectedProducts.length} products...`);
-
-      // Create products directory
-      const productsDir = path.join(storePath, 'products');
-      if (!fs.existsSync(productsDir)) {
-        fs.mkdirSync(productsDir, { recursive: true });
-      }
-
-      // Fetch products from Shopify
-      const allProducts = await store.fetchShopifyProducts(50);
+      // Load products page template
+      const template = await this.loadTemplate('products');
       
-      // Filter to only selected products
-      const productsToGenerate = allProducts.filter(product => 
-        selectedProducts.includes(product.handle)
-      );
+      // Prepare variables
+      const variables = {
+        // Store information
+        store_name: store.name,
+        store_domain: store.domain,
+        support_email: store.support_email || `support@${store.domain}`,
+        
+        // Page content
+        page_title: page.title || 'Our Products',
+        page_subtitle: page.subtitle || 'Discover our amazing collection',
+        meta_title: page.meta_title || `Products - ${store.name}`,
+        meta_description: page.meta_description || `Shop our products at ${store.name}`,
+        
+        // Products
+        products_html: productsHtml,
+        products_count: displayProducts.length,
+        
+        // Theme variables
+        theme_primary: themeConfig.primary,
+        theme_secondary: themeConfig.secondary,
+        theme_accent: themeConfig.accent || themeConfig.primary,
+        theme_background: themeConfig.background || '#ffffff',
+        theme_surface: themeConfig.surface || '#f8f9fa',
+        
+        // Navigation and footer
+        nav_links: this.generateNavLinks(store, 'products'),
+        footer_content: this.generateFooterContent(store)
+      };
 
-      // Generate each product detail page
-      for (const product of productsToGenerate) {
-        await this.generateSingleProductPage(store, product, productsDir, allPages);
+      // Replace template variables
+      let html = template;
+      for (const [key, value] of Object.entries(variables)) {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        html = html.replace(regex, value);
       }
 
-      console.log(`✅ Generated ${productsToGenerate.length} product detail pages`);
+      return html;
 
     } catch (error) {
-      console.error(`❌ Error generating product detail pages:`, error);
-      // Don't throw - let the main generation continue
+      console.error(`❌ Error generating products page:`, error.message);
+      
+      // Fallback to basic products page
+      return await this.generatePage(store, {
+        ...page,
+        title: 'Products',
+        content: '<p>Products are being loaded. Please check back soon!</p>'
+      }, themeConfig);
     }
   }
 
   /**
-   * Generate a single product detail page
+   * Generate HTML for a single product card
    */
-  async generateSingleProductPage(store, product, productsDir, allPages) {
+  generateProductCard(product, store, themeConfig) {
+    const primaryVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+    const primaryImage = product.images && product.images.length > 0 ? product.images[0] : null;
+    
+    const price = primaryVariant ? `${primaryVariant.price.toFixed(2)} ${store.currency}` : 'Price unavailable';
+    const compareAtPrice = primaryVariant && primaryVariant.compare_at_price 
+      ? `${primaryVariant.compare_at_price.toFixed(2)} ${store.currency}`
+      : null;
+    
+    const imageHtml = primaryImage 
+      ? `<img src="${primaryImage.src}" alt="${primaryImage.alt}" class="product-image" loading="lazy">`
+      : `<div class="product-image-placeholder">No Image</div>`;
+    
+    const priceHtml = compareAtPrice && primaryVariant.compare_at_price > primaryVariant.price
+      ? `<span class="product-price-sale">${price}</span> <span class="product-price-original">${compareAtPrice}</span>`
+      : `<span class="product-price">${price}</span>`;
+
+    const availabilityClass = primaryVariant && primaryVariant.available ? 'product-available' : 'product-unavailable';
+    const availabilityText = primaryVariant && primaryVariant.available ? 'In Stock' : 'Out of Stock';
+
+    return `
+    <div class="product-card ${availabilityClass}">
+      <div class="product-image-container">
+        ${imageHtml}
+        ${!primaryVariant || !primaryVariant.available ? '<div class="product-overlay">Out of Stock</div>' : ''}
+      </div>
+      <div class="product-info">
+        <h3 class="product-title">${product.title}</h3>
+        <p class="product-vendor">${product.vendor || ''}</p>
+        <div class="product-price-container">
+          ${priceHtml}
+        </div>
+        <p class="product-availability ${availabilityClass}">${availabilityText}</p>
+        <div class="product-actions">
+          ${primaryVariant && primaryVariant.available 
+            ? `<button class="btn btn-primary" onclick="viewProduct('${product.handle}')">View Product</button>`
+            : `<button class="btn btn-secondary" disabled>Out of Stock</button>`
+          }
+        </div>
+      </div>
+    </div>`;
+  }
+
+  /**
+   * Process page content (handle JSON blocks or HTML)
+   */
+  processPageContent(content) {
+    if (!content) return '';
+
+    // If content looks like JSON (content blocks), process it
+    if (content.trim().startsWith('[') || content.trim().startsWith('{')) {
+      try {
+        const blocks = JSON.parse(content);
+        if (Array.isArray(blocks)) {
+          return blocks.map(block => this.renderContentBlock(block)).join('\n');
+        } else {
+          return this.renderContentBlock(blocks);
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to parse content as JSON, treating as HTML');
+        return content;
+      }
+    }
+
+    // Otherwise treat as HTML
+    return content;
+  }
+
+  /**
+   * Render a content block to HTML
+   */
+  renderContentBlock(block) {
+    switch (block.type) {
+      case 'text':
+        return `<div class="content-block text-block">${block.content}</div>`;
+      
+      case 'hero':
+        return `
+        <div class="content-block hero-block">
+          <h1>${block.title}</h1>
+          ${block.subtitle ? `<p class="hero-subtitle">${block.subtitle}</p>` : ''}
+          ${block.cta ? `<a href="#" class="btn btn-primary">${block.cta}</a>` : ''}
+        </div>`;
+      
+      case 'features':
+        const featuresHtml = block.items ? block.items.map(item => 
+          `<div class="feature-item">
+            <h4>${item.title}</h4>
+            <p>${item.description}</p>
+          </div>`
+        ).join('') : '';
+        return `<div class="content-block features-block">${featuresHtml}</div>`;
+      
+      default:
+        return `<div class="content-block unknown-block">${block.content || ''}</div>`;
+    }
+  }
+
+  /**
+   * Generate navigation links
+   */
+  generateNavLinks(store, currentPageType) {
+    const links = [
+      { href: '/', text: 'Home', type: 'home' },
+      { href: '/products.html', text: 'Products', type: 'products' },
+      { href: '/about.html', text: 'About', type: 'about' },
+      { href: '/contact.html', text: 'Contact', type: 'contact' }
+    ];
+
+    return links.map(link => {
+      const activeClass = link.type === currentPageType ? ' class="active"' : '';
+      return `<a href="${link.href}"${activeClass}>${link.text}</a>`;
+    }).join('\n');
+  }
+
+  /**
+   * Generate footer content
+   */
+  generateFooterContent(store) {
+    return `
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>${store.name}</h4>
+        <p>Quality products and exceptional service.</p>
+        ${store.support_email ? `<p>Email: <a href="mailto:${store.support_email}">${store.support_email}</a></p>` : ''}
+        ${store.support_phone ? `<p>Phone: ${store.support_phone}</p>` : ''}
+      </div>
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/products.html">Products</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-section">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="/terms.html">Terms of Service</a></li>
+          <li><a href="/privacy.html">Privacy Policy</a></li>
+        </ul>
+      </div>
+    </div>`;
+  }
+
+  /**
+   * Generate static files (CSS, JS, etc.)
+   */
+  async generateStaticFiles(store, storePath, themeConfig) {
     try {
-      console.log(`📄 Generating product page: ${product.handle}`);
+      // Generate main CSS file with theme colors
+      const cssContent = this.generateCSS(themeConfig);
+      fs.writeFileSync(path.join(storePath, 'styles.css'), cssContent, 'utf8');
 
-      // Use the same template as the dynamic rendering in domainRouter.js
-      const ejs = require('ejs');
-      const templatePath = path.join(process.cwd(), 'views', 'product-detail.ejs');
-      
-      const html = await ejs.renderFile(templatePath, {
-        title: `${product.title} - ${store.name}`,
-        store: store,
-        product: product,
-        allPages: allPages,
-        metaDescription: product.description ? 
-          product.description.replace(/<[^>]*>/g, '').substring(0, 160) + '...' :
-          `${product.title} - Available at ${store.name}`
-      });
+      // Generate basic JavaScript
+      const jsContent = this.generateJavaScript(store);
+      fs.writeFileSync(path.join(storePath, 'scripts.js'), jsContent, 'utf8');
 
-      // Write the product page file
-      const fileName = `${product.handle}.html`;
-      const filePath = path.join(productsDir, fileName);
-      fs.writeFileSync(filePath, html, 'utf8');
-      
-      console.log(`✅ Generated product page: products/${fileName}`);
+      // Generate robots.txt
+      const robotsContent = this.generateRobotsTxt(store);
+      fs.writeFileSync(path.join(storePath, 'robots.txt'), robotsContent, 'utf8');
+
+      console.log('✅ Generated static files (CSS, JS, robots.txt)');
 
     } catch (error) {
-      console.error(`❌ Error generating product page for ${product.handle}:`, error);
-      // Continue with other products
+      console.error('❌ Error generating static files:', error.message);
     }
+  }
+
+  /**
+   * Generate CSS with theme colors
+   */
+  generateCSS(themeConfig) {
+    return `
+/* Generated CSS for theme: ${themeConfig.name} */
+:root {
+  --theme-primary: ${themeConfig.primary};
+  --theme-secondary: ${themeConfig.secondary};
+  --theme-accent: ${themeConfig.accent};
+  --theme-background: ${themeConfig.background};
+  --theme-surface: ${themeConfig.surface};
+}
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: var(--theme-background);
+}
+
+/* Header styles */
+header {
+  background: var(--theme-primary);
+  color: white;
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+nav a:hover,
+nav a.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Main content */
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Content blocks */
+.content-block {
+  margin: 2rem 0;
+}
+
+.hero-block {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
+  color: white;
+  border-radius: 8px;
+}
+
+.hero-block h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+}
+
+.features-block {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.feature-item {
+  padding: 2rem;
+  background: var(--theme-surface);
+  border-radius: 8px;
+  text-align: center;
+}
+
+/* Product grid */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.product-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-container {
+  position: relative;
+  height: 250px;
+  overflow: hidden;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--theme-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.product-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.product-info {
+  padding: 1.5rem;
+}
+
+.product-title {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-vendor {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.product-price-container {
+  margin: 1rem 0;
+}
+
+.product-price {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: var(--theme-primary);
+}
+
+.product-price-sale {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #e74c3c;
+}
+
+.product-price-original {
+  text-decoration: line-through;
+  color: #666;
+  margin-left: 0.5rem;
+}
+
+.product-availability {
+  font-size: 0.9rem;
+  margin: 0.5rem 0;
+}
+
+.product-available {
+  color: #27ae60;
+}
+
+.product-unavailable {
+  color: #e74c3c;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: var(--theme-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--theme-accent);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--theme-secondary);
+  color: #333;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Footer */
+footer {
+  background: #333;
+  color: white;
+  padding: 3rem 0 1rem;
+  margin-top: 4rem;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.footer-section h4 {
+  margin-bottom: 1rem;
+  color: var(--theme-primary);
+}
+
+.footer-section ul {
+  list-style: none;
+}
+
+.footer-section ul li {
+  margin: 0.5rem 0;
+}
+
+.footer-section a {
+  color: #ccc;
+  text-decoration: none;
+}
+
+.footer-section a:hover {
+  color: var(--theme-primary);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .hero-block h1 {
+    font-size: 2rem;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+  
+  nav {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+`;
+  }
+
+  /**
+   * Generate basic JavaScript
+   */
+  generateJavaScript(store) {
+    return `
+// Generated JavaScript for ${store.name}
+
+// Product view function
+function viewProduct(handle) {
+  // For now, just show an alert
+  // In the future, this could open a product modal or redirect to a product page
+  alert('Product details for: ' + handle + '\\n\\nThis feature will be enhanced in future updates.');
+}
+
+// Basic smooth scrolling for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({
+        behavior: 'smooth'
+      });
+    }
+  });
+});
+
+// Basic form handling
+document.addEventListener('DOMContentLoaded', function() {
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Form submission is not yet implemented. Coming soon!');
+    });
+  });
+});
+
+console.log('🏪 Store: ${store.name} | Domain: ${store.domain} | Generated with Claude Code');
+`;
+  }
+
+  /**
+   * Generate robots.txt
+   */
+  generateRobotsTxt(store) {
+    return `User-agent: *
+Allow: /
+
+Sitemap: https://${store.domain}/sitemap.xml
+
+# Generated for ${store.name}`;
+  }
+
+  /**
+   * Load HTML template from templates directory
+   */
+  async loadTemplate(templateName) {
+    const templatePath = path.join(this.templatesPath, `${templateName}.html`);
+    
+    if (fs.existsSync(templatePath)) {
+      return fs.readFileSync(templatePath, 'utf8');
+    } else {
+      console.warn(`⚠️ Template ${templateName}.html not found, using default template`);
+      return this.getDefaultTemplate();
+    }
+  }
+
+  /**
+   * Get default HTML template
+   */
+  getDefaultTemplate() {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{meta_title}}</title>
+    <meta name="description" content="{{meta_description}}">
+    ${`{{favicon_url}}` ? `<link rel="icon" href="{{favicon_url}}">` : ''}
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-brand">
+                {{#if logo_url}}
+                <img src="{{logo_url}}" alt="{{store_name}}" class="logo">
+                {{else}}
+                <h1>{{store_name}}</h1>
+                {{/if}}
+            </div>
+            <div class="nav-links">
+                {{nav_links}}
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        {{#if page_subtitle}}
+        <div class="page-header">
+            <h1>{{page_title}}</h1>
+            <p class="page-subtitle">{{page_subtitle}}</p>
+        </div>
+        {{else}}
+        <h1>{{page_title}}</h1>
+        {{/if}}
+
+        <div class="page-content">
+            {{page_content}}
+        </div>
+
+        {{#if products_html}}
+        <div class="products-section">
+            <h2>Our Products</h2>
+            <div class="products-grid">
+                {{products_html}}
+            </div>
+        </div>
+        {{/if}}
+    </main>
+
+    <footer>
+        {{footer_content}}
+        <div class="footer-bottom">
+            <p>&copy; {{new Date().getFullYear()}} {{store_name}}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="scripts.js"></script>
+</body>
+</html>`;
+  }
+
+  /**
+   * Determine template name based on page type
+   */
+  getTemplateName(page) {
+    const templateMap = {
+      'home': 'home',
+      'products': 'products',
+      'about': 'about',
+      'contact': 'contact',
+      'terms': 'legal',
+      'privacy': 'legal',
+      'refund': 'legal',
+      'delivery': 'legal'
+    };
+
+    return templateMap[page.page_type] || 'default';
+  }
+
+  /**
+   * Get file name for page
+   */
+  getPageFileName(page) {
+    if (page.page_type === 'home') {
+      return 'index.html';
+    }
+    
+    // Use slug if available, otherwise use page_type
+    const slug = page.slug || page.page_type;
+    return `${slug}.html`;
+  }
+
+  /**
+   * Ensure directory exists
+   */
+  ensureDirectoryExists(dirPath) {
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+  }
+
+  /**
+   * Format file size for logging
+   */
+  formatFileSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 }
 

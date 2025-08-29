@@ -29,6 +29,7 @@ app.use(domainRouter);
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/api', require('./routes/api'));
+app.use('/', require('./routes/themes')); // Add themes routes
 
 // Static serving for store files
 app.use('/stores', express.static(path.join(__dirname, 'stores'), {

@@ -31,14 +31,6 @@
                     </div>
                 </div>
                 
-                <div class="mt-4">
-                    <a href="/admin/store/<%= store.uuid %>/pages" class="btn btn-outline-light btn-sm">
-                        <i class="bi bi-files me-2"></i>Manage Pages
-                    </a>
-                    <a href="<%= store.deployment_url.startsWith('http') ? store.deployment_url : 'https://' + store.deployment_url %>" target="_blank" class="btn btn-outline-success btn-sm mt-2">
-                        <i class="bi bi-box-arrow-up-right me-2"></i>View Live
-                    </a>
-                </div>
             </div>
             
             <div class="col-md-9 p-4">

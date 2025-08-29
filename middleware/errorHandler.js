@@ -13,7 +13,7 @@ class AppError extends Error {
 
 // Development error handler - detailed error info
 const handleDevError = (err, req, res) => {
-  console.error('💥 ERROR STACK:', err.stack);
+  console.error('💥 ERROR STACK:', err.stack || err.message || 'No stack trace available');
   
   if (req.originalUrl.startsWith('/api/')) {
     // API error response

@@ -273,7 +273,7 @@ describe('TemplateRenderer', () => {
         '<html>Test</html>',
         'utf8'
       );
-      expect(mockRenderPageHTML).toHaveBeenCalledWith(mockStore, mockPages[0], mockPages);
+      expect(mockRenderPageHTML).toHaveBeenCalledWith(mockStore, mockPages[0], mockPages, []);
     });
 
     test('should use correct filename for non-home pages', async () => {
