@@ -1,11 +1,30 @@
 
 // Generated JavaScript for Clipia Germany
 
-// Product view function
-function viewProduct(handle) {
-  // For now, just show an alert
-  // In the future, this could open a product modal or redirect to a product page
-  alert('Product details for: ' + handle + '\n\nThis feature will be enhanced in future updates.');
+// Product image switching
+function changeMainImage(imageSrc) {
+  const mainImage = document.querySelector('.main-product-image');
+  if (mainImage) {
+    mainImage.src = imageSrc;
+  }
+  
+  // Update active thumbnail
+  document.querySelectorAll('.product-thumbnail').forEach(thumb => {
+    thumb.classList.remove('active');
+  });
+  event.target.closest('.product-thumbnail').classList.add('active');
+}
+
+// Product variant selection
+function selectVariant(variantId) {
+  // Update selected variant
+  document.querySelectorAll('.variant-option').forEach(variant => {
+    variant.classList.remove('selected');
+  });
+  event.target.classList.add('selected');
+  
+  // In a real implementation, this would update price and availability
+  console.log('Selected variant:', variantId);
 }
 
 // Basic smooth scrolling for anchor links
