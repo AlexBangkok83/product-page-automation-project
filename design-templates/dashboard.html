@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command Center - MultiStore Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Dashboard-specific creative enhancements */
+        .hero-metric {
+            position: relative;
+            background: var(--brand-mesh-soft);
+            border: 1px solid rgba(108, 99, 255, 0.1);
+            overflow: hidden;
+        }
+        
+        .hero-metric::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(108, 99, 255, 0.05) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+            z-index: 1;
+        }
+        
+        .hero-metric-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr);
+            grid-template-rows: repeat(12, minmax(60px, auto));
+            gap: var(--spacing-24);
+        }
+        
+        .metric-hero { grid-column: 1 / 11; grid-row: 1 / 3; }
+        .metric-accent-1 { grid-column: 11 / 13; grid-row: 1 / 2; }
+        .metric-accent-2 { grid-column: 13 / 15; grid-row: 1 / 2; }
+        .metric-accent-3 { grid-column: 15 / 17; grid-row: 1 / 2; }
+        .stores-table { grid-column: 1 / 11; grid-row: 3 / 8; }
+        .activity-panel { grid-column: 11 / 17; grid-row: 2 / 6; }
+        .quick-actions { grid-column: 1 / 17; grid-row: 8 / 9; }
+        .insights-panel { grid-column: 11 / 17; grid-row: 6 / 8; }
+    </style>
+</head>
+<body>
+    <!-- 
+    ASSUMPTIONS:
+    - Time range selector defaults to "7d" 
+    - KPI data shows realistic e-commerce metrics
+    - Store table includes varied statuses for demonstration
+    - Recent activity shows last 5 items for readability
+    -->
+
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                MultiStore Platform
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="#" class="sidebar-nav-link active">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="stores.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10z"/>
+                            </svg>
+                            <span>Stores</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="template-builder.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14z"/>
+                            </svg>
+                            <span>Template Builder</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="company-profile.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            <span>Company Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar" style="background: var(--color-surface-glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);">
+                <div class="flex items-center gap-4">
+                    <h1 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin: 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Command Center</h1>
+                    
+                    <div class="filter-chips">
+                        <button class="chip">Today</button>
+                        <button class="chip active">7d</button>
+                        <button class="chip">30d</button>
+                        <button class="chip">Custom</button>
+                    </div>
+                    
+                    <div class="status-indicator active" style="margin-left: auto; margin-right: var(--spacing-16);">
+                        All Systems Operational
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="form-group" style="margin: 0; min-width: 280px;">
+                        <input type="search" class="form-control search-input" placeholder="Search stores, domains..." style="min-height: 40px; background: var(--color-surface-floating);">
+                    </div>
+                    
+                    <button class="btn btn-gradient floating">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Create Store
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Creative Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <!-- Hero Metric -->
+                    <div class="card hero-metric kpi-card-enhanced card-magnetic metric-hero floating">
+                        <div class="hero-metric-content">
+                            <div class="kpi-header">
+                                <h3 class="kpi-title" style="font-size: var(--font-size-lg); color: var(--brand-primary);">Total Revenue</h3>
+                                <div class="progress-ring" data-progress="75">
+                                    <svg class="progress-ring-circle">
+                                        <circle cx="24" cy="24" r="20" class="progress-ring-progress"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="kpi-value-enhanced">€47,829</div>
+                            <div class="kpi-delta positive" style="font-size: var(--font-size-base);">
+                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                                </svg>
+                                +23.5% vs last month
+                            </div>
+                            <div class="kpi-chart-mini">
+                                <svg viewBox="0 0 48 24" style="width: 100%; height: 100%;">
+                                    <polyline points="2,20 12,15 22,18 32,8 42,12" fill="none" stroke="var(--brand-primary)" stroke-width="2" opacity="0.6"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accent Metrics -->
+                    <div class="card kpi-card-enhanced card-magnetic metric-accent-1 floating-delayed">
+                        <div class="kpi-header">
+                            <h3 class="kpi-title">Stores</h3>
+                            <span class="kpi-time-range">47 total</span>
+                        </div>
+                        <div class="kpi-value-enhanced" style="font-size: var(--font-size-xl);">47</div>
+                        <div class="kpi-delta positive">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                            </svg>
+                            +12%
+                        </div>
+                    </div>
+
+                    <div class="card kpi-card-enhanced card-magnetic metric-accent-2">
+                        <div class="kpi-header">
+                            <h3 class="kpi-title">Active</h3>
+                            <span class="kpi-time-range">41 live</span>
+                        </div>
+                        <div class="kpi-value-enhanced" style="font-size: var(--font-size-xl);">41</div>
+                        <div class="kpi-delta positive">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                            </svg>
+                            +8%
+                        </div>
+                    </div>
+
+                    <div class="card kpi-card-enhanced card-magnetic metric-accent-3 floating">
+                        <div class="kpi-header">
+                            <h3 class="kpi-title">Connected</h3>
+                            <span class="kpi-time-range">38 shopify</span>
+                        </div>
+                        <div class="kpi-value-enhanced" style="font-size: var(--font-size-xl);">38</div>
+                        <div class="kpi-delta negative">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="transform: rotate(180deg);">
+                                <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                            </svg>
+                            -3%
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Stores Table -->
+                    <div class="data-viz-card stores-table">
+                        <div class="data-viz-content">
+                            <div class="card-header" style="border: none; padding-bottom: var(--spacing-16);">
+                                <h2 class="card-title" style="background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Your Stores</h2>
+                                <p class="card-subtitle">Real-time store performance & management</p>
+                            </div>
+                            
+                            <div class="table-container" style="border: none; border-radius: 0; background: transparent;">
+                                <table class="table table-enhanced">
+                                    <thead>
+                                        <tr>
+                                            <th>Store</th>
+                                            <th>Domain</th>
+                                            <th>Location</th>
+                                            <th>Status</th>
+                                            <th>Performance</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: var(--font-weight-semibold);">Clipia Sunglasses</div>
+                                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">Premium eyewear • €2.4k revenue</div>
+                                            </td>
+                                            <td>
+                                                <a href="https://clipia.fi" style="color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">clipia.fi</a>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center" style="gap: var(--spacing-8);">
+                                                    <span style="font-size: var(--font-size-lg);">🇫🇮</span>
+                                                    <span>FI • EUR</span>
+                                                </div>
+                                            </td>
+                                            <td><span class="status-indicator active">Active</span></td>
+                                            <td>
+                                                <div class="progress-ring" data-progress="90" style="width: 32px; height: 32px;">
+                                                    <svg class="progress-ring-circle">
+                                                        <circle cx="16" cy="16" r="12" class="progress-ring-progress"></circle>
+                                                    </svg>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="btn btn-sm btn-ghost">Edit</button>
+                                                    <button class="btn btn-sm btn-tertiary">•••</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: var(--font-weight-semibold);">Nordic Design Co</div>
+                                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">Furniture • Setting up payment</div>
+                                            </td>
+                                            <td>
+                                                <a href="https://nordic-design.com" style="color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">nordic-design.com</a>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center" style="gap: var(--spacing-8);">
+                                                    <span style="font-size: var(--font-size-lg);">🇳🇴</span>
+                                                    <span>NO • NOK</span>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge badge-warning">Setup</span></td>
+                                            <td>
+                                                <div class="progress-ring" data-progress="60" style="width: 32px; height: 32px;">
+                                                    <svg class="progress-ring-circle">
+                                                        <circle cx="16" cy="16" r="12" class="progress-ring-progress"></circle>
+                                                    </svg>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="btn btn-sm btn-ghost">Continue</button>
+                                                    <button class="btn btn-sm btn-tertiary">•••</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: var(--font-weight-semibold);">TechGear Pro</div>
+                                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">Electronics • €1.8k revenue</div>
+                                            </td>
+                                            <td>
+                                                <a href="https://techgear.de" style="color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">techgear.de</a>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center" style="gap: var(--spacing-8);">
+                                                    <span style="font-size: var(--font-size-lg);">🇩🇪</span>
+                                                    <span>DE • EUR</span>
+                                                </div>
+                                            </td>
+                                            <td><span class="status-indicator active">Active</span></td>
+                                            <td>
+                                                <div class="progress-ring" data-progress="75" style="width: 32px; height: 32px;">
+                                                    <svg class="progress-ring-circle">
+                                                        <circle cx="16" cy="16" r="12" class="progress-ring-progress"></circle>
+                                                    </svg>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="btn btn-sm btn-ghost">Edit</button>
+                                                    <button class="btn btn-sm btn-tertiary">•••</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <div style="font-weight: var(--font-weight-semibold);">Organic Beauty</div>
+                                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">Cosmetics • SSL certificate issue</div>
+                                            </td>
+                                            <td>
+                                                <a href="https://organicbeauty.fr" style="color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">organicbeauty.fr</a>
+                                            </td>
+                                            <td>
+                                                <div class="flex items-center" style="gap: var(--spacing-8);">
+                                                    <span style="font-size: var(--font-size-lg);">🇫🇷</span>
+                                                    <span>FR • EUR</span>
+                                                </div>
+                                            </td>
+                                            <td><span class="status-indicator error">Error</span></td>
+                                            <td>
+                                                <div class="progress-ring" data-progress="30" style="width: 32px; height: 32px;">
+                                                    <svg class="progress-ring-circle">
+                                                        <circle cx="16" cy="16" r="12" class="progress-ring-progress"></circle>
+                                                    </svg>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="btn btn-sm btn-danger">Fix Now</button>
+                                                    <button class="btn btn-sm btn-tertiary">•••</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Activity Panel -->
+                    <div class="card card-glass activity-panel floating-delayed">
+                        <div class="card-header" style="border-bottom: 1px solid rgba(108, 99, 255, 0.1);">
+                            <h2 class="card-title" style="background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Live Activity</h2>
+                            <div class="filter-chips">
+                                <button class="chip active" style="font-size: var(--font-size-xs);">All</button>
+                                <button class="chip" style="font-size: var(--font-size-xs);">Errors</button>
+                                <button class="chip" style="font-size: var(--font-size-xs);">Success</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-timeline">
+                                <div class="activity-item success">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">🚀 Store deployed</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 4px 0;">Clipia Sunglasses successfully deployed to production</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">2 minutes ago</div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">🔗 Integration connected</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 4px 0;">Nordic Design Co successfully linked to Shopify store</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">15 minutes ago</div>
+                                </div>
+
+                                <div class="activity-item error">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">⚠️ Certificate issue</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 4px 0;">Organic Beauty SSL certificate expired - auto-renewal failed</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">1 hour ago</div>
+                                </div>
+
+                                <div class="activity-item success">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">✨ Store initialized</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 4px 0;">TechGear Pro store setup completed with base configuration</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">3 hours ago</div>
+                                </div>
+
+                                <div class="activity-item">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">🔄 Template updated</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 4px 0;">Bootstrap template v2.1 changes applied across 3 stores</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">5 hours ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Insights Panel -->
+                    <div class="data-viz-card insights-panel">
+                        <div class="data-viz-content">
+                            <div class="card-header" style="border: none; padding-bottom: var(--spacing-16);">
+                                <h2 class="card-title" style="background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Smart Insights</h2>
+                                <p class="card-subtitle">AI-powered recommendations</p>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: var(--spacing-16);">
+                                <div style="padding: var(--spacing-16); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: var(--radius-md);">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--success-text); margin-bottom: var(--spacing-8);">💡 Optimization Opportunity</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--success-text); opacity: 0.9;">Your conversion rate increased 23% after enabling product reviews. Consider adding this to Nordic Design Co.</div>
+                                </div>
+                                
+                                <div style="padding: var(--spacing-16); background: var(--info-bg); border: 1px solid var(--info-border); border-radius: var(--radius-md);">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--info-text); margin-bottom: var(--spacing-8);">📊 Traffic Pattern</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--info-text); opacity: 0.9;">Peak traffic on Clipia occurs 2-4 PM CET. Consider running flash sales during these hours.</div>
+                                </div>
+                                
+                                <div style="padding: var(--spacing-16); background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-md);">
+                                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--warning-text); margin-bottom: var(--spacing-8);">⚡ Performance Alert</div>
+                                    <div style="font-size: var(--font-size-xs); color: var(--warning-text); opacity: 0.9;">TechGear Pro page load time is 2.3s slower than average. Check image optimization.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Enhanced Quick Actions -->
+                    <div class="data-viz-card quick-actions">
+                        <div class="data-viz-content">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-20);">
+                                <h3 style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); margin: 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Power Tools</h3>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">Everything you need, one click away</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-16);">
+                                <button class="btn btn-gradient floating" style="padding: var(--spacing-16); min-height: 56px; justify-content: flex-start; text-align: left;">
+                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: var(--font-weight-semibold);">Create Store</div>
+                                        <div style="font-size: var(--font-size-xs); opacity: 0.9;">Launch in minutes</div>
+                                    </div>
+                                </button>
+                                <button class="btn btn-ghost card-magnetic" style="padding: var(--spacing-16); min-height: 56px; justify-content: flex-start; text-align: left;">
+                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14z"/>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: var(--font-weight-semibold);">Template Studio</div>
+                                        <div style="font-size: var(--font-size-xs); opacity: 0.9;">Design & customize</div>
+                                    </div>
+                                </button>
+                                <button class="btn btn-ghost card-magnetic" style="padding: var(--spacing-16); min-height: 56px; justify-content: flex-start; text-align: left;">
+                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M9 11H7v6h2v-6zm4-4H11v10h2V7zm4-4H15v14h2V3z"/>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: var(--font-weight-semibold);">Analytics Hub</div>
+                                        <div style="font-size: var(--font-size-xs); opacity: 0.9;">Deep insights</div>
+                                    </div>
+                                </button>
+                                <button class="btn btn-ghost card-magnetic" style="padding: var(--spacing-16); min-height: 56px; justify-content: flex-start; text-align: left;">
+                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                    <div>
+                                        <div style="font-weight: var(--font-weight-semibold);">Profile Center</div>
+                                        <div style="font-size: var(--font-size-xs); opacity: 0.9;">Manage account</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Add some delightful micro-interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Stagger animation for KPI cards
+            const kpiCards = document.querySelectorAll('.kpi-card-enhanced');
+            kpiCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+            
+            // Interactive table rows
+            const tableRows = document.querySelectorAll('.table-enhanced tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.005)';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                });
+            });
+            
+            // Progress ring animations
+            const progressRings = document.querySelectorAll('.progress-ring');
+            progressRings.forEach(ring => {
+                const progress = ring.getAttribute('data-progress');
+                const circle = ring.querySelector('.progress-ring-progress');
+                const circumference = 2 * Math.PI * circle.r.baseVal.value;
+                const offset = circumference - (progress / 100) * circumference;
+                
+                setTimeout(() => {
+                    circle.style.strokeDashoffset = offset;
+                }, 500);
+            });
+        });
+    </script>
+</body>
+</html>

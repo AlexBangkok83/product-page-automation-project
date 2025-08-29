@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Galaxy - MultiStore Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Store-specific creative enhancements */
+        .store-card {
+            position: relative;
+            background: var(--color-surface-floating);
+            border: 1px solid rgba(108, 99, 255, 0.1);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all var(--duration-elastic) var(--ease-elastic);
+        }
+        
+        .store-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-mesh);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform var(--duration-standard) var(--ease-standard);
+        }
+        
+        .store-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-floating);
+        }
+        
+        .store-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .store-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            background: var(--brand-mesh);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: var(--font-weight-bold);
+            font-size: var(--font-size-lg);
+        }
+        
+        .store-metrics {
+            display: flex;
+            gap: var(--spacing-16);
+            margin-top: var(--spacing-12);
+        }
+        
+        .store-metric {
+            text-align: center;
+        }
+        
+        .store-metric-value {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-bold);
+            color: var(--brand-primary);
+        }
+        
+        .store-metric-label {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+        }
+        
+        .stores-masonry {
+            columns: 3;
+            column-gap: var(--spacing-24);
+            margin-top: var(--spacing-24);
+        }
+        
+        .stores-masonry .store-card {
+            break-inside: avoid;
+            margin-bottom: var(--spacing-24);
+        }
+        
+        @media (max-width: 1200px) {
+            .stores-masonry { columns: 2; }
+        }
+        
+        @media (max-width: 768px) {
+            .stores-masonry { columns: 1; }
+        }
+        
+        .view-toggle {
+            display: flex;
+            background: var(--color-surface-glass);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-4);
+        }
+        
+        .view-toggle button {
+            padding: var(--spacing-8) var(--spacing-16);
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--duration-fast) var(--ease-standard);
+        }
+        
+        .view-toggle button.active {
+            background: var(--brand-primary);
+            color: var(--brand-on-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    ASSUMPTIONS:
+    - Bulk actions appear when rows are selected
+    - Status filter defaults to "All" with active stores visible
+    - Search works across store names and domains
+    - Empty state shows when no stores match filters
+    -->
+
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                MultiStore Platform
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="dashboard.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" class="sidebar-nav-link active">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10z"/>
+                            </svg>
+                            <span>Stores</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="template-builder.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14z"/>
+                            </svg>
+                            <span>Template Builder</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="company-profile.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            <span>Company Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar" style="background: var(--color-surface-glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);">
+                <div class="flex items-center gap-4">
+                    <h1 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin: 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Store Galaxy</h1>
+                    <div class="status-indicator active" style="font-size: var(--font-size-sm);">12 stores</div>
+                    
+                    <div class="view-toggle" style="margin-left: auto; margin-right: var(--spacing-16);">
+                        <button class="active" onclick="switchView('cards')">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 3v8h8V3H3zm10 0v8h8V3h-8zM3 13v8h8v-8H3zm10 0v8h8v-8h-8z"/>
+                            </svg>
+                        </button>
+                        <button onclick="switchView('table')">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 14h4v-4H3v4zm0 5h4v-4H3v4zM3 9h4V5H3v4zm5 5h13v-4H8v4zm0 5h13v-4H8v4zM8 5v4h13V5H8z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="btn btn-ghost card-magnetic">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z"/>
+                        </svg>
+                        Export Data
+                    </button>
+                    
+                    <button class="btn btn-gradient floating">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Launch Store
+                    </button>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Enhanced Filters Bar -->
+                <div class="data-viz-card" style="margin-bottom: var(--spacing-24);">
+                    <div class="data-viz-content" style="padding: var(--spacing-20);">
+                        <div style="display: flex; align-items: center; gap: var(--spacing-16); flex-wrap: wrap;">
+                            <div class="form-group search-input" style="margin: 0; flex: 1; min-width: 280px; max-width: 400px;">
+                                <input type="search" class="form-control" placeholder="🔍 Search stores, domains, or categories..." style="min-height: 44px; background: var(--color-surface-floating); border: 2px solid transparent; transition: border-color var(--duration-standard) var(--ease-standard);" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='transparent'">
+                            </div>
+                            
+                            <div class="filter-chips">
+                                <button class="chip active">🌟 All (12)</button>
+                                <button class="chip">✅ Active (8)</button>
+                                <button class="chip">⚙️ Setup (2)</button>
+                                <button class="chip">⚠️ Issues (1)</button>
+                                <button class="chip">💤 Inactive (1)</button>
+                            </div>
+                            
+                            <select class="form-control" style="min-width: 160px; min-height: 44px; background: var(--color-surface-floating);">
+                                <option>🌍 All Countries</option>
+                                <option>🇫🇮 Finland</option>
+                                <option>🇳🇴 Norway</option>
+                                <option>🇩🇪 Germany</option>
+                                <option>🇫🇷 France</option>
+                                <option>🇸🇪 Sweden</option>
+                                <option>🇩🇰 Denmark</option>
+                            </select>
+                            
+                            <button class="btn btn-ghost">
+                                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+                                </svg>
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Bulk Actions Bar -->
+                <div class="data-viz-card floating" style="display: none; margin-bottom: var(--spacing-24); background: var(--brand-mesh-soft); border: 2px solid var(--brand-primary);" id="bulk-actions-bar">
+                    <div class="data-viz-content" style="padding: var(--spacing-16) var(--spacing-24);">
+                        <div class="flex items-center justify-between">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-12);">
+                                <div style="width: 32px; height: 32px; background: var(--brand-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: var(--font-weight-bold); font-size: var(--font-size-sm);">
+                                    <span id="selected-count">3</span>
+                                </div>
+                                <span style="font-weight: var(--font-weight-semibold); color: var(--brand-primary);">
+                                    stores selected - Power tools activated
+                                </span>
+                            </div>
+                            <div class="flex gap-3">
+                                <button class="btn btn-sm btn-gradient">🚀 Deploy All</button>
+                                <button class="btn btn-sm btn-ghost">⚡ Activate</button>
+                                <button class="btn btn-sm btn-ghost">🔗 Connect</button>
+                                <button class="btn btn-sm btn-tertiary">❌</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Creative Store Cards View -->
+                <div id="cards-view" class="stores-masonry">
+                    <div class="store-card card-magnetic floating">
+                        <div style="padding: var(--spacing-20);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16); margin-bottom: var(--spacing-16);">
+                                <div class="store-avatar">C</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold);">Clipia Sunglasses</h3>
+                                    <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted);">Premium eyewear • 🇫🇮 Finland</p>
+                                    <a href="https://clipia.fi" style="font-size: var(--font-size-sm); color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">clipia.fi ↗</a>
+                                </div>
+                                <div class="status-indicator active">Live</div>
+                            </div>
+                            <div class="store-metrics">
+                                <div class="store-metric">
+                                    <div class="store-metric-value">€2.4k</div>
+                                    <div class="store-metric-label">Revenue</div>
+                                </div>
+                                <div class="store-metric">
+                                    <div class="store-metric-value">142</div>
+                                    <div class="store-metric-label">Orders</div>
+                                </div>
+                                <div class="store-metric">
+                                    <div class="store-metric-value">95%</div>
+                                    <div class="store-metric-label">Uptime</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: var(--spacing-16); display: flex; gap: var(--spacing-8);">
+                                <button class="btn btn-sm btn-ghost" style="flex: 1;">✏️ Edit</button>
+                                <button class="btn btn-sm btn-tertiary">📊</button>
+                                <button class="btn btn-sm btn-tertiary">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card card-magnetic floating-delayed">
+                        <div style="padding: var(--spacing-20);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16); margin-bottom: var(--spacing-16);">
+                                <div class="store-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">N</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold);">Nordic Design Co</h3>
+                                    <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted);">Furniture • 🇳🇴 Norway</p>
+                                    <a href="https://nordic-design.com" style="font-size: var(--font-size-sm); color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">nordic-design.com ↗</a>
+                                </div>
+                                <div class="badge badge-warning">Setup</div>
+                            </div>
+                            <div style="background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-md); padding: var(--spacing-12); margin-bottom: var(--spacing-12);">
+                                <div style="font-size: var(--font-size-sm); color: var(--warning-text); font-weight: var(--font-weight-medium);">⚙️ Setup in progress</div>
+                                <div style="font-size: var(--font-size-xs); color: var(--warning-text); opacity: 0.8;">Complete payment configuration to go live</div>
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-8);">
+                                <button class="btn btn-sm btn-gradient" style="flex: 1;">🚀 Continue Setup</button>
+                                <button class="btn btn-sm btn-tertiary">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card card-magnetic">
+                        <div style="padding: var(--spacing-20);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16); margin-bottom: var(--spacing-16);">
+                                <div class="store-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">T</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold);">TechGear Pro</h3>
+                                    <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted);">Electronics • 🇩🇪 Germany</p>
+                                    <a href="https://techgear.de" style="font-size: var(--font-size-sm); color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">techgear.de ↗</a>
+                                </div>
+                                <div class="status-indicator active">Live</div>
+                            </div>
+                            <div class="store-metrics">
+                                <div class="store-metric">
+                                    <div class="store-metric-value">€1.8k</div>
+                                    <div class="store-metric-label">Revenue</div>
+                                </div>
+                                <div class="store-metric">
+                                    <div class="store-metric-value">89</div>
+                                    <div class="store-metric-label">Orders</div>
+                                </div>
+                                <div class="store-metric">
+                                    <div class="store-metric-value">98%</div>
+                                    <div class="store-metric-label">Uptime</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: var(--spacing-16); display: flex; gap: var(--spacing-8);">
+                                <button class="btn btn-sm btn-ghost" style="flex: 1;">✏️ Edit</button>
+                                <button class="btn btn-sm btn-tertiary">📊</button>
+                                <button class="btn btn-sm btn-tertiary">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card card-magnetic floating">
+                        <div style="padding: var(--spacing-20);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16); margin-bottom: var(--spacing-16);">
+                                <div class="store-avatar" style="background: linear-gradient(135deg, #ef4444, #dc2626);">O</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold);">Organic Beauty</h3>
+                                    <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted);">Cosmetics • 🇫🇷 France</p>
+                                    <a href="https://organicbeauty.fr" style="font-size: var(--font-size-sm); color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">organicbeauty.fr ↗</a>
+                                </div>
+                                <div class="status-indicator error">Error</div>
+                            </div>
+                            <div style="background: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: var(--radius-md); padding: var(--spacing-12); margin-bottom: var(--spacing-12);">
+                                <div style="font-size: var(--font-size-sm); color: var(--danger-text); font-weight: var(--font-weight-medium);">🚨 SSL Certificate Issue</div>
+                                <div style="font-size: var(--font-size-xs); color: var(--danger-text); opacity: 0.8;">Certificate expired - requires immediate attention</div>
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-8);">
+                                <button class="btn btn-sm btn-danger" style="flex: 1;">🛠️ Fix Now</button>
+                                <button class="btn btn-sm btn-tertiary">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card card-magnetic floating-delayed">
+                        <div style="padding: var(--spacing-20);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16); margin-bottom: var(--spacing-16);">
+                                <div class="store-avatar" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">F</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold);">Fashion Forward</h3>
+                                    <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted);">Clothing • 🇸🇪 Sweden</p>
+                                    <a href="https://fashionforward.se" style="font-size: var(--font-size-sm); color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">fashionforward.se ↗</a>
+                                </div>
+                                <div class="badge badge-neutral">Inactive</div>
+                            </div>
+                            <div style="background: var(--color-bg); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); padding: var(--spacing-12); margin-bottom: var(--spacing-12); text-align: center;">
+                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted); font-weight: var(--font-weight-medium);">💤 Hibernating</div>
+                                <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); opacity: 0.8;">Store paused by owner</div>
+                            </div>
+                            <div style="display: flex; gap: var(--spacing-8);">
+                                <button class="btn btn-sm btn-ghost" style="flex: 1;">⚡ Activate</button>
+                                <button class="btn btn-sm btn-tertiary">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="store-card card-magnetic">
+                        <div style="padding: var(--spacing-20);">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16); margin-bottom: var(--spacing-16);">
+                                <div class="store-avatar" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">P</div>
+                                <div style="flex: 1;">
+                                    <h3 style="margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-bold);">Pet Paradise</h3>
+                                    <p style="margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted);">Pet supplies • 🇩🇰 Denmark</p>
+                                    <a href="https://petparadise.dk" style="font-size: var(--font-size-sm); color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">petparadise.dk ↗</a>
+                                </div>
+                                <div class="status-indicator active">Live</div>
+                            </div>
+                            <div class="store-metrics">
+                                <div class="store-metric">
+                                    <div class="store-metric-value">€980</div>
+                                    <div class="store-metric-label">Revenue</div>
+                                </div>
+                                <div class="store-metric">
+                                    <div class="store-metric-value">34</div>
+                                    <div class="store-metric-label">Orders</div>
+                                </div>
+                                <div class="store-metric">
+                                    <div class="store-metric-value">100%</div>
+                                    <div class="store-metric-label">Uptime</div>
+                                </div>
+                            </div>
+                            <div style="margin-top: var(--spacing-16); display: flex; gap: var(--spacing-8);">
+                                <button class="btn btn-sm btn-ghost" style="flex: 1;">✏️ Edit</button>
+                                <button class="btn btn-sm btn-tertiary">📊</button>
+                                <button class="btn btn-sm btn-tertiary">⚙️</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enhanced Table View (hidden by default) -->
+                <div id="table-view" style="display: none;">
+                    <div class="table-container" style="background: var(--color-surface-floating); border: 1px solid rgba(108, 99, 255, 0.1);">
+                        <table class="table table-enhanced">
+                            <thead>
+                                <tr>
+                                    <th style="width: 48px;">
+                                        <input type="checkbox" style="width: 18px; height: 18px;">
+                                    </th>
+                                    <th>Store</th>
+                                    <th>Domain</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Performance</th>
+                                    <th>Revenue</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="checkbox" style="width: 18px; height: 18px;"></td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-12);">
+                                            <div class="store-avatar" style="width: 32px; height: 32px; font-size: var(--font-size-sm);">C</div>
+                                            <div>
+                                                <div style="font-weight: var(--font-weight-bold);">Clipia Sunglasses</div>
+                                                <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">Premium eyewear</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><a href="https://clipia.fi" style="color: var(--brand-primary); text-decoration: none; font-weight: var(--font-weight-medium);">clipia.fi ↗</a></td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: var(--spacing-8);">
+                                            <span style="font-size: var(--font-size-lg);">🇫🇮</span>
+                                            <span>FI • EUR</span>
+                                        </div>
+                                    </td>
+                                    <td><span class="status-indicator active">Live</span></td>
+                                    <td><div class="progress-ring" data-progress="95" style="width: 32px; height: 32px;"><svg class="progress-ring-circle"><circle cx="16" cy="16" r="12" class="progress-ring-progress"></circle></svg></div></td>
+                                    <td style="font-weight: var(--font-weight-bold); color: var(--brand-primary);">€2,400</td>
+                                    <td><div class="table-actions"><button class="btn btn-sm btn-ghost">✏️</button><button class="btn btn-sm btn-tertiary">⚙️</button></div></td>
+                                </tr>
+                                <!-- Add more rows here with similar structure -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Enhanced Pagination -->
+                <div class="data-viz-card" style="margin-top: var(--spacing-32);">
+                    <div class="data-viz-content" style="padding: var(--spacing-16) var(--spacing-24);">
+                        <div class="flex items-center justify-between">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-16);">
+                                <div style="color: var(--color-text-muted); font-size: var(--font-size-sm);">Showing 6 of 12 stores</div>
+                                <div style="display: flex; align-items: center; gap: var(--spacing-8);">
+                                    <span style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Per page:</span>
+                                    <select class="form-control" style="min-width: 80px; min-height: 32px; padding: var(--spacing-4) var(--spacing-8);">
+                                        <option>6</option>
+                                        <option>12</option>
+                                        <option>24</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="btn btn-sm btn-ghost" disabled style="opacity: 0.5;">← Previous</button>
+                                <button class="btn btn-sm btn-gradient">1</button>
+                                <button class="btn btn-sm btn-ghost">2</button>
+                                <button class="btn btn-sm btn-ghost">Next →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Enhanced Empty State -->
+    <div class="data-viz-card floating" style="display: none; text-align: center; padding: var(--spacing-48); background: var(--brand-mesh-soft);" id="empty-state">
+        <div class="data-viz-content">
+            <div style="font-size: 4rem; margin-bottom: var(--spacing-24); animation: float 3s ease-in-out infinite;">🌟</div>
+            <h3 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin: 0 0 var(--spacing-16) 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">No stores in your galaxy yet</h3>
+            <p style="color: var(--color-text-muted); margin: 0 0 var(--spacing-32) 0; font-size: var(--font-size-md);">Ready to launch your first e-commerce store? It takes less than 5 minutes to get started.</p>
+            <div style="display: flex; gap: var(--spacing-16); justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-gradient btn-lg">🚀 Launch Your First Store</button>
+                <button class="btn btn-ghost btn-lg">📖 Browse Templates</button>
+            </div>
+            <div style="margin-top: var(--spacing-32); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-16); max-width: 600px; margin-left: auto; margin-right: auto;">
+                <div style="text-align: center; padding: var(--spacing-16);">
+                    <div style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-8);">⚡</div>
+                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">Lightning Fast</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Launch in minutes</div>
+                </div>
+                <div style="text-align: center; padding: var(--spacing-16);">
+                    <div style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-8);">🎨</div>
+                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">Beautiful Design</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Professional templates</div>
+                </div>
+                <div style="text-align: center; padding: var(--spacing-16);">
+                    <div style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-8);">📈</div>
+                    <div style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold);">Analytics Built-in</div>
+                    <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Track everything</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // View switching functionality
+        function switchView(view) {
+            const cardsView = document.getElementById('cards-view');
+            const tableView = document.getElementById('table-view');
+            const buttons = document.querySelectorAll('.view-toggle button');
+            
+            // Remove active class from all buttons
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            if (view === 'cards') {
+                cardsView.style.display = 'block';
+                tableView.style.display = 'none';
+                buttons[0].classList.add('active');
+            } else {
+                cardsView.style.display = 'none';
+                tableView.style.display = 'block';
+                buttons[1].classList.add('active');
+            }
+        }
+        
+        // Enhanced interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Stagger card animations
+            const storeCards = document.querySelectorAll('.store-card');
+            storeCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 100}ms`;
+            });
+            
+            // Checkbox interactions for bulk actions
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const bulkBar = document.getElementById('bulk-actions-bar');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedCount = document.querySelectorAll('input[type="checkbox"]:checked').length;
+                    if (checkedCount > 0) {
+                        bulkBar.style.display = 'block';
+                        document.getElementById('selected-count').textContent = checkedCount;
+                    } else {
+                        bulkBar.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Enhanced search with debounce
+            const searchInput = document.querySelector('input[type="search"]');
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    // Add subtle glow effect while searching
+                    this.style.boxShadow = 'var(--shadow-glow)';
+                    setTimeout(() => {
+                        this.style.boxShadow = 'none';
+                    }, 1000);
+                }, 300);
+            });
+        });
+    </script>
+</body>
+</html>

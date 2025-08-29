@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Profile - MultiStore Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Company Profile Specific Creative Styles */
+        .profile-hero {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            padding: var(--spacing-48) var(--spacing-32);
+            position: relative;
+            overflow: hidden;
+            border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+        }
+        
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(45deg, var(--color-surface), var(--color-surface-glass));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: var(--font-weight-bold);
+            color: var(--brand-primary);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-32);
+            margin: var(--spacing-40) 0;
+        }
+        
+        .form-section {
+            background: var(--color-surface-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-32);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--duration-standard) var(--ease-standard);
+        }
+        
+        .form-section:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-3);
+            border-color: var(--brand-weak);
+        }
+        
+        .form-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        }
+        
+        .form-section-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: var(--spacing-20);
+        }
+        
+        .form-section-title {
+            font-size: var(--font-size-lg);
+            font-weight: var(--font-weight-semibold);
+            margin: 0 0 var(--spacing-8) 0;
+            background: linear-gradient(135deg, var(--color-text), var(--color-text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .form-section-subtitle {
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+            margin: 0 0 var(--spacing-24) 0;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-16);
+            margin-bottom: var(--spacing-20);
+        }
+        
+        .form-row.full-width {
+            grid-template-columns: 1fr;
+        }
+        
+        .creative-textarea {
+            min-height: 120px;
+            resize: vertical;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-16);
+            font-family: inherit;
+            transition: all var(--duration-fast) var(--ease-standard);
+        }
+        
+        .creative-textarea:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 4px var(--brand-weak);
+            background: white;
+        }
+        
+        .upload-zone {
+            border: 2px dashed var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-32);
+            text-align: center;
+            background: var(--color-bg);
+            transition: all var(--duration-fast) var(--ease-standard);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-zone:hover {
+            border-color: var(--brand-primary);
+            background: var(--brand-weak);
+        }
+        
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, var(--brand-weak) 0%, transparent 70%);
+            border-radius: var(--radius-full);
+            transition: all var(--duration-standard) var(--ease-standard);
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+        
+        .upload-zone:hover::before {
+            width: 200px;
+            height: 200px;
+        }
+        
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-8);
+            padding: var(--spacing-12) var(--spacing-16);
+            background: var(--color-success-weak);
+            border: 1px solid var(--color-success);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-sm);
+            color: var(--color-success-strong);
+            margin-top: var(--spacing-16);
+        }
+        
+        .action-bar {
+            position: sticky;
+            bottom: var(--spacing-24);
+            background: var(--color-surface-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-full);
+            padding: var(--spacing-16) var(--spacing-24);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-16);
+            margin: var(--spacing-40) auto 0;
+            max-width: 600px;
+            box-shadow: var(--shadow-2);
+        }
+        
+        .unsaved-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-8);
+            color: var(--color-text-muted);
+            font-size: var(--font-size-sm);
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-warning);
+            border-radius: var(--radius-full);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+        }
+        
+        @media (max-width: 1024px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-24);
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .profile-hero {
+                padding: var(--spacing-32) var(--spacing-20);
+                text-align: center;
+            }
+            
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 32px;
+                margin: 0 auto var(--spacing-20);
+            }
+            
+            .form-section {
+                padding: var(--spacing-20);
+            }
+            
+            .action-bar {
+                position: fixed;
+                bottom: var(--spacing-16);
+                left: var(--spacing-16);
+                right: var(--spacing-16);
+                max-width: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    ASSUMPTIONS:
+    - Company profile form with multiple sections for organization
+    - File upload functionality for logo and brand assets
+    - Real-time saving indicators and progress feedback
+    - Creative layout with glassmorphism and modern interactions
+    -->
+
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                MultiStore Platform
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="dashboard.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="stores.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10z"/>
+                            </svg>
+                            <span>Stores</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="template-builder.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14z"/>
+                            </svg>
+                            <span>Template Builder</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" class="sidebar-nav-link active">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            <span>Company Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Hero Section -->
+            <div class="profile-hero">
+                <div class="flex items-center gap-6">
+                    <div class="profile-avatar">
+                        MS
+                    </div>
+                    <div>
+                        <h1 style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: white; margin: 0 0 var(--spacing-8) 0;">MultiStore Platform</h1>
+                        <p style="color: rgba(255, 255, 255, 0.9); font-size: var(--font-size-lg); margin: 0 0 var(--spacing-4) 0;">Complete your company profile to unlock advanced features 🚀</p>
+                        <div class="progress-indicator">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.58L19 8l-9 9z"/>
+                            </svg>
+                            <span>73% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Sections Grid -->
+            <div class="container">
+                <div class="form-grid">
+                    <!-- Company Information -->
+                    <div class="form-section">
+                        <div class="form-section-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                            </svg>
+                        </div>
+                        <h2 class="form-section-title">Company Information 🏢</h2>
+                        <p class="form-section-subtitle">Core details about your business</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Company Name</label>
+                                <input type="text" class="form-control" value="MultiStore Platform" placeholder="Your company name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Legal Entity</label>
+                                <input type="text" class="form-control" placeholder="LLC, Inc, Ltd, etc.">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Tax ID / VAT Number</label>
+                                <input type="text" class="form-control" placeholder="123456789">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Founded Year</label>
+                                <input type="number" class="form-control" placeholder="2024" min="1900" max="2025">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row full-width">
+                            <div class="form-group">
+                                <label class="form-label">Company Description</label>
+                                <textarea class="creative-textarea" placeholder="Tell us about your company, mission, and what makes you unique..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="form-section">
+                        <div class="form-section-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>
+                        </div>
+                        <h2 class="form-section-title">Contact Information 📞</h2>
+                        <p class="form-section-subtitle">How customers can reach you</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Primary Email</label>
+                                <input type="email" class="form-control" placeholder="hello@multistore.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Support Email</label>
+                                <input type="email" class="form-control" placeholder="support@multistore.com">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" placeholder="+1 (555) 123-4567">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Website</label>
+                                <input type="url" class="form-control" placeholder="https://multistore.com">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row full-width">
+                            <div class="form-group">
+                                <label class="form-label">Business Address</label>
+                                <textarea class="creative-textarea" placeholder="123 Business St.&#10;Suite 100&#10;City, State 12345&#10;Country" style="min-height: 80px;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Details -->
+                    <div class="form-section">
+                        <div class="form-section-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+                            </svg>
+                        </div>
+                        <h2 class="form-section-title">Business Details 💼</h2>
+                        <p class="form-section-subtitle">Industry and operational information</p>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Industry</label>
+                                <select class="form-control">
+                                    <option value="">Select Industry</option>
+                                    <option value="technology">Technology</option>
+                                    <option value="retail">Retail & E-commerce</option>
+                                    <option value="fashion">Fashion & Apparel</option>
+                                    <option value="health">Health & Wellness</option>
+                                    <option value="food">Food & Beverage</option>
+                                    <option value="beauty">Beauty & Cosmetics</option>
+                                    <option value="home">Home & Garden</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Company Size</label>
+                                <select class="form-control">
+                                    <option value="">Select Size</option>
+                                    <option value="1-10">1-10 employees</option>
+                                    <option value="11-50">11-50 employees</option>
+                                    <option value="51-200">51-200 employees</option>
+                                    <option value="201-500">201-500 employees</option>
+                                    <option value="500+">500+ employees</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Annual Revenue</label>
+                                <select class="form-control">
+                                    <option value="">Select Range</option>
+                                    <option value="0-100k">$0 - $100K</option>
+                                    <option value="100k-500k">$100K - $500K</option>
+                                    <option value="500k-1m">$500K - $1M</option>
+                                    <option value="1m-10m">$1M - $10M</option>
+                                    <option value="10m+">$10M+</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Primary Currency</label>
+                                <select class="form-control">
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="SEK">SEK (kr)</option>
+                                    <option value="NOK">NOK (kr)</option>
+                                    <option value="DKK">DKK (kr)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brand Assets -->
+                    <div class="form-section">
+                        <div class="form-section-icon">
+                            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                            </svg>
+                        </div>
+                        <h2 class="form-section-title">Brand Assets 🎨</h2>
+                        <p class="form-section-subtitle">Upload your visual brand elements</p>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Company Logo</label>
+                            <div class="upload-zone">
+                                <div style="font-size: 48px; margin-bottom: var(--spacing-12);">📁</div>
+                                <h4 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin: 0 0 var(--spacing-8) 0;">Drop your logo here</h4>
+                                <p style="color: var(--color-text-muted); margin: 0 0 var(--spacing-16) 0;">Or click to browse files</p>
+                                <p style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Supports PNG, JPG, SVG up to 5MB</p>
+                                <input type="file" style="display: none;" accept=".png,.jpg,.jpeg,.svg" id="logo-upload">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Primary Brand Color</label>
+                                <div style="display: flex; gap: var(--spacing-8); align-items: center;">
+                                    <input type="color" value="#6c63ff" style="width: 50px; height: 40px; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm);">
+                                    <input type="text" class="form-control" value="#6c63ff" placeholder="#6c63ff">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Secondary Color</label>
+                                <div style="display: flex; gap: var(--spacing-8); align-items: center;">
+                                    <input type="color" value="#9c88ff" style="width: 50px; height: 40px; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm);">
+                                    <input type="text" class="form-control" value="#9c88ff" placeholder="#9c88ff">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Brand Guidelines</label>
+                            <div class="upload-zone" style="padding: var(--spacing-20);">
+                                <div style="display: flex; align-items: center; gap: var(--spacing-12);">
+                                    <div style="font-size: 32px;">📋</div>
+                                    <div>
+                                        <h5 style="margin: 0 0 var(--spacing-4) 0;">Upload brand guidelines</h5>
+                                        <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0;">PDF, DOCX up to 10MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Floating Action Bar -->
+            <div class="action-bar">
+                <div class="unsaved-indicator">
+                    <div class="pulse-dot"></div>
+                    <span>Unsaved changes</span>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="btn btn-tertiary">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.58L19 8l-9 9z"/>
+                        </svg>
+                        Save Draft
+                    </button>
+                    
+                    <button class="btn btn-primary">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Complete Profile
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Creative interactions for company profile
+        document.addEventListener('DOMContentLoaded', function() {
+            // Upload zone interactions
+            const uploadZones = document.querySelectorAll('.upload-zone');
+            uploadZones.forEach(zone => {
+                zone.addEventListener('click', () => {
+                    const fileInput = zone.querySelector('input[type="file"]') || document.createElement('input');
+                    if (!zone.querySelector('input[type="file"]')) {
+                        fileInput.type = 'file';
+                        fileInput.style.display = 'none';
+                        zone.appendChild(fileInput);
+                    }
+                    fileInput.click();
+                });
+                
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.style.borderColor = 'var(--brand-primary)';
+                    zone.style.background = 'var(--brand-weak)';
+                });
+                
+                zone.addEventListener('dragleave', () => {
+                    zone.style.borderColor = 'var(--color-border-subtle)';
+                    zone.style.background = 'var(--color-bg)';
+                });
+            });
+            
+            // Auto-save simulation
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    clearTimeout(input.saveTimeout);
+                    input.saveTimeout = setTimeout(() => {
+                        // Simulate auto-save
+                        console.log('Auto-saved:', input.value);
+                    }, 1000);
+                });
+            });
+            
+            // Form section animations
+            const sections = document.querySelectorAll('.form-section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationDelay = `${index * 100}ms`;
+                        entry.target.classList.add('animate-in');
+                    }
+                });
+            });
+            
+            sections.forEach(section => observer.observe(section));
+        });
+    </script>
+</body>
+</html>

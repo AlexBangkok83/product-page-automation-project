@@ -26,7 +26,8 @@ router.get('/admin', async (req, res) => {
       title: 'Admin Dashboard',
       stores: stores,
       totalStores: stores.length,
-      activeStores: stores.filter(s => s.status === 'active').length
+      activeStores: stores.filter(s => s.status === 'active').length,
+      currentPage: 'dashboard'
     });
   } catch (error) {
     console.error('Dashboard error:', error);
@@ -585,8 +586,370 @@ router.post('/admin/site-setup', validateSiteSetup, async (req, res) => {
 // Product Template Builder
 router.get('/admin/product-template', (req, res) => {
   res.render('admin/product-template', { 
-    title: 'Product Template Builder'
+    title: 'Product Template Builder',
+    currentPage: 'product-template'
   });
+});
+
+// Product Page Builder
+router.get('/admin/product-page-builder', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Get existing templates
+    const templates = await db.all('SELECT * FROM product_page_templates ORDER BY created_at DESC');
+    
+    res.render('admin/product-page-builder', { 
+      title: 'Product Page Builder',
+      templates: templates,
+      currentPage: 'product-page-builder'
+    });
+  } catch (error) {
+    console.error('Product page builder error:', error);
+    res.render('admin/product-page-builder', { 
+      title: 'Product Page Builder',
+      templates: [],
+      currentPage: 'product-page-builder'
+    });
+  }
+});
+
+// Save product page template
+router.post('/admin/product-page-builder/save', async (req, res) => {
+  try {
+    const { name, description, sections, assignToProducts, isDefault } = req.body;
+    const db = require('../database/db');
+    
+    if (!name || !sections) {
+      return res.status(400).json({ error: 'Name and sections are required' });
+    }
+    
+    // Insert new template
+    const result = await db.run(`
+      INSERT INTO product_page_templates (name, description, elements, is_default, created_at)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `, [name, description, JSON.stringify(sections), isDefault ? 1 : 0]);
+    
+    const templateId = result.lastID;
+    
+    // If setting as default, remove default flag from others
+    if (isDefault) {
+      await db.run('UPDATE product_page_templates SET is_default = 0 WHERE id != ?', [templateId]);
+    }
+    
+    // Handle product assignments
+    if (assignToProducts && assignToProducts.length > 0) {
+      for (const productHandle of assignToProducts) {
+        await db.run(`
+          INSERT OR REPLACE INTO product_template_assignments (template_id, product_handle, assigned_at)
+          VALUES (?, ?, CURRENT_TIMESTAMP)
+        `, [templateId, productHandle]);
+      }
+    }
+    
+    res.json({ success: true, templateId: templateId });
+    
+  } catch (error) {
+    console.error('Save template error:', error);
+    res.status(500).json({ error: 'Failed to save template' });
+  }
+});
+
+// Get specific template
+router.get('/admin/product-page-builder/template/:id', async (req, res) => {
+  try {
+    console.log('Getting template ID:', req.params.id);
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    const template = await db.get('SELECT * FROM product_page_templates WHERE id = ?', [req.params.id]);
+    console.log('Template found:', template);
+    
+    if (!template) {
+      console.log('Template not found for ID:', req.params.id);
+      return res.status(404).json({ success: false, error: 'Template not found' });
+    }
+    
+    res.json({ success: true, template: template });
+  } catch (error) {
+    console.error('Get template error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get template: ' + error.message });
+  }
+});
+
+// Duplicate template
+router.post('/admin/product-page-builder/template/:id/duplicate', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const db = require('../database/db');
+    
+    const original = await db.get('SELECT * FROM product_page_templates WHERE id = ?', [req.params.id]);
+    if (!original) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    
+    const result = await db.run(`
+      INSERT INTO product_page_templates (name, description, elements, is_default, created_at)
+      VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
+    `, [name, original.description, original.elements]);
+    
+    res.json({ success: true, templateId: result.lastID });
+  } catch (error) {
+    console.error('Duplicate template error:', error);
+    res.status(500).json({ error: 'Failed to duplicate template' });
+  }
+});
+
+// Delete template
+router.delete('/admin/product-page-builder/template/:id', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Check if it's the default template
+    const template = await db.get('SELECT is_default FROM product_page_templates WHERE id = ?', [req.params.id]);
+    if (template && template.is_default) {
+      return res.status(400).json({ error: 'Cannot delete default template' });
+    }
+    
+    // Delete template assignments first
+    await db.run('DELETE FROM product_template_assignments WHERE template_id = ?', [req.params.id]);
+    
+    // Delete template
+    await db.run('DELETE FROM product_page_templates WHERE id = ?', [req.params.id]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete template error:', error);
+    res.status(500).json({ error: 'Failed to delete template' });
+  }
+});
+
+// === NEW TEMPLATE SYSTEM ROUTES ===
+
+// Templates Library - Main listing page
+router.get('/admin/templates', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Get all templates
+    const templates = await db.all('SELECT * FROM product_page_templates ORDER BY is_default DESC, created_at DESC');
+    
+    res.render('admin/templates-library', { 
+      title: 'Templates Library',
+      templates: templates,
+      currentPage: 'templates'
+    });
+  } catch (error) {
+    console.error('Templates library error:', error);
+    res.render('admin/templates-library', { 
+      title: 'Templates Library',
+      templates: [],
+      currentPage: 'templates'
+    });
+  }
+});
+
+// Template Builder - Creation and editing interface
+router.get('/admin/templates/builder', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    const editId = req.query.edit;
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    let templateData = null;
+    let editMode = false;
+    
+    // If editing existing template
+    if (editId) {
+      templateData = await db.get('SELECT * FROM product_page_templates WHERE id = ?', [editId]);
+      if (templateData) {
+        editMode = true;
+      }
+    }
+    
+    res.render('admin/template-builder', { 
+      title: editMode ? `Edit Template - ${templateData.name}` : 'Create Template',
+      template: templateData,
+      editMode: editMode,
+      currentPage: 'template-builder'
+    });
+  } catch (error) {
+    console.error('Template builder error:', error);
+    res.render('admin/template-builder', { 
+      title: 'Create Template',
+      template: null,
+      editMode: false,
+      currentPage: 'template-builder'
+    });
+  }
+});
+
+// Save new template
+router.post('/admin/templates', async (req, res) => {
+  try {
+    const { name, description, sections } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    if (!name || !sections) {
+      return res.status(400).json({ success: false, error: 'Name and sections are required' });
+    }
+    
+    // Insert new template
+    const result = await db.run(`
+      INSERT INTO product_page_templates (name, description, elements, is_default, created_at)
+      VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
+    `, [name, description || '', JSON.stringify(sections)]);
+    
+    res.json({ success: true, templateId: result.lastID });
+    
+  } catch (error) {
+    console.error('Save template error:', error);
+    res.status(500).json({ success: false, error: 'Failed to save template: ' + error.message });
+  }
+});
+
+// Update existing template
+router.put('/admin/templates/:id', async (req, res) => {
+  try {
+    const { name, description, sections } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    if (!name || !sections) {
+      return res.status(400).json({ success: false, error: 'Name and sections are required' });
+    }
+    
+    // Update template
+    await db.run(`
+      UPDATE product_page_templates 
+      SET name = ?, description = ?, elements = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [name, description || '', JSON.stringify(sections), req.params.id]);
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Update template error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update template: ' + error.message });
+  }
+});
+
+// Get specific template (for editing)
+router.get('/admin/templates/:id', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    const template = await db.get('SELECT * FROM product_page_templates WHERE id = ?', [req.params.id]);
+    
+    if (!template) {
+      return res.status(404).json({ success: false, error: 'Template not found' });
+    }
+    
+    res.json({ success: true, template: template });
+  } catch (error) {
+    console.error('Get template error:', error);
+    res.status(500).json({ success: false, error: 'Failed to get template: ' + error.message });
+  }
+});
+
+// Duplicate template
+router.post('/admin/templates/:id/duplicate', async (req, res) => {
+  try {
+    const { name } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    const original = await db.get('SELECT * FROM product_page_templates WHERE id = ?', [req.params.id]);
+    if (!original) {
+      return res.status(404).json({ success: false, error: 'Template not found' });
+    }
+    
+    const result = await db.run(`
+      INSERT INTO product_page_templates (name, description, elements, is_default, created_at)
+      VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP)
+    `, [name, original.description, original.elements]);
+    
+    res.json({ success: true, templateId: result.lastID });
+  } catch (error) {
+    console.error('Duplicate template error:', error);
+    res.status(500).json({ success: false, error: 'Failed to duplicate template: ' + error.message });
+  }
+});
+
+// Delete template
+router.delete('/admin/templates/:id', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Check if it's the default template
+    const template = await db.get('SELECT is_default FROM product_page_templates WHERE id = ?', [req.params.id]);
+    if (template && template.is_default) {
+      return res.status(400).json({ success: false, error: 'Cannot delete default template' });
+    }
+    
+    // Delete template assignments first
+    await db.run('DELETE FROM product_template_assignments WHERE template_id = ?', [req.params.id]);
+    
+    // Delete template
+    await db.run('DELETE FROM product_page_templates WHERE id = ?', [req.params.id]);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete template error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete template: ' + error.message });
+  }
+});
+
+// Template Assignments page
+router.get('/admin/templates/assignments', async (req, res) => {
+  try {
+    res.render('admin/template-assignments', { 
+      title: 'Template Assignments',
+      currentPage: 'template-assignments'
+    });
+  } catch (error) {
+    console.error('Template assignments error:', error);
+    res.render('admin/template-assignments', { 
+      title: 'Template Assignments',
+      currentPage: 'template-assignments'
+    });
+  }
 });
 
 // Agent system works in Claude Code - no web dashboard needed
@@ -594,7 +957,8 @@ router.get('/admin/product-template', (req, res) => {
 // Company Profile - Manage Shopify stores
 router.get('/admin/company-profile', (req, res) => {
   res.render('admin/company-profile', { 
-    title: 'Company Profile - Manage Shopify Stores'
+    title: 'Company Profile - Manage Shopify Stores',
+    currentPage: 'company-profile'
   });
 });
 

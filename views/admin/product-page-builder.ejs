@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - MultiStore Platform</title>
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+            padding-top: 0;
+        }
+        
+        .page-builder-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            min-height: 100vh;
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .elements-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem;
+            height: fit-content;
+        }
+        
+        .canvas-area {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 500px;
+            position: relative;
+            padding: 1rem;
+        }
+        
+        .properties-panel {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem;
+            height: fit-content;
+        }
+        
+        .section-toggle {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .section-toggle:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .section-toggle.active {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .toggle-icon {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #dc3545;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 16px;
+            color: #dc3545;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .section-toggle.active .toggle-icon {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+        
+        .section-info {
+            flex: 1;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+        
+        .section-description {
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.3;
+        }
+        
+        .preview-section {
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .wireframe-section {
+            border: 2px dashed #ccc;
+            padding: 15px;
+            margin: 5px 0;
+            background: #f9f9f9;
+            text-align: center;
+            color: #666;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .wireframe-section.navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+        }
+        
+        .wireframe-section.navigation .logo {
+            background: #ddd;
+            padding: 8px 16px;
+            border: 1px solid #bbb;
+        }
+        
+        .wireframe-section.navigation .menu {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .wireframe-section.navigation .menu-item {
+            background: #eee;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+        }
+        
+        .wireframe-section.navigation .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .wireframe-section.navigation .action-btn {
+            background: #ddd;
+            padding: 6px 12px;
+            border: 1px solid #bbb;
+        }
+        
+        .preview-placeholder {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #6c757d;
+            font-size: 1.1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .product-showcase {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 2px dashed #aaa;
+            background: #f5f5f5;
+        }
+        
+        .gallery-column {
+            border: 1px dashed #999;
+            padding: 1rem;
+            background: #fafafa;
+        }
+        
+        .product-info-column {
+            border: 1px dashed #999;
+            padding: 1rem;
+            background: #fafafa;
+        }
+        
+        .sub-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
+            padding: 0;
+            margin-left: 0;
+            margin-right: 0;
+        }
+        
+        .sub-item-toggle {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            font-size: 0.75rem;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .sub-item-toggle:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .sub-item-toggle.active {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+        
+        .sub-toggle-icon {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #dc3545;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.6rem;
+            font-size: 12px;
+            font-weight: bold;
+            color: #dc3545;
+            background: white;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .sub-item-toggle.active .sub-toggle-icon {
+            border-color: #28a745;
+            background: #28a745;
+            color: white;
+        }
+        
+        .sub-item-text {
+            flex: 1;
+            line-height: 1.2;
+        }
+        
+        .preview-badge {
+            display: inline-block;
+            width: 60px;
+            height: 25px;
+            border-radius: 15px;
+            margin: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 2px solid #fff;
+        }
+        
+        .discount-badge {
+            background: linear-gradient(135deg, #FF6B6B, #FF4757);
+        }
+        
+        .sales-counter-badge {
+            background: linear-gradient(135deg, #FFA726, #FF9800);
+        }
+        
+        .gallery-container {
+            position: relative;
+            border: 2px dashed #ccc;
+            background: #f9f9f9;
+            padding: 15px;
+        }
+        
+        .main-image-area {
+            background: #ddd;
+            padding: 40px;
+            margin: 10px 0;
+            border: 1px dashed #999;
+            color: #666;
+            text-align: center;
+            position: relative;
+        }
+        
+        .badge-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .badge-position-left {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+        }
+        
+        .badge-position-right {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        
+        .canvas-content {
+            padding: 2rem;
+            min-height: 500px;
+            position: relative;
+        }
+        
+        .drop-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 3rem 1rem;
+            text-align: center;
+            color: #6c757d;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            color: #667eea;
+        }
+        
+        .dropped-element {
+            border: 2px solid transparent;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .dropped-element:hover,
+        .dropped-element.selected {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+        
+        .element-controls {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            display: flex;
+            gap: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .dropped-element:hover .element-controls,
+        .dropped-element.selected .element-controls {
+            opacity: 1;
+        }
+        
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+        
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .form-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        
+        .section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .save-template-section {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .page-builder-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .elements-panel,
+            .properties-panel {
+                max-width: 100%;
+            }
+        }
+        
+        /* Page element preview styles */
+        .element-hero {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 3rem 1rem;
+            text-align: center;
+        }
+        
+        .element-product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+        
+        .element-text {
+            padding: 1rem 0;
+        }
+        
+        .element-image {
+            text-align: center;
+            padding: 1rem 0;
+        }
+        
+        .element-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            padding: 1rem 0;
+        }
+        
+        .placeholder-product {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        
+        .placeholder-image {
+            width: 100%;
+            height: 150px;
+            background: #dee2e6;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <!-- Include admin navigation -->
+    <%- include('../partials/admin-nav', { currentPage: currentPage || 'product-page-builder' }) %>
+    
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="h3 mb-0">Product Page Builder</h1>
+                        <p class="text-muted">Create customizable product page templates</p>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" id="previewBtn">
+                            <i class="bi bi-eye"></i> Preview
+                        </button>
+                        <button type="button" class="btn btn-primary" id="saveTemplateBtn">
+                            <i class="bi bi-floppy"></i> Save Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page Builder Interface -->
+        <div class="page-builder-container">
+            <!-- Sections Panel -->
+            <div class="elements-panel">
+                <h5 class="mb-3">
+                    <i class="bi bi-toggles me-2"></i>Page Sections
+                </h5>
+                
+                <div class="element-category">
+                    <h6 class="text-muted mb-3">Top-of-Page Elements</h6>
+                    
+                    <div class="section-toggle active" data-section="FreeShippingBar" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Free Shipping Bar</div>
+                            <div class="section-description">Top banner announcing free shipping offers and promotions</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="FlashSaleCountdown" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Flash Sale Countdown</div>
+                            <div class="section-description">Urgency banner with countdown timer for limited-time offers</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="FreeShippingTeaser" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Free Shipping Teaser</div>
+                            <div class="section-description">Progress bar showing how much more to spend for free shipping</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="NavigationBar" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Navigation Bar</div>
+                            <div class="section-description">Site navigation header with logo, menu links, and action buttons</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="element-category mt-4">
+                    <h6 class="text-muted mb-3">Product Showcase Section</h6>
+                    
+                    <div class="section-toggle active" data-section="ProductImageGallery" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Product Image Gallery</div>
+                            <div class="section-description">Main product photos with thumbnails and special overlays</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sub-items for Product Image Gallery -->
+                    <div class="sub-items">
+                        <div class="sub-item-toggle active" data-section="DiscountBadge" onclick="toggleSubSection(this)">
+                            <div class="sub-toggle-icon">✓</div>
+                            <div class="sub-item-text">Discount Badge</div>
+                        </div>
+                        <div class="sub-item-toggle active" data-section="SalesCounter" onclick="toggleSubSection(this)">
+                            <div class="sub-toggle-icon">✓</div>
+                            <div class="sub-item-text">Sales Counter</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ProductTitle" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Product Title</div>
+                            <div class="section-description">Main product name and heading</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ScarcityNotice" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Scarcity Notice</div>
+                            <div class="section-description">High demand message (SÄLJER FORT | FÅ KVAR)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="StarRating" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Star Rating</div>
+                            <div class="section-description">5-star rating display with review count</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="PricingSection" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Pricing Section</div>
+                            <div class="section-description">Regular price, discount price, and savings amount</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="QuickBuyButton" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Quick Buy Button</div>
+                            <div class="section-description">Main purchase button with pricing</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="FreeTextField" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Free Text Field</div>
+                            <div class="section-description">Custom text content area</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ListSection" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">List Section</div>
+                            <div class="section-description">Custom bullet point list with multiple items</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="SocialProof" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Social Proof</div>
+                            <div class="section-description">Customer avatars with purchase count</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="GuaranteeBadge" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Guarantee Badge</div>
+                            <div class="section-description">Trust indicator with satisfaction guarantee promise</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="Bundles" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Bundles</div>
+                            <div class="section-description">Package selection with quantity discounts</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ATCButton" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">ATC Button</div>
+                            <div class="section-description">Main add-to-cart button</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="TrustIndicators" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Trust Indicators</div>
+                            <div class="section-description">Security, guarantee and shipping icons</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="SecureCheckout" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <div class="section-title">Secure Checkout</div>
+                            <div class="section-description">Payment method options display</div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- Template Library -->
+            <div class="elements-panel mt-3">
+                <h5 class="mb-3">
+                    <i class="bi bi-collection me-2"></i>Saved Templates
+                </h5>
+                
+                <div id="templatesList">
+                    <% if (templates && templates.length > 0) { %>
+                        <% templates.forEach(template => { %>
+                            <div class="template-item mb-3 p-3 border rounded" data-template-id="<%= template.id %>">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1"><%= template.name %></h6>
+                                        <% if (template.description) { %>
+                                            <p class="text-muted small mb-2"><%= template.description %></p>
+                                        <% } %>
+                                        <small class="text-muted">
+                                            Created: <%= new Date(template.created_at).toLocaleDateString() %>
+                                            <% if (template.is_default) { %>
+                                                <span class="badge bg-primary ms-2">Default</span>
+                                            <% } %>
+                                        </small>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#" onclick="loadTemplate(<%= template.id %>)"><i class="bi bi-upload me-2"></i>Load Template</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="duplicateTemplate(<%= template.id %>)"><i class="bi bi-copy me-2"></i>Duplicate</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteTemplate(<%= template.id %>)"><i class="bi bi-trash me-2"></i>Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-collection" style="font-size: 3rem; opacity: 0.3;"></i>
+                            <h6 class="mt-2">No templates saved yet</h6>
+                            <p class="small mb-0">Create and save your first template to see it here</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+            
+            <!-- Preview Area -->
+            <div class="canvas-area">
+                <h5 class="mb-3">
+                    <i class="bi bi-eye me-2"></i>Wireframe Preview (Full Width)
+                </h5>
+                
+                <div id="previewContainer" style="width: 100%;">
+                    <!-- Free Shipping Bar - Hidden by default -->
+                    <div class="preview-section" id="preview-FreeShippingBar" style="display: none;">
+                        <div class="wireframe-section">
+                            [FREE SHIPPING BAR] - Top banner with shipping offers
+                        </div>
+                    </div>
+                    
+                    <!-- Flash Sale Countdown - Default active -->
+                    <div class="preview-section" id="preview-FlashSaleCountdown">
+                        <div class="wireframe-section">
+                            [FLASH SALE COUNTDOWN] - Urgency timer banner
+                        </div>
+                    </div>
+                    
+                    <!-- Free Shipping Teaser - Hidden by default -->
+                    <div class="preview-section" id="preview-FreeShippingTeaser" style="display: none;">
+                        <div class="wireframe-section">
+                            [FREE SHIPPING PROGRESS] - "You're 220kr from free shipping!" with progress bar
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation Bar - Hidden by default -->
+                    <div class="preview-section" id="preview-NavigationBar" style="display: none;">
+                        <div class="wireframe-section navigation">
+                            <div class="logo">[LOGO]</div>
+                            <div class="menu">
+                                <div class="menu-item">Menu 1</div>
+                                <div class="menu-item">Menu 2</div>
+                                <div class="menu-item">Menu 3</div>
+                                <div class="menu-item">Menu 4</div>
+                            </div>
+                            <div class="actions">
+                                <div class="action-btn">[LOGIN]</div>
+                                <div class="action-btn">[CART]</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Product Showcase Section (Two-column split) -->
+                    <div class="product-showcase" id="productShowcase" style="display: none;">
+                        <!-- Left Column: Image Gallery -->
+                        <div class="gallery-column">
+                            <h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">IMAGE GALLERY</h6>
+                            <div id="galleryContent">
+                                <div class="wireframe-section" style="margin: 0; padding: 10px; font-size: 12px;">
+                                    [No gallery sections selected]
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column: Product Info -->
+                        <div class="product-info-column">
+                            <h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">PRODUCT INFO</h6>
+                            <div id="productInfoContent">
+                                <div class="wireframe-section" style="margin: 0; padding: 10px; font-size: 12px;">
+                                    [No product info sections selected]
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hidden individual section containers for the new sections -->
+                    <div class="preview-section" id="preview-ProductImageGallery" style="display: none;"></div>
+                    <div class="preview-section" id="preview-GuaranteeBadge" style="display: none;"></div>
+                    
+                    <!-- Placeholder when no sections selected -->
+                    <div id="emptyPreview" class="preview-placeholder" style="display: none;">
+                        <i class="bi bi-eye-slash" style="font-size: 3rem; opacity: 0.3; display: block; margin-bottom: 1rem;"></i>
+                        <h5>No sections selected</h5>
+                        <p class="mb-0">Toggle sections from the left panel to see the wireframe preview</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Properties Panel -->
+            <div class="properties-panel">
+                <h5 class="mb-3">
+                    <i class="bi bi-sliders me-2"></i>Properties
+                </h5>
+                
+                <div id="propertiesContent">
+                    <div class="text-muted text-center py-4">
+                        <i class="bi bi-hand-index" style="font-size: 2rem; opacity: 0.3;"></i>
+                        <p class="mt-2 mb-0">Select an element to edit its properties</p>
+                    </div>
+                </div>
+                
+                <!-- Save Template Section -->
+                <div class="save-template-section">
+                    <div class="form-section">
+                        <div class="section-title">Template Settings</div>
+                        
+                        <div class="mb-3">
+                            <label for="templateName" class="form-label">Template Name</label>
+                            <input type="text" class="form-control" id="templateName" placeholder="e.g., Premium Product Page">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="templateDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="templateDescription" rows="2" placeholder="Describe this template..."></textarea>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="setAsDefault">
+                            <label class="form-check-label" for="setAsDefault">
+                                Set as default template
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Template Modal -->
+    <div class="modal fade" id="saveTemplateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save Product Page Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modalTemplateName" class="form-label">Template Name *</label>
+                        <input type="text" class="form-control" id="modalTemplateName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalTemplateDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="modalTemplateDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignToProducts" class="form-label">Assign to Products</label>
+                        <select class="form-select" id="assignToProducts" multiple>
+                            <option value="">Select products to assign this template...</option>
+                            <!-- Products will be loaded dynamically -->
+                        </select>
+                        <div class="form-text">Hold Ctrl/Cmd to select multiple products</div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="modalSetAsDefault">
+                        <label class="form-check-label" for="modalSetAsDefault">
+                            Set as default template for new products
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmSaveTemplate">
+                        <i class="bi bi-floppy"></i> Save Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Page Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="previewContent" style="min-height: 500px; background: white;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Simple toggle functionality for sections
+        const activeSections = new Set(['FreeShippingBar', 'FlashSaleCountdown', 'FreeShippingTeaser', 'NavigationBar', 'ProductImageGallery', 'ProductTitle', 'StarRating', 'PricingSection', 'QuickBuyButton', 'FreeTextField', 'ListSection', 'SocialProof', 'GuaranteeBadge', 'Bundles', 'ATCButton', 'TrustIndicators', 'SecureCheckout', 'ScarcityNotice']); // All active by default
+        const activeSubSections = new Set(['DiscountBadge', 'SalesCounter']); // Sub-items active by default
+        
+        function toggleSection(element) {
+            const sectionName = element.dataset.section;
+            const toggleIcon = element.querySelector('.toggle-icon');
+            
+            if (element.classList.contains('active')) {
+                // Deactivate section
+                element.classList.remove('active');
+                toggleIcon.innerHTML = '✕';
+                activeSections.delete(sectionName);
+            } else {
+                // Activate section
+                element.classList.add('active');
+                toggleIcon.innerHTML = '✓';
+                activeSections.add(sectionName);
+            }
+            
+            // Update preview layout
+            updatePreviewLayout();
+        }
+        
+        function toggleSubSection(element) {
+            const sectionName = element.dataset.section;
+            const toggleIcon = element.querySelector('.sub-toggle-icon');
+            
+            if (element.classList.contains('active')) {
+                // Deactivate sub-section
+                element.classList.remove('active');
+                toggleIcon.innerHTML = '✕';
+                activeSubSections.delete(sectionName);
+            } else {
+                // Activate sub-section
+                element.classList.add('active');
+                toggleIcon.innerHTML = '✓';
+                activeSubSections.add(sectionName);
+            }
+            
+            // Update preview layout
+            updatePreviewLayout();
+        }
+        
+        function updatePreviewLayout() {
+            const emptyPreview = document.getElementById('emptyPreview');
+            const productShowcase = document.getElementById('productShowcase');
+            const galleryContent = document.getElementById('galleryContent');
+            const productInfoContent = document.getElementById('productInfoContent');
+            
+            // Check if we have any top sections
+            const topSections = ['FreeShippingBar', 'FlashSaleCountdown', 'FreeShippingTeaser', 'NavigationBar'];
+            const hasTopSections = topSections.some(section => activeSections.has(section));
+            
+            // Check if we have product showcase sections
+            const hasGallery = activeSections.has('ProductImageGallery');
+            const productInfoSections = ['ProductTitle', 'StarRating', 'PricingSection', 'QuickBuyButton', 'FreeTextField', 'ListSection', 'SocialProof', 'GuaranteeBadge', 'Bundles', 'ATCButton', 'TrustIndicators', 'SecureCheckout', 'ScarcityNotice'];
+            const hasProductInfo = productInfoSections.some(section => activeSections.has(section));
+            const hasProductSections = hasGallery || hasProductInfo;
+            
+            if (activeSections.size === 0) {
+                // No sections selected
+                emptyPreview.style.display = 'block';
+                productShowcase.style.display = 'none';
+                // Hide all top sections
+                topSections.forEach(sectionName => {
+                    const element = document.getElementById(`preview-${sectionName}`);
+                    if (element) element.style.display = 'none';
+                });
+            } else {
+                emptyPreview.style.display = 'none';
+                
+                // Show/hide top sections based on active state
+                topSections.forEach(sectionName => {
+                    const element = document.getElementById(`preview-${sectionName}`);
+                    if (element) {
+                        element.style.display = activeSections.has(sectionName) ? 'block' : 'none';
+                    }
+                });
+                
+                // Handle product showcase
+                if (hasProductSections) {
+                    productShowcase.style.display = 'grid';
+                    
+                    // Update gallery column
+                    if (hasGallery) {
+                        // Build fixed position badges
+                        let badgeElements = '';
+                        if (activeSubSections.has('DiscountBadge')) {
+                            badgeElements += '<div class="badge-position-left"><span class="preview-badge discount-badge"></span></div>';
+                        }
+                        if (activeSubSections.has('SalesCounter')) {
+                            badgeElements += '<div class="badge-position-right"><span class="preview-badge sales-counter-badge"></span></div>';
+                        }
+                        
+                        galleryContent.innerHTML = `
+                            <div class="gallery-container">
+                                <div class="main-image-area">
+                                    [MAIN PRODUCT IMAGE]
+                                    ${badgeElements}
+                                </div>
+                                <div style="background: #eee; padding: 20px; margin: 5px 0; border: 1px dashed #ccc; color: #666; text-align: center;">
+                                    [THUMBNAIL GALLERY]
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        galleryContent.innerHTML = `
+                            <div class="wireframe-section" style="margin: 0; padding: 10px; font-size: 12px;">
+                                [No gallery sections selected]
+                            </div>
+                        `;
+                    }
+                    
+                    // Update product info column
+                    if (hasProductInfo) {
+                        let productInfoElements = [];
+                        
+                        if (activeSections.has('GuaranteeBadge')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left;"><strong>[GUARANTEE BADGE]</strong><br>60-dagars pengarna tillbaka garanti</div>');
+                        }
+                        
+                        if (activeSections.has('ProductTitle')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left;"><strong>[PRODUCT TITLE]</strong><br>The Magic Remover™ - Slipp Dyra Salongsbesök För Alltid</div>');
+                        }
+                        
+                        // Combined Pricing and Buy Button section
+                        if (activeSections.has('PricingSection') || activeSections.has('QuickBuyButton')) {
+                            let pricingBuyHtml = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0;">';
+                            
+                            if (activeSections.has('PricingSection')) {
+                                pricingBuyHtml += '<div class="wireframe-section" style="margin: 0; padding: 10px; text-align: left;"><strong>[PRICING]</strong><br>179 kr <del>399 kr</del></div>';
+                            } else {
+                                pricingBuyHtml += '<div></div>';
+                            }
+                            
+                            if (activeSections.has('QuickBuyButton')) {
+                                pricingBuyHtml += '<div class="wireframe-section" style="margin: 0; padding: 10px; text-align: center; background: #ff69b4; color: white; border: 2px solid #ff69b4;"><strong>[BUY BUTTON]</strong><br>Köp 1 flaska - 199 kr</div>';
+                            } else {
+                                pricingBuyHtml += '<div></div>';
+                            }
+                            
+                            pricingBuyHtml += '</div>';
+                            productInfoElements.push(pricingBuyHtml);
+                        }
+                        
+                        if (activeSections.has('StarRating')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left;"><strong>[STAR RATING]</strong><br>★★★★★ 4.9 från 2,847 recensioner</div>');
+                        }
+                        
+                        if (activeSections.has('FreeTextField')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left;"><strong>[FREE TEXT]</strong><br>Ta bort gellack hemma på 5 minuter • Skadar INTE naglarna</div>');
+                        }
+                        
+                        if (activeSections.has('ListSection')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left;"><strong>[LIST SECTION]</strong><br>✓ Hör tydligt efter endast en rengöring<br>✓ Slipp betala för dyr öronvård i framtiden<br>✓ Mjuk silikonspets som är skonsam mot örat</div>');
+                        }
+                        
+                        if (activeSections.has('SocialProof')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left; background: #f0f0f0; border-radius: 8px;"><strong>[SOCIAL PROOF]</strong><br>👥👥👥👥 Sofia L. och 3,528 personer har köpt</div>');
+                        }
+                        
+                        if (activeSections.has('Bundles')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 15px; text-align: center; border: 2px solid #ddd; border-radius: 12px;"><strong>[BUNDLES]</strong><br>📦 Välj ditt paket & spara mer!<br>1 flaska | 2 flaskor | 3 flaskor</div>');
+                        }
+                        
+                        if (activeSections.has('ATCButton')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 15px; text-align: center; background: #e91e63; color: white; border: 2px solid #e91e63; border-radius: 25px; font-weight: bold;"><strong>[ATC BUTTON]</strong><br>🛒 LÄGG I VARUKORGEN - 299 KR</div>');
+                        }
+                        
+                        if (activeSections.has('TrustIndicators')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: center; background: #f8f9fa;"><strong>[TRUST INDICATORS]</strong><br>🔒 Säker betalning • 📃 60-dagars garanti • 🚚 Fri frakt</div>');
+                        }
+                        
+                        if (activeSections.has('SecureCheckout')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: center;"><strong>[SECURE CHECKOUT]</strong><br>💳 Klarna | Swish | Apple Pay | Google Pay</div>');
+                        }
+                        
+                        if (activeSections.has('ScarcityNotice')) {
+                            productInfoElements.push('<div class="wireframe-section" style="margin: 5px 0; padding: 10px; text-align: left;"><strong>[SCARCITY NOTICE]</strong><br>47 personer tittar just nu • 12 i varukorgar just nu</div>');
+                        }
+                        
+                        productInfoContent.innerHTML = `
+                            <div style="margin: 0; padding: 15px; font-size: 12px;">
+                                ${productInfoElements.join('')}
+                            </div>
+                        `;
+                    } else {
+                        productInfoContent.innerHTML = `
+                            <div class="wireframe-section" style="margin: 0; padding: 10px; font-size: 12px;">
+                                [No product info sections selected]
+                            </div>
+                        `;
+                    }
+                } else {
+                    productShowcase.style.display = 'none';
+                }
+            }
+            
+            // Reorder top sections to maintain proper order
+            reorderPreviewSections();
+        }
+        
+        function reorderPreviewSections() {
+            const container = document.getElementById('previewContainer');
+            const productShowcase = document.getElementById('productShowcase');
+            const emptyPreview = document.getElementById('emptyPreview');
+            const sections = ['FreeShippingBar', 'FlashSaleCountdown', 'FreeShippingTeaser', 'NavigationBar']; // Correct order
+            
+            // Move active top sections to correct positions (before product showcase)
+            sections.forEach(sectionName => {
+                if (activeSections.has(sectionName)) {
+                    const element = document.getElementById(`preview-${sectionName}`);
+                    container.insertBefore(element, productShowcase);
+                }
+            });
+            
+            // Ensure product showcase comes after navigation sections
+            container.appendChild(productShowcase);
+            // Keep empty preview at the very end
+            container.appendChild(emptyPreview);
+        }
+        
+        // Simple save functionality
+        async function saveTemplate() {
+            const name = document.getElementById('modalTemplateName').value;
+            const description = document.getElementById('modalTemplateDescription').value;
+            const assignToProducts = Array.from(document.getElementById('assignToProducts').selectedOptions).map(opt => opt.value);
+            const setAsDefault = document.getElementById('modalSetAsDefault').checked;
+            
+            if (!name.trim()) {
+                alert('Please enter a template name');
+                return;
+            }
+            
+            if (activeSections.size === 0) {
+                alert('Please select at least one section');
+                return;
+            }
+            
+            const templateData = {
+                name: name,
+                description: description,
+                sections: Array.from(activeSections),
+                assignToProducts: assignToProducts,
+                isDefault: setAsDefault
+            };
+            
+            try {
+                // Show loading state
+                const saveBtn = document.getElementById('confirmSaveTemplate');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+                saveBtn.disabled = true;
+                
+                const response = await fetch('/admin/product-page-builder/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(templateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Template saved successfully!');
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('saveTemplateModal'));
+                    modal.hide();
+                    
+                    // Clear form
+                    document.getElementById('modalTemplateName').value = '';
+                    document.getElementById('modalTemplateDescription').value = '';
+                    document.getElementById('modalSetAsDefault').checked = false;
+                } else {
+                    alert('Error saving template: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Save template error:', error);
+                alert('Failed to save template. Please try again.');
+            } finally {
+                // Restore button state
+                const saveBtn = document.getElementById('confirmSaveTemplate');
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+        
+        // Load products for assignment
+        function loadProductsForAssignment() {
+            const select = document.getElementById('assignToProducts');
+            select.innerHTML = `
+                <option value="">Select products to assign this template...</option>
+                <option value="all">All Products</option>
+                <option value="product-1">Sample Product 1</option>
+                <option value="product-2">Sample Product 2</option>
+            `;
+        }
+        
+        // Template management functions
+        async function loadTemplate(templateId) {
+            try {
+                console.log('Loading template ID:', templateId);
+                const response = await fetch(`/admin/product-page-builder/template/${templateId}`);
+                console.log('Response status:', response.status);
+                
+                const template = await response.json();
+                console.log('Template response:', template);
+                
+                if (template.success && template.template) {
+                    console.log('Template elements:', template.template.elements);
+                    
+                    // Clear current sections
+                    activeSections.clear();
+                    
+                    // Load template sections
+                    const sections = JSON.parse(template.template.elements);
+                    console.log('Parsed sections:', sections);
+                    
+                    sections.forEach(section => activeSections.add(section));
+                    
+                    // Update UI to reflect loaded template
+                    updateToggleStates();
+                    updatePreviewLayout();
+                    
+                    alert(`Template "${template.template.name}" loaded successfully!`);
+                } else {
+                    console.error('Template load failed:', template);
+                    alert('Failed to load template: ' + (template.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Load template error:', error);
+                alert('Failed to load template: ' + error.message);
+            }
+        }
+        
+        async function duplicateTemplate(templateId) {
+            const newName = prompt('Enter name for duplicated template:');
+            if (!newName) return;
+            
+            try {
+                const response = await fetch(`/admin/product-page-builder/template/${templateId}/duplicate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: newName })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Template duplicated successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to duplicate template: ' + result.error);
+                }
+            } catch (error) {
+                alert('Failed to duplicate template');
+            }
+        }
+        
+        async function deleteTemplate(templateId) {
+            if (!confirm('Are you sure you want to delete this template?')) return;
+            
+            try {
+                const response = await fetch(`/admin/product-page-builder/template/${templateId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Template deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Failed to delete template: ' + result.error);
+                }
+            } catch (error) {
+                alert('Failed to delete template');
+            }
+        }
+        
+        function updateToggleStates() {
+            // Update all toggle states to match activeSections
+            document.querySelectorAll('.section-toggle').forEach(toggle => {
+                const sectionName = toggle.dataset.section;
+                const icon = toggle.querySelector('.toggle-icon');
+                
+                if (activeSections.has(sectionName)) {
+                    toggle.classList.add('active');
+                    icon.innerHTML = '✓';
+                } else {
+                    toggle.classList.remove('active');
+                    icon.innerHTML = '✕';
+                }
+            });
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize layout on page load
+            updatePreviewLayout();
+            
+            // Save template button
+            document.getElementById('saveTemplateBtn').addEventListener('click', () => {
+                loadProductsForAssignment();
+                const modal = new bootstrap.Modal(document.getElementById('saveTemplateModal'));
+                modal.show();
+            });
+            
+            // Save template confirmation
+            document.getElementById('confirmSaveTemplate').addEventListener('click', saveTemplate);
+            
+            // Preview button
+            document.getElementById('previewBtn').addEventListener('click', () => {
+                const previewContent = document.getElementById('previewContent');
+                
+                let previewHtml = '<div style="width: 100%; padding: 20px;">';
+                
+                if (activeSections.has('FreeShippingBar')) {
+                    previewHtml += `
+                        <div style="border: 2px dashed #ccc; padding: 15px; margin: 5px 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 14px;">
+                            [FREE SHIPPING BAR] - Top banner with shipping offers
+                        </div>
+                    `;
+                }
+                
+                if (activeSections.has('FlashSaleCountdown')) {
+                    previewHtml += `
+                        <div style="border: 2px dashed #ccc; padding: 15px; margin: 5px 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 14px;">
+                            [FLASH SALE COUNTDOWN] - Urgency timer banner
+                        </div>
+                    `;
+                }
+                
+                if (activeSections.has('FreeShippingTeaser')) {
+                    previewHtml += `
+                        <div style="border: 2px dashed #ccc; padding: 15px; margin: 5px 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 14px;">
+                            [FREE SHIPPING PROGRESS] - "You're 220kr from free shipping!" with progress bar
+                        </div>
+                    `;
+                }
+                
+                if (activeSections.has('NavigationBar')) {
+                    previewHtml += `
+                        <div style="border: 2px dashed #ccc; padding: 15px; margin: 5px 0; background: #f9f9f9; color: #666; font-family: monospace; font-size: 14px; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="background: #ddd; padding: 8px 16px; border: 1px solid #bbb;">[LOGO]</div>
+                            <div style="display: flex; gap: 20px;">
+                                <div style="background: #eee; padding: 6px 12px; border: 1px solid #ccc;">Menu 1</div>
+                                <div style="background: #eee; padding: 6px 12px; border: 1px solid #ccc;">Menu 2</div>
+                                <div style="background: #eee; padding: 6px 12px; border: 1px solid #ccc;">Menu 3</div>
+                                <div style="background: #eee; padding: 6px 12px; border: 1px solid #ccc;">Menu 4</div>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <div style="background: #ddd; padding: 6px 12px; border: 1px solid #bbb;">[LOGIN]</div>
+                                <div style="background: #ddd; padding: 6px 12px; border: 1px solid #bbb;">[CART]</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add product showcase section if any product sections are active
+                const hasGallery = activeSections.has('ProductImageGallery');
+                const productInfoSections = ['ProductTitle', 'StarRating', 'PricingSection', 'QuickBuyButton', 'FreeTextField', 'ListSection', 'SocialProof', 'GuaranteeBadge', 'Bundles', 'ATCButton', 'TrustIndicators', 'SecureCheckout', 'ScarcityNotice'];
+                const hasProductInfo = productInfoSections.some(section => activeSections.has(section));
+                
+                if (hasGallery || hasProductInfo) {
+                    previewHtml += `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; padding: 1rem; border: 2px dashed #aaa; background: #f5f5f5;">
+                            <div style="border: 1px dashed #999; padding: 1rem; background: #fafafa;">
+                                <h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">IMAGE GALLERY</h6>
+                                ${hasGallery ? (() => {
+                                    let badgeElements = '';
+                                    if (activeSubSections.has('DiscountBadge')) {
+                                        badgeElements += '<div style="position: absolute; top: 15px; left: 15px;"><span style="display: inline-block; width: 60px; height: 25px; border-radius: 15px; margin: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #fff; background: linear-gradient(135deg, #FF6B6B, #FF4757);"></span></div>';
+                                    }
+                                    if (activeSubSections.has('SalesCounter')) {
+                                        badgeElements += '<div style="position: absolute; top: 15px; right: 15px;"><span style="display: inline-block; width: 60px; height: 25px; border-radius: 15px; margin: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); border: 2px solid #fff; background: linear-gradient(135deg, #FFA726, #FF9800);"></span></div>';
+                                    }
+                                    
+                                    return '<div style="border: 2px dashed #ccc; padding: 15px; margin: 0; background: #f9f9f9;"><div style="background: #ddd; padding: 40px; margin: 10px 0; border: 1px dashed #999; color: #666; text-align: center; position: relative;">[MAIN PRODUCT IMAGE]' + badgeElements + '</div><div style="background: #eee; padding: 20px; margin: 5px 0; border: 1px dashed #ccc; color: #666; text-align: center;">[THUMBNAIL GALLERY]</div></div>';
+                                })() :
+                                    '<div style="border: 2px dashed #ccc; padding: 10px; margin: 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 12px;">[No gallery sections selected]</div>'
+                                }
+                            </div>
+                            <div style="border: 1px dashed #999; padding: 1rem; background: #fafafa;">
+                                <h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">PRODUCT INFO</h6>
+                                ${hasProductInfo ? (() => {
+                                    let productInfoElements = [];
+                                    if (activeSections.has('GuaranteeBadge')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[GUARANTEE BADGE]</strong><br>60-dagars pengarna tillbaka garanti</div>');
+                                    }
+                                    if (activeSections.has('ProductTitle')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[PRODUCT TITLE]</strong><br>The Magic Remover™ - Slipp Dyra Salongsbesök För Alltid</div>');
+                                    }
+                                    
+                                    // Combined Pricing and Buy Button section
+                                    if (activeSections.has('PricingSection') || activeSections.has('QuickBuyButton')) {
+                                        let pricingBuyHtml = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0;">';
+                                        
+                                        if (activeSections.has('PricingSection')) {
+                                            pricingBuyHtml += '<div style="border: 2px dashed #ccc; padding: 10px; margin: 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[PRICING]</strong><br>179 kr <del>399 kr</del></div>';
+                                        } else {
+                                            pricingBuyHtml += '<div></div>';
+                                        }
+                                        
+                                        if (activeSections.has('QuickBuyButton')) {
+                                            pricingBuyHtml += '<div style="border: 2px solid #ff69b4; padding: 10px; margin: 0; background: #ff69b4; text-align: center; color: white; font-family: monospace; font-size: 12px;"><strong>[BUY BUTTON]</strong><br>Köp 1 flaska - 199 kr</div>';
+                                        } else {
+                                            pricingBuyHtml += '<div></div>';
+                                        }
+                                        
+                                        pricingBuyHtml += '</div>';
+                                        productInfoElements.push(pricingBuyHtml);
+                                    }
+                                    
+                                    if (activeSections.has('StarRating')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[STAR RATING]</strong><br>★★★★★ 4.9 från 2,847 recensioner</div>');
+                                    }
+                                    if (activeSections.has('FreeTextField')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[FREE TEXT]</strong><br>Ta bort gellack hemma på 5 minuter • Skadar INTE naglarna</div>');
+                                    }
+                                    if (activeSections.has('ListSection')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[LIST SECTION]</strong><br>✓ Hör tydligt efter endast en rengöring<br>✓ Slipp betala för dyr öronvård i framtiden<br>✓ Mjuk silikonspets som är skonsam mot örat</div>');
+                                    }
+                                    if (activeSections.has('SocialProof')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f0f0f0; text-align: left; color: #666; font-family: monospace; font-size: 12px; border-radius: 8px;"><strong>[SOCIAL PROOF]</strong><br>👥👥👥👥 Sofia L. och 3,528 personer har köpt</div>');
+                                    }
+                                    if (activeSections.has('Bundles')) {
+                                        productInfoElements.push('<div style="border: 2px solid #ddd; padding: 15px; margin: 5px 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 12px; border-radius: 12px;"><strong>[BUNDLES]</strong><br>📦 Välj ditt paket & spara mer!<br>1 flaska | 2 flaskor | 3 flaskor</div>');
+                                    }
+                                    if (activeSections.has('ATCButton')) {
+                                        productInfoElements.push('<div style="border: 2px solid #e91e63; padding: 15px; margin: 5px 0; background: #e91e63; text-align: center; color: white; font-family: monospace; font-size: 12px; border-radius: 25px; font-weight: bold;"><strong>[ATC BUTTON]</strong><br>🛒 LÄGG I VARUKORGEN - 299 KR</div>');
+                                    }
+                                    if (activeSections.has('TrustIndicators')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f8f9fa; text-align: center; color: #666; font-family: monospace; font-size: 12px;"><strong>[TRUST INDICATORS]</strong><br>🔒 Säker betalning • 📃 60-dagars garanti • 🚚 Fri frakt</div>');
+                                    }
+                                    if (activeSections.has('SecureCheckout')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 12px;"><strong>[SECURE CHECKOUT]</strong><br>💳 Klarna | Swish | Apple Pay | Google Pay</div>');
+                                    }
+                                    if (activeSections.has('ScarcityNotice')) {
+                                        productInfoElements.push('<div style="border: 2px dashed #ccc; padding: 10px; margin: 5px 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[SCARCITY NOTICE]</strong><br>47 personer tittar just nu • 12 i varukorgar just nu</div>');
+                                    }
+                                    return '<div style="margin: 0; padding: 15px; font-size: 12px;">' + productInfoElements.join('') + '</div>';
+                                })() :
+                                    '<div style="border: 2px dashed #ccc; padding: 10px; margin: 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 12px;">[No product info sections selected]</div>'
+                                }
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                if (activeSections.size === 0) {
+                    previewHtml += '<p class="text-center text-muted py-4">No sections selected</p>';
+                }
+                
+                previewHtml += '</div>';
+                previewContent.innerHTML = previewHtml;
+                
+                const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+                modal.show();
+            });
+        });
+    </script>
+</body>
+</html>

@@ -35,6 +35,43 @@
                     </a>
                 </li>
 
+                <!-- Templates -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <%= currentPage === 'templates' || currentPage === 'template-builder' || currentPage === 'template-assignments' ? 'active' : '' %>" 
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-collection"></i>
+                        <span>Templates</span>
+                    </a>
+                    <ul class="dropdown-menu admin-dropdown">
+                        <li>
+                            <a class="dropdown-item <%= currentPage === 'templates' ? 'active' : '' %>" href="/admin/templates">
+                                <i class="bi bi-collection"></i>
+                                Templates Library
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= currentPage === 'template-builder' ? 'active' : '' %>" href="/admin/templates/builder">
+                                <i class="bi bi-plus-circle"></i>
+                                Create Template
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= currentPage === 'template-assignments' ? 'active' : '' %>" href="/admin/templates/assignments">
+                                <i class="bi bi-link-45deg"></i>
+                                Assign Templates
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Product Page Builder (Legacy) -->
+                <li class="nav-item">
+                    <a class="nav-link <%= currentPage === 'product-page-builder' ? 'active' : '' %>" href="/admin/product-page-builder">
+                        <i class="bi bi-grid-3x3-gap"></i>
+                        <span>Legacy Builder</span>
+                    </a>
+                </li>
+
                 <!-- Company Profile -->
                 <li class="nav-item">
                     <a class="nav-link <%= currentPage === 'company-profile' ? 'active' : '' %>" href="/admin/company-profile">

@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Studio - MultiStore Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Creative Template Builder Styles */
+        .builder-layout {
+            display: grid;
+            grid-template-columns: 360px 1fr 320px;
+            height: calc(100vh - 72px);
+            background: var(--color-bg);
+            gap: var(--spacing-16);
+            padding: var(--spacing-16);
+        }
+        
+        .builder-sidebar {
+            background: var(--color-surface-glass);
+            backdrop-filter: var(--glass-blur-strong);
+            -webkit-backdrop-filter: var(--glass-blur-strong);
+            border: 1px solid rgba(108, 99, 255, 0.1);
+            border-radius: var(--radius-lg);
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .builder-sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-mesh);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+        
+        .builder-canvas {
+            background: var(--color-surface-glass);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .canvas-toolbar {
+            background: var(--color-surface-floating);
+            border-bottom: 1px solid var(--color-border-subtle);
+            padding: var(--spacing-12) var(--spacing-16);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-12);
+        }
+        
+        .canvas-content {
+            flex: 1;
+            background: var(--color-surface);
+            margin: var(--spacing-16);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-floating);
+            position: relative;
+            overflow: auto;
+            border: 2px dashed transparent;
+            transition: all var(--duration-standard) var(--ease-standard);
+        }
+        
+        .canvas-content.drag-over {
+            border-color: var(--brand-primary);
+            background: var(--brand-mesh-soft);
+        }
+        
+        .properties-panel {
+            background: var(--color-surface-glass);
+            backdrop-filter: var(--glass-blur-strong);
+            -webkit-backdrop-filter: var(--glass-blur-strong);
+            border: 1px solid rgba(108, 99, 255, 0.1);
+            border-radius: var(--radius-lg);
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .properties-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--brand-mesh);
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        }
+        
+        .component-group {
+            margin-bottom: var(--spacing-20);
+        }
+        
+        .component-group-title {
+            font-size: var(--font-size-sm);
+            font-weight: var(--font-weight-bold);
+            color: var(--brand-primary);
+            margin-bottom: var(--spacing-16);
+            padding: var(--spacing-16) var(--spacing-20) 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .component-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-12);
+            padding: var(--spacing-16) var(--spacing-20);
+            cursor: grab;
+            border-radius: var(--radius-md);
+            margin: 0 var(--spacing-12) var(--spacing-8) var(--spacing-12);
+            transition: all var(--duration-elastic) var(--ease-elastic);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .component-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--brand-mesh-soft);
+            transition: left var(--duration-standard) var(--ease-standard);
+        }
+        
+        .component-item:hover {
+            transform: translateX(4px) scale(1.02);
+            background: var(--color-surface-floating);
+            box-shadow: var(--shadow-2);
+        }
+        
+        .component-item:hover::before {
+            left: 100%;
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+        
+        .component-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--brand-mesh);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .component-details {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .component-name {
+            font-weight: var(--font-weight-semibold);
+            font-size: var(--font-size-sm);
+            margin-bottom: 2px;
+        }
+        
+        .component-desc {
+            font-size: var(--font-size-xs);
+            color: var(--color-text-muted);
+        }
+        
+        .canvas-element {
+            position: relative;
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            transition: all var(--duration-standard) var(--ease-standard);
+        }
+        
+        .canvas-element:hover {
+            border-color: var(--brand-primary);
+            background: rgba(108, 99, 255, 0.05);
+        }
+        
+        .canvas-element.selected {
+            border-color: var(--brand-primary);
+            background: rgba(108, 99, 255, 0.08);
+            box-shadow: 0 0 0 4px rgba(108, 99, 255, 0.1);
+        }
+        
+        .element-toolbar {
+            position: absolute;
+            top: -40px;
+            right: -2px;
+            display: flex;
+            gap: var(--spacing-4);
+            opacity: 0;
+            transform: translateY(8px);
+            transition: all var(--duration-standard) var(--ease-standard);
+        }
+        
+        .canvas-element:hover .element-toolbar,
+        .canvas-element.selected .element-toolbar {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .toolbar-btn {
+            width: 28px;
+            height: 28px;
+            background: var(--brand-primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration-fast) var(--ease-standard);
+        }
+        
+        .toolbar-btn:hover {
+            transform: scale(1.1);
+            background: var(--brand-primary-vibrant);
+        }
+        
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-8);
+            background: var(--color-surface-glass);
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-4) var(--spacing-8);
+        }
+        
+        .device-preview {
+            display: flex;
+            gap: var(--spacing-8);
+        }
+        
+        .device-btn {
+            width: 32px;
+            height: 24px;
+            background: transparent;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--duration-fast) var(--ease-standard);
+        }
+        
+        .device-btn.active {
+            background: var(--brand-primary);
+            color: white;
+            border-color: var(--brand-primary);
+        }
+        
+        @media (max-width: 1400px) {
+            .builder-layout {
+                grid-template-columns: 300px 1fr 280px;
+            }
+        }
+        
+        @media (max-width: 1024px) {
+            .builder-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+            
+            .properties-panel {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    ASSUMPTIONS:
+    - Component library shows basic e-commerce components
+    - Canvas shows live preview with placeholder content
+    - Settings panel appears when component is selected
+    - Save/Load functionality is mocked for demonstration
+    -->
+
+    <div class="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                MultiStore Platform
+            </div>
+            
+            <nav>
+                <ul class="sidebar-nav">
+                    <li class="sidebar-nav-item">
+                        <a href="dashboard.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            </svg>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="stores.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10z"/>
+                            </svg>
+                            <span>Stores</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="#" class="sidebar-nav-link active">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M22 9V7h-2V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-2h2v-2h-2v-2h2v-2h-2V9h2zm-4 10H4V5h14v14z"/>
+                            </svg>
+                            <span>Template Builder</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item">
+                        <a href="company-profile.html" class="sidebar-nav-link">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                            <span>Company Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar" style="background: var(--color-surface-glass); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);">
+                <div class="flex items-center gap-4">
+                    <h1 style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin: 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Design Studio</h1>
+                    <div class="status-indicator active" style="font-size: var(--font-size-sm);">v2.1 • Auto-saving</div>
+                    
+                    <div style="margin-left: auto; margin-right: var(--spacing-16); display: flex; align-items: center; gap: var(--spacing-12);">
+                        <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">Project:</div>
+                        <select style="background: transparent; border: none; color: var(--brand-primary); font-weight: var(--font-weight-semibold);">
+                            <option>Bootstrap Template</option>
+                            <option>Minimal Store</option>
+                            <option>Fashion Forward</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="btn btn-ghost card-magnetic">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 3H5c-1.11 0-2 .89-2 2v14c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                        </svg>
+                        Import
+                    </button>
+                    
+                    <button class="btn btn-ghost card-magnetic">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M17 3H5c-1.11 0-2 .89-2 2v14c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zM6 6h9v4H6z"/>
+                        </svg>
+                        Save
+                    </button>
+                    
+                    <button class="btn btn-gradient floating">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        Publish Live
+                    </button>
+                </div>
+            </header>
+
+            <!-- Enhanced Builder Layout -->
+            <div class="builder-layout">
+                <!-- Component Library Sidebar -->
+                <div class="builder-sidebar floating">
+                    <div style="padding: var(--spacing-20) 0;">
+                        <div style="padding: 0 var(--spacing-20) var(--spacing-16);">
+                            <h2 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); margin: 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🎨 Component Library</h2>
+                            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: var(--spacing-4) 0 0;">Drag components to canvas</p>
+                        </div>
+                        
+                        <!-- Layout Components -->
+                        <div class="component-group">
+                            <h3 class="component-group-title">🏗️ Layout Foundation</h3>
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Smart Header</div>
+                                    <div class="component-desc">Responsive navigation + logo</div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V9h18v10zm0-12H3V5h18v2z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Hero Banner</div>
+                                    <div class="component-desc">Eye-catching main section</div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3v-2h18v2zm0-5H3v-2h18v2zm0-5H3V7h18v2z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Smart Footer</div>
+                                    <div class="component-desc">Links, legal & contact info</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Components -->
+                        <div class="component-group">
+                            <h3 class="component-group-title">📝 Content Blocks</h3>
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 9H9V9h10v2zm-4 4H9v-2h6v2zm4-8H9V5h10v2z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Product Showcase</div>
+                                    <div class="component-desc">Interactive product grid</div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Rich Text</div>
+                                    <div class="component-desc">Typography & content area</div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Media Gallery</div>
+                                    <div class="component-desc">Image & video showcase</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- E-commerce Components -->
+                        <div class="component-group">
+                            <h3 class="component-group-title">🛍️ Commerce Widgets</h3>
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4H5.21l-.94-2H1zm16 16c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Smart Cart</div>
+                                    <div class="component-desc">Mini cart + checkout flow</div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Social Proof</div>
+                                    <div class="component-desc">Reviews & testimonials</div>
+                                </div>
+                            </div>
+                            
+                            <div class="component-item" draggable="true">
+                                <div class="component-icon">
+                                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8l8 5 8-5v10zm0-12l-8 5-8-5h16z"/>
+                                    </svg>
+                                </div>
+                                <div class="component-details">
+                                    <div class="component-name">Newsletter Pro</div>
+                                    <div class="component-desc">Email capture + automation</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Settings -->
+                        <div style="padding: var(--spacing-20); border-top: 1px solid rgba(108, 99, 255, 0.1); margin-top: var(--spacing-24);">
+                            <div style="display: flex; flex-direction: column; gap: var(--spacing-12);">
+                                <label style="display: flex; align-items: center; gap: var(--spacing-8); cursor: pointer;">
+                                    <input type="checkbox" style="width: 18px; height: 18px;">
+                                    <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);">🎨 Design tokens visible</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: var(--spacing-8); cursor: pointer;">
+                                    <input type="checkbox" checked style="width: 18px; height: 18px;">
+                                    <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);">⚡ Smart guides enabled</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: var(--spacing-8); cursor: pointer;">
+                                    <input type="checkbox" style="width: 18px; height: 18px;">
+                                    <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);">📱 Mobile-first mode</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Canvas -->
+                <div class="builder-canvas">
+                    <div class="canvas-toolbar">
+                        <div class="device-preview">
+                            <button class="device-btn active" title="Desktop" onclick="setDevice('desktop')">
+                                <svg width="16" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/>
+                                </svg>
+                            </button>
+                            <button class="device-btn" title="Tablet" onclick="setDevice('tablet')">
+                                <svg width="14" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                                </svg>
+                            </button>
+                            <button class="device-btn" title="Mobile" onclick="setDevice('mobile')">
+                                <svg width="10" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-2 20h-4v-1h4v1zm3.25-3H6.75V4h10.5v14z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div style="flex: 1;"></div>
+                        
+                        <div class="zoom-controls">
+                            <button onclick="zoomOut()" style="background: none; border: none; padding: 4px;">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19 13H5v-2h14v2z"/>
+                                </svg>
+                            </button>
+                            <span id="zoom-level" style="font-size: var(--font-size-xs); min-width: 40px; text-align: center;">100%</span>
+                            <button onclick="zoomIn()" style="background: none; border: none; padding: 4px;">
+                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <button class="btn btn-sm btn-ghost" onclick="toggleGrid()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M10 4v2h4V4h2v2h2v2h-2v4h2v2h-2v2h-2v-2h-4v2H8v-2H6v-2h2v-4H6V8h2V6h2V4h2zm0 4v4h4V8h-4z"/>
+                            </svg>
+                            Grid
+                        </button>
+                    </div>
+                    
+                    <div class="canvas-content" id="canvas" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <!-- Enhanced Live Preview -->
+                        <div style="padding: var(--spacing-32); min-height: 100%;">
+                            <!-- Interactive Header -->
+                            <div class="canvas-element" id="header-element" onclick="selectElement('header')">
+                                <div class="element-toolbar">
+                                    <button class="toolbar-btn" title="Edit">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="toolbar-btn" title="Duplicate">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="toolbar-btn" title="Delete">
+                                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-20) 0; border-bottom: 1px solid var(--color-border-subtle); margin-bottom: var(--spacing-40);">
+                                    <div style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Your Store Name</div>
+                                    <div style="display: flex; gap: var(--spacing-32);">
+                                        <a href="#" style="color: var(--color-text); text-decoration: none; font-weight: var(--font-weight-medium); transition: color var(--duration-fast) var(--ease-standard);" onmouseover="this.style.color='var(--brand-primary)'" onmouseout="this.style.color='var(--color-text)'">Home</a>
+                                        <a href="#" style="color: var(--color-text); text-decoration: none; font-weight: var(--font-weight-medium); transition: color var(--duration-fast) var(--ease-standard);" onmouseover="this.style.color='var(--brand-primary)'" onmouseout="this.style.color='var(--color-text)'">Products</a>
+                                        <a href="#" style="color: var(--color-text); text-decoration: none; font-weight: var(--font-weight-medium); transition: color var(--duration-fast) var(--ease-standard);" onmouseover="this.style.color='var(--brand-primary)'" onmouseout="this.style.color='var(--color-text)'">About</a>
+                                        <a href="#" style="color: var(--color-text); text-decoration: none; font-weight: var(--font-weight-medium); transition: color var(--duration-fast) var(--ease-standard);" onmouseover="this.style.color='var(--brand-primary)'" onmouseout="this.style.color='var(--color-text)'">Contact</a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Interactive Hero -->
+                            <div class="canvas-element floating" id="hero-element" onclick="selectElement('hero')">
+                                <div class="element-toolbar">
+                                    <button class="toolbar-btn" title="Edit"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+                                    <button class="toolbar-btn" title="Duplicate"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+                                    <button class="toolbar-btn" title="Delete"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+                                </div>
+                                <div style="background: var(--brand-mesh); padding: var(--spacing-64) var(--spacing-40); text-align: center; border-radius: var(--radius-lg); margin-bottom: var(--spacing-40); position: relative; overflow: hidden;">
+                                    <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%); animation: rotate 20s linear infinite;"></div>
+                                    <h1 style="font-size: clamp(2rem, 5vw, 3rem); font-weight: var(--font-weight-bold); color: white; margin: 0 0 var(--spacing-20) 0; position: relative; z-index: 2;">Welcome to Your Store</h1>
+                                    <p style="font-size: var(--font-size-lg); color: rgba(255, 255, 255, 0.9); margin: 0 0 var(--spacing-32) 0; position: relative; z-index: 2;">Discover amazing products and exceptional service</p>
+                                    <button class="btn btn-lg" style="background: white; color: var(--brand-primary); position: relative; z-index: 2; box-shadow: var(--shadow-2);">Shop Now →</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Interactive Product Grid -->
+                            <div class="canvas-element" id="products-element" onclick="selectElement('products')">
+                                <div class="element-toolbar">
+                                    <button class="toolbar-btn" title="Edit"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg></button>
+                                    <button class="toolbar-btn" title="Duplicate"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
+                                    <button class="toolbar-btn" title="Delete"><svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+                                </div>
+                                <div>
+                                    <h2 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); margin: 0 0 var(--spacing-32) 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Featured Products</h2>
+                                    <div class="grid grid-cols-3 gap-6">
+                                        <div class="card card-magnetic">
+                                            <div style="height: 200px; background: var(--brand-mesh-soft); border-radius: var(--radius-md) var(--radius-md) 0 0; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-lg); color: var(--brand-primary);">👕</div>
+                                            <div class="card-body">
+                                                <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin: 0 0 var(--spacing-8) 0;">Premium T-Shirt</h3>
+                                                <p style="color: var(--color-text-muted); margin: 0 0 var(--spacing-16) 0;">Comfortable cotton blend</p>
+                                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--brand-primary);">€29.99</div>
+                                            </div>
+                                        </div>
+                                        <div class="card card-magnetic floating-delayed">
+                                            <div style="height: 200px; background: var(--brand-mesh-soft); border-radius: var(--radius-md) var(--radius-md) 0 0; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-lg); color: var(--brand-primary);">👖</div>
+                                            <div class="card-body">
+                                                <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin: 0 0 var(--spacing-8) 0;">Designer Jeans</h3>
+                                                <p style="color: var(--color-text-muted); margin: 0 0 var(--spacing-16) 0;">Premium denim quality</p>
+                                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--brand-primary);">€89.99</div>
+                                            </div>
+                                        </div>
+                                        <div class="card card-magnetic">
+                                            <div style="height: 200px; background: var(--brand-mesh-soft); border-radius: var(--radius-md) var(--radius-md) 0 0; display: flex; align-items: center; justify-content: center; font-size: var(--font-size-lg); color: var(--brand-primary);">👟</div>
+                                            <div class="card-body">
+                                                <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin: 0 0 var(--spacing-8) 0;">Sport Sneakers</h3>
+                                                <p style="color: var(--color-text-muted); margin: 0 0 var(--spacing-16) 0;">All-day comfort</p>
+                                                <div style="font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--brand-primary);">€129.99</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Properties Panel -->
+                <div class="properties-panel floating">
+                    <div style="padding: var(--spacing-20);">
+                        <div style="margin-bottom: var(--spacing-24);">
+                            <h2 style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); margin: 0 0 var(--spacing-4) 0; background: var(--brand-mesh); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🎨 Properties</h2>
+                            <p style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0;">Customize selected element</p>
+                        </div>
+                        
+                        <div id="properties-content">
+                            <div style="text-align: center; padding: var(--spacing-32) var(--spacing-16); color: var(--color-text-muted);">
+                                <div style="font-size: 2rem; margin-bottom: var(--spacing-16);">✨</div>
+                                <p style="font-size: var(--font-size-sm); margin: 0;">Select an element to customize its properties</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let selectedElement = null;
+        let zoomLevel = 100;
+        
+        // Device preview functionality
+        function setDevice(device) {
+            const canvas = document.getElementById('canvas');
+            const buttons = document.querySelectorAll('.device-btn');
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.device-btn').classList.add('active');
+            
+            switch(device) {
+                case 'mobile':
+                    canvas.style.maxWidth = '375px';
+                    canvas.style.margin = '0 auto';
+                    break;
+                case 'tablet':
+                    canvas.style.maxWidth = '768px';
+                    canvas.style.margin = '0 auto';
+                    break;
+                default:
+                    canvas.style.maxWidth = 'none';
+                    canvas.style.margin = 'var(--spacing-16)';
+            }
+        }
+        
+        // Zoom functionality
+        function zoomIn() {
+            if (zoomLevel < 200) {
+                zoomLevel += 10;
+                updateZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (zoomLevel > 50) {
+                zoomLevel -= 10;
+                updateZoom();
+            }
+        }
+        
+        function updateZoom() {
+            const canvas = document.getElementById('canvas');
+            canvas.style.transform = `scale(${zoomLevel / 100})`;
+            canvas.style.transformOrigin = 'top center';
+            document.getElementById('zoom-level').textContent = `${zoomLevel}%`;
+        }
+        
+        // Element selection
+        function selectElement(elementId) {
+            // Remove previous selection
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+            
+            // Select new element
+            selectedElement = document.getElementById(elementId + '-element');
+            selectedElement.classList.add('selected');
+            
+            // Update properties panel
+            updatePropertiesPanel(elementId);
+        }
+        
+        function updatePropertiesPanel(elementType) {
+            const content = document.getElementById('properties-content');
+            
+            switch(elementType) {
+                case 'header':
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">Logo Text</label>
+                            <input type="text" class="form-control" value="Your Store Name" placeholder="Enter store name" style="background: var(--color-surface-floating);">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Navigation Style</label>
+                            <select class="form-control" style="background: var(--color-surface-floating);">
+                                <option>Horizontal</option>
+                                <option>Centered</option>
+                                <option>Left Aligned</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Background</label>
+                            <div style="display: flex; gap: var(--spacing-8);">
+                                <input type="color" value="#ffffff" style="width: 40px; height: 40px; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm);">
+                                <input type="text" class="form-control" value="transparent" placeholder="Color or gradient" style="background: var(--color-surface-floating);">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Height</label>
+                            <input type="range" min="60" max="120" value="80" style="width: 100%;">
+                        </div>
+                        
+                        <div style="display: flex; gap: var(--spacing-8); margin-top: var(--spacing-20);">
+                            <button class="btn btn-sm btn-gradient" style="flex: 1;">Apply Changes</button>
+                            <button class="btn btn-sm btn-tertiary">Reset</button>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'hero':
+                    content.innerHTML = `
+                        <div class="form-group">
+                            <label class="form-label">Headline</label>
+                            <input type="text" class="form-control" value="Welcome to Your Store" style="background: var(--color-surface-floating);">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Subtitle</label>
+                            <textarea class="form-control" rows="3" style="background: var(--color-surface-floating);">Discover amazing products and exceptional service</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Background Style</label>
+                            <select class="form-control" style="background: var(--color-surface-floating);">
+                                <option>Gradient (Current)</option>
+                                <option>Solid Color</option>
+                                <option>Image</option>
+                                <option>Video</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Button Text</label>
+                            <input type="text" class="form-control" value="Shop Now" style="background: var(--color-surface-floating);">
+                        </div>
+                        
+                        <div style="display: flex; gap: var(--spacing-8); margin-top: var(--spacing-20);">
+                            <button class="btn btn-sm btn-gradient" style="flex: 1;">Apply Changes</button>
+                            <button class="btn btn-sm btn-tertiary">Reset</button>
+                        </div>
+                    `;
+                    break;
+                    
+                default:
+                    content.innerHTML = `
+                        <div style="text-align: center; padding: var(--spacing-32) var(--spacing-16); color: var(--color-text-muted);">
+                            <div style="font-size: 2rem; margin-bottom: var(--spacing-16);">✨</div>
+                            <p style="font-size: var(--font-size-sm); margin: 0;">Select an element to customize its properties</p>
+                        </div>
+                    `;
+            }
+        }
+        
+        // Drag and drop functionality
+        function allowDrop(ev) {
+            ev.preventDefault();
+            document.getElementById('canvas').classList.add('drag-over');
+        }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            document.getElementById('canvas').classList.remove('drag-over');
+            // Add drop logic here
+        }
+        
+        // Component drag start
+        document.querySelectorAll('.component-item').forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.querySelector('.component-name').textContent);
+            });
+        });
+        
+        // Auto-save simulation
+        let autoSaveInterval = setInterval(() => {
+            // Simulate auto-save
+            const indicator = document.querySelector('.status-indicator');
+            const originalText = indicator.textContent;
+            indicator.textContent = 'v2.1 • Saved!';
+            indicator.style.background = 'var(--success-bg)';
+            indicator.style.color = 'var(--success-text)';
+            
+            setTimeout(() => {
+                indicator.textContent = originalText;
+                indicator.style.background = '';
+                indicator.style.color = '';
+            }, 2000);
+        }, 15000);
+        
+        // Enhanced interactions on load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add subtle animations to components
+            const componentItems = document.querySelectorAll('.component-item');
+            componentItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 50}ms`;
+            });
+        });
+    </script>
+</body>
+</html>

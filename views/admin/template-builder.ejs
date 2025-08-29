@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background: #f8f9fa;
+        }
+        
+        .builder-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .builder-header {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .builder-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .sections-panel {
+            width: 350px;
+            background: white;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        .preview-panel {
+            flex: 1;
+            background: #f8f9fa;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .preview-container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: visible;
+            min-height: fit-content;
+        }
+        
+        .section-toggle {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            margin-bottom: 0.75rem;
+        }
+        
+        .section-toggle:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .section-toggle.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .toggle-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .section-toggle.active .toggle-icon {
+            background: #667eea;
+            color: white;
+        }
+        
+        .section-info h6 {
+            margin: 0 0 0.25rem 0;
+            font-weight: 600;
+        }
+        
+        .section-info small {
+            color: #666;
+            line-height: 1.3;
+        }
+        
+        .wireframe-section {
+            border: 2px dashed #ccc;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            background: #f9f9f9;
+            text-align: center;
+            color: #666;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        
+        .template-name-input {
+            border: none;
+            background: transparent;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            width: 300px;
+        }
+        
+        .template-name-input:focus {
+            outline: none;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+        }
+        
+        .cancel-btn {
+            color: #666;
+            border-color: #ddd;
+        }
+        
+        .element-category h6 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="builder-container">
+        <!-- Builder Header -->
+        <div class="builder-header">
+            <div class="container-fluid">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <a href="/admin/templates" class="btn btn-outline-secondary me-3">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Templates
+                        </a>
+                        <input type="text" 
+                               class="template-name-input" 
+                               placeholder="Template Name" 
+                               value="<%= editMode ? template.name : 'New Template' %>"
+                               id="templateName">
+                    </div>
+                    <div>
+                        <button type="button" class="btn cancel-btn me-2" onclick="cancelTemplate()">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn save-btn" onclick="openSaveModal()">
+                            <i class="bi bi-check-circle me-1"></i>Save Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Builder Content -->
+        <div class="builder-content">
+            <!-- Sections Panel -->
+            <div class="sections-panel">
+                <div class="element-category">
+                    <h6><i class="bi bi-layout-text-window me-2"></i>Header Elements</h6>
+                    
+                    <div class="section-toggle active" data-section="FreeShippingBar" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Free Shipping Bar</h6>
+                            <small>Top announcement banner with shipping offer</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="FlashSaleCountdown" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Flash Sale Countdown</h6>
+                            <small>Urgency timer with sale end countdown</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="FreeShippingTeaser" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Free Shipping Teaser</h6>
+                            <small>Free shipping threshold progress bar</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="NavigationBar" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Navigation Bar</h6>
+                            <small>Site navigation header with logo, menu links, and action buttons</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="element-category">
+                    <h6><i class="bi bi-grid-3x3-gap me-2"></i>Product Showcase</h6>
+                    
+                    <div class="section-toggle active" data-section="ProductImageGallery" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Product Image Gallery</h6>
+                            <small>Main product photos with thumbnails and special overlays</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Gallery Sub-items -->
+                    <div class="sub-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; margin-bottom: 1.5rem; padding: 0;">
+                        <div class="sub-item-toggle active" data-section="DiscountBadge" onclick="toggleSubSection(this)" style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; background: white; font-size: 0.75rem; font-weight: 500; width: 100%; box-sizing: border-box;">
+                            <div class="toggle-icon" style="width: 16px; height: 16px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; font-size: 0.6rem;">✓</div>
+                            <span>Discount Badge</span>
+                        </div>
+                        
+                        <div class="sub-item-toggle active" data-section="SalesCounter" onclick="toggleSubSection(this)" style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; background: white; font-size: 0.75rem; font-weight: 500; width: 100%; box-sizing: border-box;">
+                            <div class="toggle-icon" style="width: 16px; height: 16px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; font-size: 0.6rem;">✓</div>
+                            <span>Sales Counter</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="element-category">
+                    <h6><i class="bi bi-info-circle me-2"></i>Product Information</h6>
+                    
+                    <div class="section-toggle active" data-section="GuaranteeBadge" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Guarantee Badge</h6>
+                            <small>Trust indicator with satisfaction guarantee promise</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ProductTitle" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Product Title</h6>
+                            <small>Product name and headline</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="StarRating" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Star Rating</h6>
+                            <small>Customer rating stars and review count</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="PricingSection" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Pricing Section</h6>
+                            <small>Regular price, discount price, and savings amount</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="QuickBuyButton" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Quick Buy Button</h6>
+                            <small>Main purchase button with pricing</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="FreeTextField" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Free Text Field</h6>
+                            <small>Custom text content area</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ListSection" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>List Section</h6>
+                            <small>Custom bullet point list with multiple items</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="SocialProof" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Social Proof</h6>
+                            <small>Customer avatars with purchase count</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="Bundles" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Bundles</h6>
+                            <small>Package selection with quantity discounts</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ATCButton" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>ATC Button</h6>
+                            <small>Main add-to-cart button</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="TrustIndicators" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Trust Indicators</h6>
+                            <small>Security, guarantee and shipping icons</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="SecureCheckout" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Secure Checkout</h6>
+                            <small>Payment method options display</small>
+                        </div>
+                    </div>
+                    
+                    <div class="section-toggle active" data-section="ScarcityNotice" onclick="toggleSection(this)">
+                        <div class="toggle-icon">✓</div>
+                        <div class="section-info">
+                            <h6>Scarcity Notice</h6>
+                            <small>Urgency messaging to encourage immediate purchase</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Panel -->
+            <div class="preview-panel">
+                <div class="preview-container">
+                    <div id="templatePreview">
+                        <!-- Preview content will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Template Modal -->
+    <div class="modal fade" id="saveTemplateModal" tabindex="-1" aria-labelledby="saveTemplateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saveTemplateModalLabel">
+                        <i class="bi bi-save me-2"></i>Save Template
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="saveTemplateForm">
+                        <div class="mb-3">
+                            <label for="modalTemplateName" class="form-label">Template Name *</label>
+                            <input type="text" class="form-control" id="modalTemplateName" 
+                                   placeholder="Enter template name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalTemplateDescription" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="modalTemplateDescription" rows="3" 
+                                      placeholder="Describe what this template is for..."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Selected Sections:</strong> <span id="selectedSectionsCount">0</span> sections
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </button>
+                    <button type="button" class="btn save-btn" id="confirmSaveTemplate" onclick="saveTemplate()">
+                        <i class="bi bi-check-circle me-1"></i>Save Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Initialize active sections
+        let activeSections;
+        
+        // Check if we're in edit mode first
+        const editMode = <%= editMode ? 'true' : 'false' %>;
+        
+        if (editMode) {
+            // Start with empty set, will be populated from saved template
+            activeSections = new Set();
+        } else {
+            // New template - start with all sections active
+            activeSections = new Set([
+                'FreeShippingBar', 'FlashSaleCountdown', 'FreeShippingTeaser', 'NavigationBar', 
+                'ProductImageGallery', 'ProductTitle', 'StarRating', 'PricingSection', 
+                'QuickBuyButton', 'FreeTextField', 'ListSection', 'SocialProof', 
+                'GuaranteeBadge', 'Bundles', 'ATCButton', 'TrustIndicators', 
+                'SecureCheckout', 'ScarcityNotice', 'DiscountBadge', 'SalesCounter'
+            ]);
+        }
+        
+        const templateId = <%= editMode ? template.id : 'null' %>;
+        
+        // Load existing template data if in edit mode
+        <% if (editMode && template) { %>
+            try {
+                console.log('=== TEMPLATE LOADING DEBUG ===');
+                console.log('Edit mode:', editMode);
+                console.log('Template ID:', <%= template.id %>);
+                console.log('Template name:', '<%= template.name %>');
+                console.log('Template elements raw:', '<%= template.elements %>');
+                
+                // Use a safer approach to pass the JSON data
+                const templateElementsJson = <%- JSON.stringify(template.elements) %>;
+                console.log('Template elements as JSON:', templateElementsJson);
+                
+                let existingSections;
+                if (typeof templateElementsJson === 'string') {
+                    // If it's a string, parse it
+                    existingSections = JSON.parse(templateElementsJson);
+                } else {
+                    // If it's already an object/array, use it directly
+                    existingSections = templateElementsJson;
+                }
+                
+                console.log('Parsed existing sections:', existingSections);
+                console.log('Is array?', Array.isArray(existingSections));
+                
+                // Clear and load saved sections
+                console.log('Active sections before clear:', Array.from(activeSections));
+                activeSections.clear();
+                console.log('Active sections after clear:', Array.from(activeSections));
+                
+                if (Array.isArray(existingSections)) {
+                    existingSections.forEach(section => {
+                        console.log('Adding section:', section);
+                        activeSections.add(section);
+                    });
+                }
+                console.log('Final active sections after loading:', Array.from(activeSections));
+                console.log('=== END TEMPLATE LOADING DEBUG ===');
+            } catch (e) {
+                console.error('Error loading existing template:', e);
+                console.log('Template elements raw:', '<%= template.elements %>');
+                console.log('Trying alternative parsing...');
+                
+                // Fallback: try to parse the raw elements string
+                try {
+                    const rawElements = '<%= template.elements %>';
+                    console.log('Raw elements string:', rawElements);
+                    const parsedElements = JSON.parse(rawElements);
+                    console.log('Successfully parsed with fallback:', parsedElements);
+                    
+                    activeSections.clear();
+                    if (Array.isArray(parsedElements)) {
+                        parsedElements.forEach(section => activeSections.add(section));
+                    }
+                    console.log('Loaded with fallback:', Array.from(activeSections));
+                } catch (fallbackError) {
+                    console.error('Fallback parsing also failed:', fallbackError);
+                }
+            }
+        <% } %>
+        
+        function toggleSection(element) {
+            const sectionName = element.dataset.section;
+            const icon = element.querySelector('.toggle-icon');
+            
+            if (activeSections.has(sectionName)) {
+                activeSections.delete(sectionName);
+                element.classList.remove('active');
+                icon.innerHTML = '✕';
+            } else {
+                activeSections.add(sectionName);
+                element.classList.add('active');
+                icon.innerHTML = '✓';
+            }
+            
+            updatePreview();
+        }
+        
+        function toggleSubSection(element) {
+            const sectionName = element.dataset.section;
+            const icon = element.querySelector('.toggle-icon');
+            
+            if (activeSections.has(sectionName)) {
+                activeSections.delete(sectionName);
+                element.classList.remove('active');
+                icon.innerHTML = '✕';
+                icon.style.background = '#e9ecef';
+                icon.style.color = '#666';
+            } else {
+                activeSections.add(sectionName);
+                element.classList.add('active');
+                icon.innerHTML = '✓';
+                icon.style.background = '#667eea';
+                icon.style.color = 'white';
+            }
+            
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const preview = document.getElementById('templatePreview');
+            let previewHTML = '';
+            
+            // Header sections
+            const headerSections = ['FreeShippingBar', 'FlashSaleCountdown', 'FreeShippingTeaser', 'NavigationBar'];
+            headerSections.forEach(sectionName => {
+                if (activeSections.has(sectionName)) {
+                    previewHTML += generateSectionHTML(sectionName);
+                }
+            });
+            
+            // Product Showcase Section (two-column layout)
+            const hasGallery = activeSections.has('ProductImageGallery');
+            const productInfoSections = ['GuaranteeBadge', 'ProductTitle', 'StarRating', 'PricingSection', 'QuickBuyButton', 'FreeTextField', 'ListSection', 'SocialProof', 'Bundles', 'ATCButton', 'TrustIndicators', 'SecureCheckout', 'ScarcityNotice'];
+            const hasProductInfo = productInfoSections.some(section => activeSections.has(section));
+            
+            if (hasGallery || hasProductInfo) {
+                previewHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem; border: 2px dashed #ddd; margin: 1rem 0; background: #fafafa;">';
+                
+                // Left column - Product Gallery
+                if (hasGallery) {
+                    previewHTML += '<div>';
+                    previewHTML += '<h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">IMAGE GALLERY</h6>';
+                    
+                    // Gallery with overlays integrated
+                    previewHTML += '<div style="position: relative; border: 2px dashed #ccc; padding: 1rem; margin: 0.5rem 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 0.875rem; height: 200px; display: flex; align-items: center; justify-content: center;">';
+                    previewHTML += '[MAIN PRODUCT IMAGE]<br>📸 Main Image + Thumbnails';
+                    
+                    // Gallery overlays (positioned at top of main gallery)
+                    const hasDiscountBadge = activeSections.has('DiscountBadge');
+                    const hasSalesCounter = activeSections.has('SalesCounter');
+                    
+                    if (hasDiscountBadge) {
+                        previewHTML += '<div style="position: absolute; top: 10px; left: 10px; width: 50px; height: 25px; background: #ff4444; border-radius: 12px; font-size: 10px; color: white; text-align: center; line-height: 25px; font-family: monospace; font-weight: bold;">-%</div>';
+                    }
+                    
+                    if (hasSalesCounter) {
+                        previewHTML += '<div style="position: absolute; top: 10px; right: 10px; background: #44ff44; padding: 6px 12px; border-radius: 15px; font-size: 10px; color: white; font-family: monospace; font-weight: bold;">🔥 #</div>';
+                    }
+                    
+                    previewHTML += '</div>';
+                    
+                    // Show thumbnail gallery below main image
+                    previewHTML += '<div style="border: 2px dashed #ccc; padding: 0.5rem; margin: 0.5rem 0; background: #f9f9f9; text-align: center; color: #666; font-family: monospace; font-size: 0.75rem;">[THUMBNAIL GALLERY]<br>📷 📷 📷 📷</div>';
+                    
+                    previewHTML += '</div>';
+                } else {
+                    previewHTML += '<div></div>';
+                }
+                
+                // Right column - Product Info
+                if (hasProductInfo) {
+                    previewHTML += '<div>';
+                    previewHTML += '<h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">PRODUCT INFO</h6>';
+                    
+                    // Product info sections in proper order
+                    const productInfoOrder = ['GuaranteeBadge', 'ProductTitle', 'PricingSection', 'QuickBuyButton', 'StarRating', 'FreeTextField', 'ListSection', 'SocialProof', 'Bundles', 'ATCButton', 'TrustIndicators', 'SecureCheckout', 'ScarcityNotice'];
+                    
+                    productInfoOrder.forEach(sectionName => {
+                        if (activeSections.has(sectionName)) {
+                            if (sectionName === 'PricingSection' && activeSections.has('QuickBuyButton')) {
+                                // Combined pricing and buy button layout
+                                previewHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0;">';
+                                previewHTML += '<div style="border: 2px dashed #ccc; padding: 10px; margin: 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[PRICING]</strong><br>💲 Price with discount display</div>';
+                                previewHTML += '<div style="border: 2px solid #ff69b4; padding: 10px; margin: 0; background: #ff69b4; text-align: center; color: white; font-family: monospace; font-size: 12px;"><strong>[BUY BUTTON]</strong><br>🛒 Quick purchase button</div>';
+                                previewHTML += '</div>';
+                                // Skip QuickBuyButton since it's handled here
+                                return;
+                            } else if (sectionName === 'QuickBuyButton' && activeSections.has('PricingSection')) {
+                                // Already handled above
+                                return;
+                            } else {
+                                previewHTML += generateSectionHTML(sectionName);
+                            }
+                        }
+                    });
+                    
+                    previewHTML += '</div>';
+                } else {
+                    previewHTML += '<div></div>';
+                }
+                
+                previewHTML += '</div>';
+            }
+            
+            if (previewHTML === '') {
+                previewHTML = '<div class="wireframe-section">Select sections to see preview</div>';
+            }
+            
+            preview.innerHTML = previewHTML;
+        }
+        
+        function generateSectionHTML(sectionName) {
+            const sectionMap = {
+                'FreeShippingBar': '<div class="wireframe-section">[FREE SHIPPING BAR]<br>🚚 Free shipping promotional message</div>',
+                'FlashSaleCountdown': '<div class="wireframe-section">[FLASH SALE COUNTDOWN]<br>⏰ Countdown timer display</div>',
+                'FreeShippingTeaser': '<div class="wireframe-section">[SHIPPING TEASER]<br>💰 Shipping threshold progress bar</div>',
+                'NavigationBar': '<div class="wireframe-section">[NAVIGATION BAR]<br>🧭 Site navigation and menu</div>',
+                'ProductImageGallery': '<div class="wireframe-section">[PRODUCT GALLERY]<br>📸 Product images and thumbnails</div>',
+                'GuaranteeBadge': '<div class="wireframe-section">[GUARANTEE BADGE]<br>✅ Money-back guarantee badge</div>',
+                'ProductTitle': '<div class="wireframe-section">[PRODUCT TITLE]<br>📝 Product name and headline</div>',
+                'PricingSection': '<div class="wireframe-section">[PRICING SECTION]<br>💲 Price with discount display</div>',
+                'QuickBuyButton': '<div class="wireframe-section">[QUICK BUY BUTTON]<br>🛒 Quick purchase button</div>',
+                'StarRating': '<div class="wireframe-section">[STAR RATING]<br>⭐ Customer reviews and rating</div>',
+                'FreeTextField': '<div class="wireframe-section">[FREE TEXT FIELD]<br>📄 Custom content area</div>',
+                'ListSection': '<div class="wireframe-section">[LIST SECTION]<br>✓ Product features list</div>',
+                'SocialProof': '<div class="wireframe-section">[SOCIAL PROOF]<br>👥 Customer purchase indicators</div>',
+                'Bundles': '<div class="wireframe-section">[BUNDLES SECTION]<br>📦 Quantity discount options</div>',
+                'ATCButton': '<div class="wireframe-section">[ADD TO CART BUTTON]<br>🛒 Main purchase button</div>',
+                'TrustIndicators': '<div class="wireframe-section">[TRUST INDICATORS]<br>🔒 Security and guarantee icons</div>',
+                'SecureCheckout': '<div class="wireframe-section">[SECURE CHECKOUT]<br>💳 Payment method options</div>',
+                'ScarcityNotice': '<div class="wireframe-section">[SCARCITY NOTICE]<br>⚡ Urgency messaging display</div>'
+            };
+            
+            return sectionMap[sectionName] || `<div class="wireframe-section">[${sectionName}]</div>`;
+        }
+        
+        function openSaveModal() {
+            if (activeSections.size === 0) {
+                alert('Please select at least one section before saving');
+                return;
+            }
+            
+            // Pre-fill modal with current template name if editing
+            const currentName = document.getElementById('templateName').value.trim();
+            document.getElementById('modalTemplateName').value = currentName === 'New Template' ? '' : currentName;
+            
+            // Update section count
+            document.getElementById('selectedSectionsCount').textContent = activeSections.size;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('saveTemplateModal'));
+            modal.show();
+        }
+        
+        async function saveTemplate() {
+            const templateName = document.getElementById('modalTemplateName').value.trim();
+            const templateDescription = document.getElementById('modalTemplateDescription').value.trim();
+            
+            if (!templateName) {
+                alert('Please enter a template name');
+                return;
+            }
+            
+            if (activeSections.size === 0) {
+                alert('Please select at least one section');
+                return;
+            }
+            
+            const templateData = {
+                name: templateName,
+                description: templateDescription,
+                sections: Array.from(activeSections)
+            };
+            
+            console.log('=== SAVING TEMPLATE DEBUG ===');
+            console.log('Template name:', templateName);
+            console.log('Active sections being saved:', Array.from(activeSections));
+            console.log('Sections count:', activeSections.size);
+            console.log('=== END SAVING DEBUG ===');
+            
+            try {
+                // Show loading state
+                const saveBtn = document.getElementById('confirmSaveTemplate');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+                saveBtn.disabled = true;
+                
+                const url = editMode ? 
+                    `/admin/templates/${templateId}` : 
+                    '/admin/templates';
+                const method = editMode ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(templateData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('saveTemplateModal'));
+                    modal.hide();
+                    
+                    // Update header template name
+                    document.getElementById('templateName').value = templateName;
+                    
+                    alert(`Template ${editMode ? 'updated' : 'saved'} successfully!`);
+                    window.location.href = '/admin/templates';
+                } else {
+                    alert('Failed to save template: ' + result.error);
+                    // Restore button
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('Failed to save template: ' + error.message);
+                // Restore button
+                const saveBtn = document.getElementById('confirmSaveTemplate');
+                saveBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Save Template';
+                saveBtn.disabled = false;
+            }
+        }
+        
+        function cancelTemplate() {
+            if (confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+                window.location.href = '/admin/templates';
+            }
+        }
+        
+        // Update toggle states on page load
+        function updateToggleStates() {
+            document.querySelectorAll('.section-toggle').forEach(toggle => {
+                const sectionName = toggle.dataset.section;
+                const icon = toggle.querySelector('.toggle-icon');
+                
+                if (activeSections.has(sectionName)) {
+                    toggle.classList.add('active');
+                    icon.innerHTML = '✓';
+                } else {
+                    toggle.classList.remove('active');
+                    icon.innerHTML = '✕';
+                }
+            });
+            
+            // Update sub-section toggle states
+            document.querySelectorAll('.sub-item-toggle').forEach(toggle => {
+                const sectionName = toggle.dataset.section;
+                const icon = toggle.querySelector('.toggle-icon');
+                
+                if (activeSections.has(sectionName)) {
+                    toggle.classList.add('active');
+                    icon.innerHTML = '✓';
+                    icon.style.background = '#667eea';
+                    icon.style.color = 'white';
+                } else {
+                    toggle.classList.remove('active');
+                    icon.innerHTML = '✕';
+                    icon.style.background = '#e9ecef';
+                    icon.style.color = '#666';
+                }
+            });
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Give a small delay to ensure template loading completes first
+            setTimeout(() => {
+                updateToggleStates();
+                updatePreview();
+                console.log('Page loaded with sections:', Array.from(activeSections));
+            }, 100);
+        });
+    </script>
+</body>
+</html>
