@@ -1403,4 +1403,244 @@ router.get('/dashboard', (req, res) => {
   res.redirect('/admin');
 });
 
+// === THEME MANAGEMENT ROUTES ===
+
+// Themes Library - Main listing page
+router.get('/admin/themes', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Get all themes
+    const themes = await db.all('SELECT * FROM themes ORDER BY is_default DESC, created_at DESC');
+    
+    res.render('admin/themes-library', {
+      title: 'Themes Library',
+      themes: themes,
+      currentPage: 'themes'
+    });
+  } catch (error) {
+    console.error('Themes library error:', error);
+    res.render('admin/themes-library', {
+      title: 'Themes Library',
+      themes: [],
+      currentPage: 'themes'
+    });
+  }
+});
+
+// Theme Builder - Create new theme
+router.get('/admin/themes/builder', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    const editId = req.query.edit;
+    
+    let theme = null;
+    let editMode = false;
+    
+    if (editId) {
+      // Ensure database is initialized
+      if (!db.db) {
+        await db.initialize();
+      }
+      
+      theme = await db.get('SELECT * FROM themes WHERE id = ?', [editId]);
+      editMode = !!theme;
+    }
+    
+    res.render('admin/theme-builder', {
+      title: editMode ? 'Edit Theme' : 'Create Theme',
+      theme: theme,
+      editMode: editMode,
+      currentPage: 'theme-builder'
+    });
+  } catch (error) {
+    console.error('Theme builder error:', error);
+    res.render('admin/theme-builder', {
+      title: 'Create Theme',
+      theme: null,
+      editMode: false,
+      currentPage: 'theme-builder'
+    });
+  }
+});
+
+// Create new theme
+router.post('/admin/themes', async (req, res) => {
+  try {
+    const { name, description, css_variables, layout_config, header_config, footer_config, is_default } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, error: 'Theme name is required' });
+    }
+    
+    // If setting as default, remove default flag from others
+    if (is_default) {
+      await db.run('UPDATE themes SET is_default = 0');
+    }
+    
+    // Insert new theme
+    const result = await db.run(`
+      INSERT INTO themes (name, description, css_variables, layout_config, header_config, footer_config, is_default, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    `, [
+      name.trim(),
+      description ? description.trim() : null,
+      css_variables || null,
+      layout_config || null,
+      header_config || null,
+      footer_config || null,
+      is_default ? 1 : 0
+    ]);
+    
+    res.json({ success: true, themeId: result.lastID });
+    
+  } catch (error) {
+    console.error('Create theme error:', error);
+    res.status(500).json({ success: false, error: 'Failed to create theme' });
+  }
+});
+
+// Update existing theme
+router.put('/admin/themes/:id', async (req, res) => {
+  try {
+    const themeId = req.params.id;
+    const { name, description, css_variables, layout_config, header_config, footer_config, is_default } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, error: 'Theme name is required' });
+    }
+    
+    // Check if theme exists
+    const existingTheme = await db.get('SELECT * FROM themes WHERE id = ?', [themeId]);
+    if (!existingTheme) {
+      return res.status(404).json({ success: false, error: 'Theme not found' });
+    }
+    
+    // If setting as default, remove default flag from others
+    if (is_default && !existingTheme.is_default) {
+      await db.run('UPDATE themes SET is_default = 0 WHERE id != ?', [themeId]);
+    }
+    
+    // Update theme
+    await db.run(`
+      UPDATE themes 
+      SET name = ?, description = ?, css_variables = ?, layout_config = ?, header_config = ?, footer_config = ?, is_default = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `, [
+      name.trim(),
+      description ? description.trim() : null,
+      css_variables || null,
+      layout_config || null,
+      header_config || null,
+      footer_config || null,
+      is_default ? 1 : 0,
+      themeId
+    ]);
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Update theme error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update theme' });
+  }
+});
+
+// Duplicate theme
+router.post('/admin/themes/:id/duplicate', async (req, res) => {
+  try {
+    const themeId = req.params.id;
+    const { name } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, error: 'New theme name is required' });
+    }
+    
+    // Get original theme
+    const original = await db.get('SELECT * FROM themes WHERE id = ?', [themeId]);
+    if (!original) {
+      return res.status(404).json({ success: false, error: 'Theme not found' });
+    }
+    
+    // Create duplicate (never default)
+    const result = await db.run(`
+      INSERT INTO themes (name, description, css_variables, layout_config, header_config, footer_config, is_default, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+    `, [
+      name.trim(),
+      original.description,
+      original.css_variables,
+      original.layout_config,
+      original.header_config,
+      original.footer_config
+    ]);
+    
+    res.json({ success: true, themeId: result.lastID });
+    
+  } catch (error) {
+    console.error('Duplicate theme error:', error);
+    res.status(500).json({ success: false, error: 'Failed to duplicate theme' });
+  }
+});
+
+// Delete theme
+router.delete('/admin/themes/:id', async (req, res) => {
+  try {
+    const themeId = req.params.id;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Check if theme exists and if it's default
+    const theme = await db.get('SELECT * FROM themes WHERE id = ?', [themeId]);
+    if (!theme) {
+      return res.status(404).json({ success: false, error: 'Theme not found' });
+    }
+    
+    if (theme.is_default) {
+      return res.status(400).json({ success: false, error: 'Cannot delete default theme' });
+    }
+    
+    // Check if theme is being used by any stores
+    const storeCount = await db.get('SELECT COUNT(*) as count FROM stores WHERE theme_id_new = ?', [themeId]);
+    if (storeCount.count > 0) {
+      return res.status(400).json({ success: false, error: `Theme is currently being used by ${storeCount.count} store(s)` });
+    }
+    
+    // Delete theme
+    await db.run('DELETE FROM themes WHERE id = ?', [themeId]);
+    
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error('Delete theme error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete theme' });
+  }
+});
+
 module.exports = router;

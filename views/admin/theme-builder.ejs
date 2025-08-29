@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        .theme-builder {
+            height: calc(100vh - 80px);
+            overflow: hidden;
+        }
+        
+        .settings-panel {
+            height: 100%;
+            border-right: 1px solid #e9ecef;
+            background: #f8f9fa;
+            overflow-y: auto;
+            padding: 0;
+        }
+        
+        .preview-panel {
+            height: 100%;
+            background: white;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .settings-header {
+            background: white;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .settings-content {
+            padding: 1rem;
+        }
+        
+        .setting-group {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .setting-group h6 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .color-input {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        
+        .preview-header {
+            background: white;
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .theme-preview {
+            min-height: 600px;
+            background: var(--bg-color, #ffffff);
+            color: var(--text-color, #1f2937);
+            font-family: var(--font-primary, 'Inter, system-ui, sans-serif');
+        }
+        
+        .preview-header-section {
+            background: var(--primary-color, #667eea);
+            color: white;
+            padding: 1rem;
+        }
+        
+        .preview-main-section {
+            padding: 2rem;
+            background: var(--surface-color, #f8f9fa);
+            min-height: 300px;
+        }
+        
+        .preview-footer-section {
+            background: var(--secondary-color, #764ba2);
+            color: white;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .save-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <!-- Include Admin Navigation -->
+    <%- include('../partials/admin-nav') %>
+    
+    <div class="container-fluid theme-builder">
+        <div class="row h-100">
+            <!-- Settings Panel -->
+            <div class="col-lg-4 col-xl-3 settings-panel">
+                <div class="settings-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-palette me-2"></i>
+                            <%= editMode ? 'Edit' : 'Create' %> Theme
+                        </h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="previewTheme()">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn save-btn btn-sm" onclick="saveTheme()">
+                                <i class="bi bi-check-lg me-1"></i>Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-content">
+                    <!-- Basic Info -->
+                    <div class="setting-group">
+                        <h6><i class="bi bi-info-circle me-1"></i>Basic Information</h6>
+                        <div class="mb-3">
+                            <label for="themeName" class="form-label">Theme Name</label>
+                            <input type="text" class="form-control" id="themeName" placeholder="My Awesome Theme" value="<%= editMode && theme ? theme.name : '' %>">
+                        </div>
+                        <div class="mb-3">
+                            <label for="themeDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="themeDescription" rows="2" placeholder="A beautiful theme for modern stores"><%= editMode && theme ? theme.description || '' : '' %></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isDefault" <%= editMode && theme && theme.is_default ? 'checked' : '' %>>
+                            <label class="form-check-label" for="isDefault">
+                                Set as default theme
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Colors -->
+                    <div class="setting-group">
+                        <h6><i class="bi bi-palette me-1"></i>Colors</h6>
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Primary</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="color-input" id="primaryColor" value="#667eea" onchange="updatePreview()">
+                                    <input type="text" class="form-control form-control-sm" id="primaryColorText" value="#667eea">
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Secondary</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="color-input" id="secondaryColor" value="#764ba2" onchange="updatePreview()">
+                                    <input type="text" class="form-control form-control-sm" id="secondaryColorText" value="#764ba2">
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Accent</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="color-input" id="accentColor" value="#f093fb" onchange="updatePreview()">
+                                    <input type="text" class="form-control form-control-sm" id="accentColorText" value="#f093fb">
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Background</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="color-input" id="backgroundColor" value="#ffffff" onchange="updatePreview()">
+                                    <input type="text" class="form-control form-control-sm" id="backgroundColorText" value="#ffffff">
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Surface</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="color-input" id="surfaceColor" value="#f8f9fa" onchange="updatePreview()">
+                                    <input type="text" class="form-control form-control-sm" id="surfaceColorText" value="#f8f9fa">
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <label class="form-label">Text</label>
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="color" class="color-input" id="textColor" value="#1f2937" onchange="updatePreview()">
+                                    <input type="text" class="form-control form-control-sm" id="textColorText" value="#1f2937">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Typography -->
+                    <div class="setting-group">
+                        <h6><i class="bi bi-fonts me-1"></i>Typography</h6>
+                        <div class="mb-3">
+                            <label for="primaryFont" class="form-label">Primary Font</label>
+                            <select class="form-select" id="primaryFont" onchange="updatePreview()">
+                                <option value="Inter, system-ui, sans-serif">Inter (Default)</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Helvetica, sans-serif">Helvetica</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="Times New Roman, serif">Times</option>
+                                <option value="Poppins, sans-serif">Poppins</option>
+                                <option value="Roboto, sans-serif">Roboto</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="secondaryFont" class="form-label">Secondary Font</label>
+                            <select class="form-select" id="secondaryFont" onchange="updatePreview()">
+                                <option value="Georgia, serif">Georgia (Default)</option>
+                                <option value="Times New Roman, serif">Times</option>
+                                <option value="Inter, system-ui, sans-serif">Inter</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Playfair Display, serif">Playfair Display</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Layout -->
+                    <div class="setting-group">
+                        <h6><i class="bi bi-layout-three-columns me-1"></i>Layout</h6>
+                        <div class="mb-3">
+                            <label for="maxWidth" class="form-label">Max Width</label>
+                            <select class="form-select" id="maxWidth" onchange="updatePreview()">
+                                <option value="1200px">1200px (Default)</option>
+                                <option value="1140px">1140px</option>
+                                <option value="960px">960px</option>
+                                <option value="100%">Full Width</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="borderRadius" class="form-label">Border Radius</label>
+                            <select class="form-select" id="borderRadius" onchange="updatePreview()">
+                                <option value="0.5rem">Medium (Default)</option>
+                                <option value="0">None</option>
+                                <option value="0.25rem">Small</option>
+                                <option value="1rem">Large</option>
+                                <option value="2rem">Extra Large</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Header Settings -->
+                    <div class="setting-group">
+                        <h6><i class="bi bi-layout-navbar me-1"></i>Header</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showLogo" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showLogo">Show Logo</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showNavigation" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showNavigation">Navigation</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showSearch" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showSearch">Search Bar</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showCart" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showCart">Cart Icon</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Settings -->
+                    <div class="setting-group">
+                        <h6><i class="bi bi-layout-footer me-1"></i>Footer</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showFooterLinks" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showFooterLinks">Links</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showSocial" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showSocial">Social Icons</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showNewsletter" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showNewsletter">Newsletter</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showCopyright" checked onchange="updatePreview()">
+                                    <label class="form-check-label" for="showCopyright">Copyright</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Panel -->
+            <div class="col-lg-8 col-xl-9 preview-panel">
+                <div class="preview-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-eye me-2"></i>Live Preview
+                        </h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="setPreviewDevice('desktop')">
+                                <i class="bi bi-laptop"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="setPreviewDevice('tablet')">
+                                <i class="bi bi-tablet"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="setPreviewDevice('mobile')">
+                                <i class="bi bi-phone"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="theme-preview" id="themePreview">
+                    <!-- Header -->
+                    <div class="preview-header-section">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" id="logoSection">
+                                    <i class="bi bi-shop" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <div id="navigationSection">
+                                    <span class="me-3">Home</span>
+                                    <span class="me-3">Products</span>
+                                    <span class="me-3">About</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3" id="searchSection">
+                                    <i class="bi bi-search"></i>
+                                </div>
+                                <div id="cartSection">
+                                    <i class="bi bi-cart"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Content -->
+                    <div class="preview-main-section">
+                        <div class="text-center">
+                            <h1 style="color: var(--text-color); font-family: var(--font-primary);">Welcome to Your Store</h1>
+                            <p style="color: var(--text-secondary); font-family: var(--font-primary);">This is how your theme will look on your website</p>
+                            <div class="row mt-4">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card" style="border-radius: var(--border-radius);">
+                                        <div class="card-body text-center">
+                                            <div style="background: var(--surface-color); height: 120px; margin: -1rem -1rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0;"></div>
+                                            <h6>Sample Product 1</h6>
+                                            <p class="small text-muted">Product description here</p>
+                                            <button class="btn btn-sm" style="background: var(--primary-color); color: white; border-radius: var(--border-radius);">Add to Cart</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card" style="border-radius: var(--border-radius);">
+                                        <div class="card-body text-center">
+                                            <div style="background: var(--surface-color); height: 120px; margin: -1rem -1rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0;"></div>
+                                            <h6>Sample Product 2</h6>
+                                            <p class="small text-muted">Product description here</p>
+                                            <button class="btn btn-sm" style="background: var(--accent-color); color: white; border-radius: var(--border-radius);">Add to Cart</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card" style="border-radius: var(--border-radius);">
+                                        <div class="card-body text-center">
+                                            <div style="background: var(--surface-color); height: 120px; margin: -1rem -1rem 1rem; border-radius: var(--border-radius) var(--border-radius) 0 0;"></div>
+                                            <h6>Sample Product 3</h6>
+                                            <p class="small text-muted">Product description here</p>
+                                            <button class="btn btn-sm" style="background: var(--secondary-color); color: white; border-radius: var(--border-radius);">Add to Cart</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="preview-footer-section">
+                        <div class="row">
+                            <div class="col-md-4" id="footerLinksSection">
+                                <h6>Quick Links</h6>
+                                <div>About Us</div>
+                                <div>Contact</div>
+                                <div>Privacy Policy</div>
+                            </div>
+                            <div class="col-md-4" id="footerSocialSection">
+                                <h6>Follow Us</h6>
+                                <div>
+                                    <i class="bi bi-facebook me-2"></i>
+                                    <i class="bi bi-twitter me-2"></i>
+                                    <i class="bi bi-instagram me-2"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="footerNewsletterSection">
+                                <h6>Newsletter</h6>
+                                <div>Subscribe for updates</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3" id="footerCopyrightSection">
+                            <small>© 2024 Your Store Name. All rights reserved.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Save Modal -->
+    <div class="modal fade" id="saveModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        Theme Saved Successfully
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Your theme has been saved successfully!</p>
+                    <div class="d-grid gap-2">
+                        <a href="/admin/themes" class="btn btn-primary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Themes Library
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            Continue Editing
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const editMode = <%= editMode ? 'true' : 'false' %>;
+        const themeId = <%= editMode && theme ? theme.id : 'null' %>;
+        
+        // Load existing theme data if in edit mode
+        <% if (editMode && theme) { %>
+            <% try { %>
+                <% const colors = JSON.parse(theme.css_variables || '{}'); %>
+                <% const layout = JSON.parse(theme.layout_config || '{}'); %>
+                <% const header = JSON.parse(theme.header_config || '{}'); %>
+                <% const footer = JSON.parse(theme.footer_config || '{}'); %>
+                
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Load colors
+                    <% if (colors.primary) { %>
+                        document.getElementById('primaryColor').value = '<%= colors.primary %>';
+                        document.getElementById('primaryColorText').value = '<%= colors.primary %>';
+                    <% } %>
+                    <% if (colors.secondary) { %>
+                        document.getElementById('secondaryColor').value = '<%= colors.secondary %>';
+                        document.getElementById('secondaryColorText').value = '<%= colors.secondary %>';
+                    <% } %>
+                    <% if (colors.accent) { %>
+                        document.getElementById('accentColor').value = '<%= colors.accent %>';
+                        document.getElementById('accentColorText').value = '<%= colors.accent %>';
+                    <% } %>
+                    <% if (colors.background) { %>
+                        document.getElementById('backgroundColor').value = '<%= colors.background %>';
+                        document.getElementById('backgroundColorText').value = '<%= colors.background %>';
+                    <% } %>
+                    <% if (colors.surface) { %>
+                        document.getElementById('surfaceColor').value = '<%= colors.surface %>';
+                        document.getElementById('surfaceColorText').value = '<%= colors.surface %>';
+                    <% } %>
+                    <% if (colors.text) { %>
+                        document.getElementById('textColor').value = '<%= colors.text %>';
+                        document.getElementById('textColorText').value = '<%= colors.text %>';
+                    <% } %>
+                    
+                    // Load fonts
+                    <% if (layout.fonts && layout.fonts.primary) { %>
+                        document.getElementById('primaryFont').value = '<%= layout.fonts.primary %>';
+                    <% } %>
+                    <% if (layout.fonts && layout.fonts.secondary) { %>
+                        document.getElementById('secondaryFont').value = '<%= layout.fonts.secondary %>';
+                    <% } %>
+                    
+                    // Load layout
+                    <% if (layout.layout && layout.layout.maxWidth) { %>
+                        document.getElementById('maxWidth').value = '<%= layout.layout.maxWidth %>';
+                    <% } %>
+                    <% if (layout.layout && layout.layout.borderRadius) { %>
+                        document.getElementById('borderRadius').value = '<%= layout.layout.borderRadius %>';
+                    <% } %>
+                    
+                    // Load header settings
+                    <% if (typeof header.showLogo !== 'undefined') { %>
+                        document.getElementById('showLogo').checked = <%= header.showLogo %>;
+                    <% } %>
+                    <% if (typeof header.showNavigation !== 'undefined') { %>
+                        document.getElementById('showNavigation').checked = <%= header.showNavigation %>;
+                    <% } %>
+                    <% if (typeof header.showSearch !== 'undefined') { %>
+                        document.getElementById('showSearch').checked = <%= header.showSearch %>;
+                    <% } %>
+                    <% if (typeof header.showCart !== 'undefined') { %>
+                        document.getElementById('showCart').checked = <%= header.showCart %>;
+                    <% } %>
+                    
+                    // Load footer settings
+                    <% if (typeof footer.showLinks !== 'undefined') { %>
+                        document.getElementById('showFooterLinks').checked = <%= footer.showLinks %>;
+                    <% } %>
+                    <% if (typeof footer.showSocial !== 'undefined') { %>
+                        document.getElementById('showSocial').checked = <%= footer.showSocial %>;
+                    <% } %>
+                    <% if (typeof footer.showNewsletter !== 'undefined') { %>
+                        document.getElementById('showNewsletter').checked = <%= footer.showNewsletter %>;
+                    <% } %>
+                    <% if (typeof footer.showCopyright !== 'undefined') { %>
+                        document.getElementById('showCopyright').checked = <%= footer.showCopyright %>;
+                    <% } %>
+                    
+                    updatePreview();
+                });
+            <% } catch(e) { %>
+                console.error('Error loading theme data:', e);
+            <% } %>
+        <% } %>
+        
+        // Sync color inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const colorInputs = ['primary', 'secondary', 'accent', 'background', 'surface', 'text'];
+            
+            colorInputs.forEach(color => {
+                const colorPicker = document.getElementById(color + 'Color');
+                const textInput = document.getElementById(color + 'ColorText');
+                
+                colorPicker.addEventListener('change', function() {
+                    textInput.value = this.value;
+                    updatePreview();
+                });
+                
+                textInput.addEventListener('change', function() {
+                    colorPicker.value = this.value;
+                    updatePreview();
+                });
+            });
+            
+            updatePreview();
+        });
+        
+        function updatePreview() {
+            const preview = document.getElementById('themePreview');
+            const root = document.documentElement;
+            
+            // Update CSS variables
+            root.style.setProperty('--primary-color', document.getElementById('primaryColor').value);
+            root.style.setProperty('--secondary-color', document.getElementById('secondaryColor').value);
+            root.style.setProperty('--accent-color', document.getElementById('accentColor').value);
+            root.style.setProperty('--bg-color', document.getElementById('backgroundColor').value);
+            root.style.setProperty('--surface-color', document.getElementById('surfaceColor').value);
+            root.style.setProperty('--text-color', document.getElementById('textColor').value);
+            root.style.setProperty('--font-primary', document.getElementById('primaryFont').value);
+            root.style.setProperty('--font-secondary', document.getElementById('secondaryFont').value);
+            root.style.setProperty('--border-radius', document.getElementById('borderRadius').value);
+            
+            // Update header visibility
+            document.getElementById('logoSection').style.display = document.getElementById('showLogo').checked ? 'block' : 'none';
+            document.getElementById('navigationSection').style.display = document.getElementById('showNavigation').checked ? 'block' : 'none';
+            document.getElementById('searchSection').style.display = document.getElementById('showSearch').checked ? 'block' : 'none';
+            document.getElementById('cartSection').style.display = document.getElementById('showCart').checked ? 'block' : 'none';
+            
+            // Update footer visibility
+            document.getElementById('footerLinksSection').style.display = document.getElementById('showFooterLinks').checked ? 'block' : 'none';
+            document.getElementById('footerSocialSection').style.display = document.getElementById('showSocial').checked ? 'block' : 'none';
+            document.getElementById('footerNewsletterSection').style.display = document.getElementById('showNewsletter').checked ? 'block' : 'none';
+            document.getElementById('footerCopyrightSection').style.display = document.getElementById('showCopyright').checked ? 'block' : 'none';
+        }
+        
+        function previewTheme() {
+            alert('Preview functionality coming soon!');
+        }
+        
+        function setPreviewDevice(device) {
+            const preview = document.getElementById('themePreview');
+            preview.className = 'theme-preview device-' + device;
+        }
+        
+        async function saveTheme() {
+            const name = document.getElementById('themeName').value;
+            const description = document.getElementById('themeDescription').value;
+            const isDefault = document.getElementById('isDefault').checked;
+            
+            if (!name.trim()) {
+                alert('Please enter a theme name');
+                return;
+            }
+            
+            const themeData = {
+                name: name.trim(),
+                description: description.trim(),
+                is_default: isDefault,
+                css_variables: JSON.stringify({
+                    primary: document.getElementById('primaryColor').value,
+                    secondary: document.getElementById('secondaryColor').value,
+                    accent: document.getElementById('accentColor').value,
+                    background: document.getElementById('backgroundColor').value,
+                    surface: document.getElementById('surfaceColor').value,
+                    text: document.getElementById('textColor').value
+                }),
+                layout_config: JSON.stringify({
+                    colors: {
+                        primary: document.getElementById('primaryColor').value,
+                        secondary: document.getElementById('secondaryColor').value,
+                        accent: document.getElementById('accentColor').value,
+                        background: document.getElementById('backgroundColor').value,
+                        surface: document.getElementById('surfaceColor').value,
+                        text: document.getElementById('textColor').value
+                    },
+                    fonts: {
+                        primary: document.getElementById('primaryFont').value,
+                        secondary: document.getElementById('secondaryFont').value
+                    },
+                    layout: {
+                        maxWidth: document.getElementById('maxWidth').value,
+                        borderRadius: document.getElementById('borderRadius').value
+                    }
+                }),
+                header_config: JSON.stringify({
+                    showLogo: document.getElementById('showLogo').checked,
+                    showNavigation: document.getElementById('showNavigation').checked,
+                    showSearch: document.getElementById('showSearch').checked,
+                    showCart: document.getElementById('showCart').checked
+                }),
+                footer_config: JSON.stringify({
+                    showLinks: document.getElementById('showFooterLinks').checked,
+                    showSocial: document.getElementById('showSocial').checked,
+                    showNewsletter: document.getElementById('showNewsletter').checked,
+                    showCopyright: document.getElementById('showCopyright').checked
+                })
+            };
+            
+            try {
+                const url = editMode ? `/admin/themes/${themeId}` : '/admin/themes';
+                const method = editMode ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(themeData)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    const modal = new bootstrap.Modal(document.getElementById('saveModal'));
+                    modal.show();
+                } else {
+                    alert('Failed to save theme: ' + result.error);
+                }
+            } catch (error) {
+                alert('Failed to save theme: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
