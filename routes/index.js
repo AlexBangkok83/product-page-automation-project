@@ -1650,7 +1650,6 @@ router.get('/admin/store/:id/theme', async (req, res) => {
   try {
     const storeId = req.params.id;
     const db = require('../database/db');
-    const Store = require('../lib/Store');
     
     // Ensure database is initialized
     if (!db.db) {
