@@ -199,6 +199,109 @@
             margin-bottom: 1rem;
             color: #333;
         }
+        
+        /* Theme Selection Styles */
+        .theme-selector-card {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: white;
+            height: 100%;
+            cursor: pointer;
+        }
+        
+        .theme-selector-card:hover {
+            border-color: #007cba;
+            box-shadow: 0 4px 15px rgba(0, 124, 186, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .theme-selector-card.selected {
+            border-color: #28a745;
+            background: #f8fff9;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.15);
+        }
+        
+        .theme-preview {
+            height: 120px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px 6px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .theme-preview-mini {
+            width: 80%;
+            height: 80%;
+            background: white;
+            border: 1px dashed #ccc;
+            display: flex;
+            flex-direction: column;
+            padding: 3px;
+            font-size: 5px;
+            color: #666;
+            font-family: monospace;
+        }
+        
+        .mini-header, .mini-main, .mini-footer {
+            border: 1px solid #ddd;
+            padding: 1px;
+            margin: 1px 0;
+            text-align: center;
+        }
+        
+        .mini-header {
+            background: var(--theme-primary, #667eea);
+            color: white;
+            height: 20%;
+        }
+        
+        .mini-main {
+            background: var(--theme-surface, #f9f9f9);
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mini-footer {
+            background: var(--theme-secondary, #764ba2);
+            color: white;
+            height: 20%;
+        }
+        
+        .theme-info {
+            padding: 1rem;
+        }
+        
+        .selected-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.6rem;
+            font-weight: 600;
+        }
+        
+        .theme-colors {
+            display: flex;
+            gap: 2px;
+            margin-top: 0.5rem;
+        }
+        
+        .theme-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+        }
     </style>
 </head>
 <body>
@@ -219,6 +322,9 @@
                 </a></li>
                 <li><a href="#settings" class="nav-link" onclick="showSection('settings')">
                     <i class="bi bi-gear"></i>Store Settings
+                </a></li>
+                <li><a href="#theme" class="nav-link" onclick="showSection('theme')">
+                    <i class="bi bi-palette"></i>Theme & Design
                 </a></li>
                 <li><a href="#pages" class="nav-link" onclick="showSection('pages')">
                     <i class="bi bi-file-text"></i>Pages (<%= pages.length %>)
@@ -378,6 +484,93 @@
                             <button type="button" class="btn btn-outline-secondary ms-2" onclick="testShopifyConnection()">Test Connection</button>
                         <% } %>
                     </form>
+                </div>
+            </div>
+            
+            <!-- Theme & Design Section -->
+            <div id="theme" class="content-section">
+                <div class="form-section">
+                    <h5 class="section-title">Choose Theme</h5>
+                    <p class="text-muted mb-4">Select a theme to define the overall look and feel of your store</p>
+                    
+                    <div class="row" id="themesGrid">
+                        <!-- Themes will be loaded here by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h5 class="section-title">Content Injection Areas</h5>
+                    <p class="text-muted mb-4">These are the dynamic areas where admin content will be injected into your theme</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="list-item">
+                                <div class="item-info">
+                                    <h6><i class="bi bi-layout-navbar me-1"></i> Header Area</h6>
+                                    <small class="text-muted">Logo, Navigation, Cart & Search<br>Dynamically populated from store settings</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="list-item">
+                                <div class="item-info">
+                                    <h6><i class="bi bi-grid-3x3 me-1"></i> Main Content Area</h6>
+                                    <small class="text-muted">Product Pages, Collections, CMS Pages<br>Product templates and page content inject here</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="list-item">
+                                <div class="item-info">
+                                    <h6><i class="bi bi-collection me-1"></i> Product Template Area</h6>
+                                    <small class="text-muted">Product Images, Info, Add to Cart, etc.<br>Selected product templates render here</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="list-item">
+                                <div class="item-info">
+                                    <h6><i class="bi bi-layout-footer me-1"></i> Footer Area</h6>
+                                    <small class="text-muted">Links, Social, Newsletter, Copyright<br>Configured through theme footer settings</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h5 class="section-title">Live Preview</h5>
+                    <p class="text-muted mb-4">See how your selected theme will look with content injection areas highlighted</p>
+                    
+                    <div class="border rounded" style="min-height: 300px; background: #f8f9fa;">
+                        <div id="livePreview" style="font-family: Arial, sans-serif;">
+                            <div style="background: var(--selected-primary, #667eea); color: white; padding: 1rem; text-align: center;">
+                                <strong>🎨 HEADER INJECTION AREA</strong> - Logo, Navigation, Cart
+                            </div>
+                            <div style="padding: 1.5rem; background: white;">
+                                <div style="border: 2px dashed #007bff; padding: 1.5rem; margin: 0.5rem 0; background: rgba(0,123,255,0.05); text-align: center; color: #007bff;">
+                                    <strong>📄 MAIN CONTENT INJECTION AREA</strong><br>
+                                    <small>Product pages, collections, and CMS content appear here</small>
+                                </div>
+                                <div style="border: 2px dashed #28a745; padding: 1.5rem; margin: 0.5rem 0; background: rgba(40,167,69,0.05); text-align: center; color: #28a745;">
+                                    <strong>🛍️ PRODUCT TEMPLATE INJECTION AREA</strong><br>
+                                    <small>Selected product templates with configured sections render here</small>
+                                </div>
+                            </div>
+                            <div style="background: var(--selected-secondary, #764ba2); color: white; padding: 1rem; text-align: center;">
+                                <strong>🔗 FOOTER INJECTION AREA</strong> - Links, Social, Newsletter
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-success" onclick="saveThemeAndDeploy()">
+                        <i class="bi bi-rocket me-1"></i>Save Theme & Deploy
+                    </button>
                 </div>
             </div>
             
@@ -941,6 +1134,209 @@
                 toast.remove();
             });
         }
+        
+        // Theme Management Functions
+        let selectedThemeId = null;
+        let availableThemes = [];
+        
+        // Load themes when theme section is accessed
+        async function loadThemes() {
+            try {
+                const response = await fetch('/admin/themes');
+                const html = await response.text();
+                
+                // Parse themes from the HTML (simple approach)
+                // Better approach would be to create an API endpoint
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // For now, let's fetch themes via a dedicated API
+                const themesResponse = await fetch('/api/themes');
+                const themesData = await themesResponse.json();
+                
+                if (themesData.success) {
+                    availableThemes = themesData.themes;
+                    renderThemes();
+                }
+            } catch (error) {
+                console.error('Error loading themes:', error);
+                // Fallback to hardcoded themes for now
+                renderFallbackThemes();
+            }
+        }
+        
+        function renderThemes() {
+            const grid = document.getElementById('themesGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '';
+            
+            availableThemes.forEach(theme => {
+                let colors = {};
+                try {
+                    colors = JSON.parse(theme.css_variables || '{}');
+                } catch(e) {
+                    colors = {primary: '#667eea', secondary: '#764ba2', surface: '#f9f9f9'};
+                }
+                
+                const isSelected = selectedThemeId === theme.id;
+                
+                const themeCard = document.createElement('div');
+                themeCard.className = 'col-lg-3 col-md-4 col-sm-6 mb-3';
+                themeCard.innerHTML = `
+                    <div class="theme-selector-card ${isSelected ? 'selected' : ''}" 
+                         onclick="selectTheme(${theme.id}, '${theme.name}')" 
+                         data-theme-id="${theme.id}">
+                        
+                        ${isSelected ? '<div class="selected-badge"><i class="bi bi-check"></i> Active</div>' : ''}
+                        
+                        <div class="theme-preview">
+                            <div class="theme-preview-mini" style="--theme-primary: ${colors.primary || '#667eea'}; --theme-secondary: ${colors.secondary || '#764ba2'}; --theme-surface: ${colors.surface || '#f9f9f9'}">
+                                <div class="mini-header">[HDR]</div>
+                                <div class="mini-main">[CONT]</div>
+                                <div class="mini-footer">[FTR]</div>
+                            </div>
+                        </div>
+                        
+                        <div class="theme-info">
+                            <h6 class="mb-1">${theme.name}</h6>
+                            ${theme.description ? `<p class="text-muted small mb-2">${theme.description}</p>` : ''}
+                            
+                            <div class="theme-colors">
+                                <div class="theme-color-dot" style="background-color: ${colors.primary || '#667eea'}"></div>
+                                <div class="theme-color-dot" style="background-color: ${colors.secondary || '#764ba2'}"></div>
+                                <div class="theme-color-dot" style="background-color: ${colors.accent || '#f093fb'}"></div>
+                            </div>
+                            
+                            ${theme.is_default ? '<small class="text-success"><i class="bi bi-star-fill me-1"></i>Default</small>' : ''}
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(themeCard);
+            });
+        }
+        
+        function renderFallbackThemes() {
+            // Fallback themes in case API fails
+            const fallbackThemes = [
+                {
+                    id: 1,
+                    name: 'Modern E-commerce',
+                    description: 'Clean, modern theme',
+                    colors: {primary: '#667eea', secondary: '#764ba2', accent: '#f093fb'},
+                    is_default: true
+                },
+                {
+                    id: 2,
+                    name: 'Bold Red Commerce',
+                    description: 'Dynamic red theme',
+                    colors: {primary: '#dc2626', secondary: '#991b1b', accent: '#f59e0b'},
+                    is_default: false
+                },
+                {
+                    id: 3,
+                    name: 'Elegant Red Luxury',
+                    description: 'Sophisticated red theme',
+                    colors: {primary: '#b91c1c', secondary: '#7f1d1d', accent: '#d97706'},
+                    is_default: false
+                }
+            ];
+            
+            availableThemes = fallbackThemes;
+            renderThemes();
+        }
+        
+        function selectTheme(themeId, themeName) {
+            // Remove previous selection
+            document.querySelectorAll('.theme-selector-card').forEach(card => {
+                card.classList.remove('selected');
+                const badge = card.querySelector('.selected-badge');
+                if (badge) badge.remove();
+            });
+            
+            // Add selection to new theme
+            const selectedCard = document.querySelector(`[data-theme-id="${themeId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                
+                // Add selected badge
+                const badge = document.createElement('div');
+                badge.className = 'selected-badge';
+                badge.innerHTML = '<i class="bi bi-check"></i> Selected';
+                selectedCard.querySelector('.theme-preview').appendChild(badge);
+                
+                selectedThemeId = themeId;
+                
+                // Update live preview colors
+                const themeData = extractThemeData(selectedCard);
+                updateLivePreview(themeData);
+                
+                console.log(`Selected theme: ${themeName} (ID: ${themeId})`);
+            }
+        }
+        
+        function extractThemeData(card) {
+            const colorDots = card.querySelectorAll('.theme-color-dot');
+            return {
+                primary: colorDots[0]?.style.backgroundColor || '#667eea',
+                secondary: colorDots[1]?.style.backgroundColor || '#764ba2'
+            };
+        }
+        
+        function updateLivePreview(themeData) {
+            const preview = document.getElementById('livePreview');
+            if (preview) {
+                preview.style.setProperty('--selected-primary', themeData.primary);
+                preview.style.setProperty('--selected-secondary', themeData.secondary);
+            }
+        }
+        
+        async function saveThemeAndDeploy() {
+            if (!selectedThemeId) {
+                showToast('❌ Please select a theme first', 'error');
+                return;
+            }
+            
+            try {
+                // Save theme
+                const response = await fetch(`/admin/store/<%= store.id %>/theme`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ theme_id: selectedThemeId })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    showToast('✅ Theme updated successfully!', 'success');
+                    
+                    // Auto-deploy the changes
+                    setTimeout(() => {
+                        showToast('🚀 Deploying changes to live site...', 'info');
+                        deployStore();
+                    }, 1000);
+                } else {
+                    showToast('❌ Failed to save theme: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showToast('❌ Failed to save theme: ' + error.message, 'error');
+            }
+        }
+        
+        // Initialize theme section when it's first accessed
+        let themesLoaded = false;
+        const originalShowSection = showSection;
+        showSection = function(sectionId) {
+            originalShowSection(sectionId);
+            
+            if (sectionId === 'theme' && !themesLoaded) {
+                themesLoaded = true;
+                loadThemes();
+                
+                // Set current theme as selected
+                selectedThemeId = <%= store.theme_id_new || 'null' %>;
+            }
+        };
     </script>
 </body>
 </html>

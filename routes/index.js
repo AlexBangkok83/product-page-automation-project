@@ -1645,45 +1645,6 @@ router.delete('/admin/themes/:id', async (req, res) => {
 
 // === STORE-THEME CONNECTION ROUTES ===
 
-// Store Theme Settings Page
-router.get('/admin/store/:id/theme', async (req, res) => {
-  try {
-    const storeId = req.params.id;
-    const db = require('../database/db');
-    
-    // Ensure database is initialized
-    if (!db.db) {
-      await db.initialize();
-    }
-    
-    // Get store by ID (numeric ID, not UUID)
-    const store = await db.get('SELECT * FROM stores WHERE id = ?', [storeId]);
-    if (!store) {
-      return res.status(404).render('error', {
-        title: 'Store Not Found',
-        message: 'The store you are looking for does not exist.'
-      });
-    }
-    
-    // Get all themes
-    const themes = await db.all('SELECT * FROM themes ORDER BY is_default DESC, created_at DESC');
-    
-    res.render('admin/store-theme-settings', {
-      title: `Theme Settings - ${store.name}`,
-      store: store,
-      themes: themes,
-      currentPage: 'store-theme-settings'
-    });
-    
-  } catch (error) {
-    console.error('Store theme settings error:', error);
-    res.status(500).render('error', {
-      title: 'Error',
-      message: 'Failed to load store theme settings'
-    });
-  }
-});
-
 // Update Store Theme
 router.post('/admin/store/:id/theme', async (req, res) => {
   try {
@@ -1729,8 +1690,11 @@ router.post('/admin/store/:id/theme', async (req, res) => {
   }
 });
 
-// Store Management with Theme Info
-router.get('/admin/stores', async (req, res) => {
+
+// === API ENDPOINTS FOR THEMES ===
+
+// API endpoint to get themes (for AJAX requests)
+router.get('/api/themes', async (req, res) => {
   try {
     const db = require('../database/db');
     
@@ -1739,27 +1703,18 @@ router.get('/admin/stores', async (req, res) => {
       await db.initialize();
     }
     
-    // Get all stores with their theme information
-    const stores = await db.all(`
-      SELECT s.*, t.name as theme_name, t.id as theme_id, sh.name as shopify_store_name
-      FROM stores s
-      LEFT JOIN themes t ON s.theme_id_new = t.id
-      LEFT JOIN shopify_stores sh ON s.shopify_store_id = sh.id
-      ORDER BY s.created_at DESC
-    `);
+    // Get all themes
+    const themes = await db.all('SELECT * FROM themes ORDER BY is_default DESC, created_at DESC');
     
-    res.render('admin/stores-management', {
-      title: 'Store Management',
-      stores: stores,
-      currentPage: 'stores-management'
+    res.json({
+      success: true,
+      themes: themes
     });
-    
   } catch (error) {
-    console.error('Stores management error:', error);
-    res.render('admin/stores-management', {
-      title: 'Store Management',
-      stores: [],
-      currentPage: 'stores-management'
+    console.error('API themes error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load themes'
     });
   }
 });
