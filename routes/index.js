@@ -1643,4 +1643,126 @@ router.delete('/admin/themes/:id', async (req, res) => {
   }
 });
 
+// === STORE-THEME CONNECTION ROUTES ===
+
+// Store Theme Settings Page
+router.get('/admin/store/:id/theme', async (req, res) => {
+  try {
+    const storeId = req.params.id;
+    const db = require('../database/db');
+    const Store = require('../lib/Store');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Get store by ID (numeric ID, not UUID)
+    const store = await db.get('SELECT * FROM stores WHERE id = ?', [storeId]);
+    if (!store) {
+      return res.status(404).render('error', {
+        title: 'Store Not Found',
+        message: 'The store you are looking for does not exist.'
+      });
+    }
+    
+    // Get all themes
+    const themes = await db.all('SELECT * FROM themes ORDER BY is_default DESC, created_at DESC');
+    
+    res.render('admin/store-theme-settings', {
+      title: `Theme Settings - ${store.name}`,
+      store: store,
+      themes: themes,
+      currentPage: 'store-theme-settings'
+    });
+    
+  } catch (error) {
+    console.error('Store theme settings error:', error);
+    res.status(500).render('error', {
+      title: 'Error',
+      message: 'Failed to load store theme settings'
+    });
+  }
+});
+
+// Update Store Theme
+router.post('/admin/store/:id/theme', async (req, res) => {
+  try {
+    const storeId = req.params.id;
+    const { theme_id } = req.body;
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    if (!theme_id) {
+      return res.status(400).json({ success: false, error: 'Theme ID is required' });
+    }
+    
+    // Verify theme exists
+    const theme = await db.get('SELECT * FROM themes WHERE id = ?', [theme_id]);
+    if (!theme) {
+      return res.status(404).json({ success: false, error: 'Theme not found' });
+    }
+    
+    // Verify store exists
+    const store = await db.get('SELECT * FROM stores WHERE id = ?', [storeId]);
+    if (!store) {
+      return res.status(404).json({ success: false, error: 'Store not found' });
+    }
+    
+    // Update store theme
+    await db.run('UPDATE stores SET theme_id_new = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [theme_id, storeId]);
+    
+    console.log(`✅ Store "${store.name}" theme updated to "${theme.name}"`);
+    
+    res.json({ 
+      success: true, 
+      message: `Theme updated to "${theme.name}" successfully!`,
+      theme: theme
+    });
+    
+  } catch (error) {
+    console.error('Update store theme error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update store theme' });
+  }
+});
+
+// Store Management with Theme Info
+router.get('/admin/stores', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Get all stores with their theme information
+    const stores = await db.all(`
+      SELECT s.*, t.name as theme_name, t.id as theme_id, sh.name as shopify_store_name
+      FROM stores s
+      LEFT JOIN themes t ON s.theme_id_new = t.id
+      LEFT JOIN shopify_stores sh ON s.shopify_store_id = sh.id
+      ORDER BY s.created_at DESC
+    `);
+    
+    res.render('admin/stores-management', {
+      title: 'Store Management',
+      stores: stores,
+      currentPage: 'stores-management'
+    });
+    
+  } catch (error) {
+    console.error('Stores management error:', error);
+    res.render('admin/stores-management', {
+      title: 'Store Management',
+      stores: [],
+      currentPage: 'stores-management'
+    });
+  }
+});
+
 module.exports = router;

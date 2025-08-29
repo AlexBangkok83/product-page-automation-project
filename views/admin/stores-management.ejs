@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        .store-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .store-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .store-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .theme-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+        }
+        
+        .theme-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            margin-right: 6px;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .status-deployed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .stats-row {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body class="bg-light admin-page">
+    <!-- Include Admin Navigation -->
+    <%- include('../partials/admin-nav') %>
+    
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="store-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-1">
+                        <i class="bi bi-shop me-2"></i>Store Management
+                    </h2>
+                    <p class="mb-0 opacity-75">Manage your stores, themes, and deployments</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="/admin/site-setup" class="btn btn-outline-light">
+                        <i class="bi bi-plus-circle me-1"></i>Create New Store
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 bg-primary text-white text-center" style="border-radius: 15px;">
+                    <div class="card-body py-3">
+                        <h3 class="mb-0"><%= stores.length %></h3>
+                        <small>Total Stores</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-success text-white text-center" style="border-radius: 15px;">
+                    <div class="card-body py-3">
+                        <h3 class="mb-0"><%= stores.filter(s => s.deployment_status === 'deployed').length %></h3>
+                        <small>Deployed Stores</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-info text-white text-center" style="border-radius: 15px;">
+                    <div class="card-body py-3">
+                        <h3 class="mb-0"><%= new Set(stores.filter(s => s.theme_name).map(s => s.theme_name)).size %></h3>
+                        <small>Themes in Use</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 bg-warning text-white text-center" style="border-radius: 15px;">
+                    <div class="card-body py-3">
+                        <h3 class="mb-0"><%= new Set(stores.map(s => s.shopify_store_name)).size %></h3>
+                        <small>Shopify Connections</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stores Grid -->
+        <div class="row">
+            <% if (stores && stores.length > 0) { %>
+                <% stores.forEach(store => { %>
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="store-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-shop me-2"></i><%= store.name %>
+                                </h6>
+                                <span class="status-badge status-<%= store.deployment_status %>">
+                                    <% if (store.deployment_status === 'deployed') { %>
+                                        <i class="bi bi-check-circle me-1"></i>Live
+                                    <% } else if (store.deployment_status === 'pending') { %>
+                                        <i class="bi bi-clock me-1"></i>Pending
+                                    <% } else { %>
+                                        <i class="bi bi-x-circle me-1"></i>Failed
+                                    <% } %>
+                                </span>
+                            </div>
+                            
+                            <div class="card-body">
+                                <!-- Store Info -->
+                                <div class="mb-3">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-globe text-muted me-2"></i>
+                                        <span class="small">
+                                            <% if (store.deployment_url) { %>
+                                                <a href="<%= store.deployment_url %>" target="_blank" class="text-decoration-none">
+                                                    <%= store.domain %>
+                                                </a>
+                                            <% } else { %>
+                                                <%= store.domain %>
+                                            <% } %>
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-link-45deg text-muted me-2"></i>
+                                        <span class="small"><%= store.shopify_store_name || 'Default Shopify Store' %></span>
+                                    </div>
+                                    
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-palette text-muted me-2"></i>
+                                        <% if (store.theme_name) { %>
+                                            <div class="theme-indicator">
+                                                <div class="theme-color-dot" style="background-color: #667eea;"></div>
+                                                <%= store.theme_name %>
+                                            </div>
+                                        <% } else { %>
+                                            <span class="small text-muted">No theme assigned</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <!-- Store Stats -->
+                                <div class="stats-row">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Products</small>
+                                            <strong>-</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Templates</small>
+                                            <strong>-</strong>
+                                        </div>
+                                        <div class="col-4">
+                                            <small class="text-muted d-block">Pages</small>
+                                            <strong>-</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Created Date -->
+                                <div class="text-center text-muted small">
+                                    Created <%= new Date(store.created_at).toLocaleDateString() %>
+                                </div>
+                            </div>
+                            
+                            <!-- Store Actions -->
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100" role="group">
+                                    <% if (store.deployment_url) { %>
+                                        <a href="<%= store.deployment_url %>" target="_blank" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    <% } else { %>
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                                            <i class="bi bi-eye-slash"></i>
+                                        </button>
+                                    <% } %>
+                                    
+                                    <a href="/admin/store/<%= store.id %>/theme" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-palette me-1"></i>Theme
+                                    </a>
+                                    
+                                    <a href="/admin/templates/assignments?store=<%= store.id %>" class="btn btn-outline-info btn-sm">
+                                        <i class="bi bi-collection me-1"></i>Templates
+                                    </a>
+                                    
+                                    <a href="/admin/store/<%= store.uuid %>/content" class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-file-text me-1"></i>Content
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <!-- Empty State -->
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="bi bi-shop" style="font-size: 4rem; color: #e9ecef;"></i>
+                        <h4 class="mt-4 text-muted">No stores created yet</h4>
+                        <p class="text-muted mb-4">Create your first store to get started</p>
+                        <a href="/admin/site-setup" class="btn btn-primary btn-lg">
+                            <i class="bi bi-plus-circle me-2"></i>Create Your First Store
+                        </a>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card bg-light border-0">
+                    <div class="card-body text-center py-4">
+                        <h5 class="mb-3">Quick Actions</h5>
+                        <div class="btn-group">
+                            <a href="/admin/site-setup" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-1"></i>Create New Store
+                            </a>
+                            <a href="/admin/themes" class="btn btn-outline-primary">
+                                <i class="bi bi-palette me-1"></i>Manage Themes
+                            </a>
+                            <a href="/admin/templates" class="btn btn-outline-primary">
+                                <i class="bi bi-collection me-1"></i>Manage Templates
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
