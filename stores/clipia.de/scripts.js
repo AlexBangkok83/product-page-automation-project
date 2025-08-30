@@ -3,9 +3,8 @@
 
 // Product view function
 function viewProduct(handle) {
-  // For now, just show an alert
-  // In the future, this could open a product modal or redirect to a product page
-  alert('Product details for: ' + handle + '\n\nThis feature will be enhanced in future updates.');
+  // Navigate to the product detail page
+  window.location.href = '/products/' + handle;
 }
 
 // Basic smooth scrolling for anchor links
