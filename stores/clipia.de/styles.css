@@ -1,11 +1,11 @@
 
-/* Generated CSS for theme: Legacy Theme */
+/* Generated CSS for theme: Bold Red Commerce */
 :root {
-  --theme-primary: #007cba;
-  --theme-secondary: #f8f9fa;
-  --theme-accent: #007cba;
+  --theme-primary: #dc2626;
+  --theme-secondary: #991b1b;
+  --theme-accent: #f59e0b;
   --theme-background: #ffffff;
-  --theme-surface: #f8f9fa;
+  --theme-surface: #fef2f2;
 }
 
 /* Reset and base styles */
