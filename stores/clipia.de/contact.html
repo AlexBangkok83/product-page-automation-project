@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Clipia Germany - Get in Touch</title>
-    <meta name="description" content="Contact Clipia Germany for any questions or support. We&#x27;re here to help!">
+    <title>Contact Clipia Deuchland - Get in Touch</title>
+    <meta name="description" content="Contact Clipia Deuchland for any questions or support. We're here to help!">
     <link rel="icon" href="">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,7 +12,11 @@
     <header>
         <nav>
             <div class="nav-brand">
-                <h1>Clipia Germany</h1>
+                {{#if logo_url}}
+                <img src="" alt="Clipia Deuchland" class="logo">
+                {{else}}
+                <h1>Clipia Deuchland</h1>
+                {{/if}}
             </div>
             <div class="nav-links">
                 <a href="/">Home</a>
@@ -24,22 +28,34 @@
     </header>
 
     <main>
+        {{#if page_subtitle}}
         <div class="page-header">
-            <h1>Contact Clipia Germany</h1>
+            <h1>Contact Clipia Deuchland</h1>
             <p class="page-subtitle">Get in touch with us</p>
         </div>
+        {{else}}
+        <h1>Contact Clipia Deuchland</h1>
+        {{/if}}
 
         <div class="page-content">
-            We&#x27;d love to hear from you. Send us a message and we&#x27;ll respond as soon as possible.
+            We'd love to hear from you. Send us a message and we'll respond as soon as possible.
         </div>
 
+        {{#if products_html}}
+        <div class="products-section">
+            <h2>Our Products</h2>
+            <div class="products-grid">
+                {{products_html}}
+            </div>
+        </div>
+        {{/if}}
     </main>
 
     <footer>
         
     <div class="footer-content">
       <div class="footer-section">
-        <h4>Clipia Germany</h4>
+        <h4>Clipia Deuchland</h4>
         <p>Quality products and exceptional service.</p>
         <p>Email: <a href="mailto:cto@nextsite.io">cto@nextsite.io</a></p>
         <p>Phone: +66822188449</p>
@@ -62,7 +78,7 @@
       </div>
     </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 Clipia Germany. All rights reserved.</p>
+            <p>&copy; {{new Date().getFullYear()}} Clipia Deuchland. All rights reserved.</p>
         </div>
     </footer>
 

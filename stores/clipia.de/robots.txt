@@ -3,4 +3,4 @@ Allow: /
 
 Sitemap: https://clipia.de/sitemap.xml
 
-# Generated for Clipia Germany
+# Generated for Clipia Deuchland
