@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipia Deuchland - Quality Products & Service</title>
+    <title>Clipia Deuchland - Quality Products &amp; Service</title>
     <meta name="description" content="Discover amazing products at Clipia Deuchland. Quality items, fast shipping, and excellent customer service.">
     <link rel="icon" href="">
     <link rel="stylesheet" href="styles.css">
@@ -12,11 +12,7 @@
     <header>
         <nav>
             <div class="nav-brand">
-                {{#if logo_url}}
-                <img src="" alt="Clipia Deuchland" class="logo">
-                {{else}}
                 <h1>Clipia Deuchland</h1>
-                {{/if}}
             </div>
             <div class="nav-links">
                 <a href="/" class="active">Home</a>
@@ -28,27 +24,15 @@
     </header>
 
     <main>
-        {{#if page_subtitle}}
         <div class="page-header">
             <h1>Welcome to Clipia Deuchland</h1>
             <p class="page-subtitle">Discover amazing products crafted just for you</p>
         </div>
-        {{else}}
-        <h1>Welcome to Clipia Deuchland</h1>
-        {{/if}}
 
         <div class="page-content">
             Your premier destination for quality products and exceptional service.
         </div>
 
-        {{#if products_html}}
-        <div class="products-section">
-            <h2>Our Products</h2>
-            <div class="products-grid">
-                {{products_html}}
-            </div>
-        </div>
-        {{/if}}
     </main>
 
     <footer>
@@ -78,7 +62,7 @@
       </div>
     </div>
         <div class="footer-bottom">
-            <p>&copy; {{new Date().getFullYear()}} Clipia Deuchland. All rights reserved.</p>
+            <p>&copy; 2025 Clipia Deuchland. All rights reserved.</p>
         </div>
     </footer>
 
