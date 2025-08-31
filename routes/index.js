@@ -172,18 +172,31 @@ router.get('/admin-v2/company/design/themes', async (req, res) => {
     const stores = await Store.findAll();
     const shopifyStores = await CompanyShopifyStore.findAll();
     
+    // Get all themes from database
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    const themes = await db.all('SELECT * FROM themes WHERE is_active = 1 ORDER BY id ASC');
+    
+    
     res.render('admin-v2/design-themes', { 
       title: 'Themes & Styling',
       stores: stores,
       shopifyStores: shopifyStores,
+      themes: themes,
       currentPage: 'design-themes'
     });
   } catch (error) {
-    console.error('Design themes error:', error);
+    console.error('❌ Design themes error:', error);
     res.render('admin-v2/design-themes', { 
       title: 'Themes & Styling',
       stores: [],
       shopifyStores: [],
+      themes: [],
       currentPage: 'design-themes'
     });
   }
@@ -2809,6 +2822,9 @@ router.get('/admin-v2/templates/builder', async (req, res) => {
     
     if (editMode && req.query.edit) {
       const db = require('../database/db');
+      if (!db.db) {
+        await db.initialize();
+      }
       template = await db.get(
         'SELECT * FROM product_page_templates WHERE id = ?',
         [req.query.edit]
@@ -2825,10 +2841,17 @@ router.get('/admin-v2/templates/builder', async (req, res) => {
       }
     }
     
-    res.render('admin/template-builder', {
+    // Get data for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/template-builder', {
       title: editMode ? 'Edit Template' : 'Create Template',
       editMode: editMode,
-      template: template
+      template: template,
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'templates'
     });
   } catch (error) {
     console.error('Error loading template builder:', error);
@@ -2949,6 +2972,65 @@ router.put('/admin-v2/templates/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to update template'
+    });
+  }
+});
+
+// Template builder save API endpoint (handles both create and update)
+router.post('/admin-v2/api/templates/save', async (req, res) => {
+  try {
+    const { id, name, description, elements } = req.body;
+    
+    if (!name || !elements || !Array.isArray(elements)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: name, elements'
+      });
+    }
+    
+    const db = require('../database/db');
+    const elementsJson = JSON.stringify(elements);
+    const companyId = 1; // For now, single company
+    
+    let result;
+    
+    if (id && id !== null) {
+      // Update existing template
+      result = await db.run(
+        'UPDATE product_page_templates SET name = ?, description = ?, elements = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND company_id = ?',
+        [name, description || '', elementsJson, id, companyId]
+      );
+      
+      if (result.changes === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Template not found'
+        });
+      }
+      
+      res.json({
+        success: true,
+        id: id,
+        message: 'Template updated successfully'
+      });
+    } else {
+      // Create new template
+      result = await db.run(
+        'INSERT INTO product_page_templates (name, description, elements, company_id) VALUES (?, ?, ?, ?)',
+        [name, description || '', elementsJson, companyId]
+      );
+      
+      res.json({
+        success: true,
+        id: result.lastID,
+        message: 'Template created successfully'
+      });
+    }
+  } catch (error) {
+    console.error('Error saving template:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save template'
     });
   }
 });
@@ -3194,6 +3276,186 @@ router.post('/admin-v2/store/:uuid/theme', async (req, res) => {
 });
 
 // Deploy store with theme changes
+// Theme Customizer Page
+router.get('/admin-v2/store/:uuid/customize-theme', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const store = await Store.findByUuid(uuid);
+    
+    if (!store) {
+      return res.status(404).render('error', { 
+        title: 'Store Not Found',
+        message: 'The requested store could not be found'
+      });
+    }
+    
+    // Get data for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/theme-customizer', {
+      title: `Theme Customizer - ${store.name}`,
+      store: store,
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'themes'
+    });
+  } catch (error) {
+    console.error('Error loading theme customizer:', error);
+    res.status(500).render('error', {
+      title: 'Theme Customizer Error',
+      message: 'Failed to load theme customizer'
+    });
+  }
+});
+
+// Theme Preview Page
+router.get('/theme-preview/:uuid', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const store = await Store.findByUuid(uuid);
+    
+    if (!store) {
+      return res.status(404).send('Store not found');
+    }
+    
+    res.render('theme-preview', {
+      store: store
+    });
+  } catch (error) {
+    console.error('Error loading theme preview:', error);
+    res.status(500).send('Failed to load theme preview');
+  }
+});
+
+// Save Theme Customization
+router.post('/admin-v2/store/:uuid/theme-customization', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { theme_customization } = req.body;
+    
+    const store = await Store.findByUuid(uuid);
+    if (!store) {
+      return res.json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    // Save theme customization to database
+    const db = require('../database/db');
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    await db.run(
+      'UPDATE stores SET theme_customization = ? WHERE uuid = ?',
+      [JSON.stringify(theme_customization), uuid]
+    );
+    
+    console.log(`🎨 Updated theme customization for store: ${store.name}`);
+    
+    res.json({
+      success: true,
+      message: 'Theme customization saved successfully'
+    });
+  } catch (error) {
+    console.error('Error saving theme customization:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Logo Upload
+router.post('/admin-v2/store/:uuid/upload-logo', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const store = await Store.findByUuid(uuid);
+    
+    if (!store) {
+      return res.json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    // For now, simulate upload and return a placeholder URL
+    // In production, you would implement actual file upload to cloud storage
+    const logoUrl = `/uploads/logos/${uuid}-${Date.now()}.png`;
+    
+    // Update database
+    const db = require('../database/db');
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    await db.run(
+      'UPDATE stores SET logo_url = ? WHERE uuid = ?',
+      [logoUrl, uuid]
+    );
+    
+    console.log(`📸 Updated logo for store: ${store.name}`);
+    
+    res.json({
+      success: true,
+      logoUrl: logoUrl,
+      message: 'Logo uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Error uploading logo:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Favicon Upload
+router.post('/admin-v2/store/:uuid/upload-favicon', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const store = await Store.findByUuid(uuid);
+    
+    if (!store) {
+      return res.json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    // For now, simulate upload and return a placeholder URL
+    // In production, you would implement actual file upload to cloud storage
+    const faviconUrl = `/uploads/favicons/${uuid}-${Date.now()}.ico`;
+    
+    // Update database
+    const db = require('../database/db');
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    await db.run(
+      'UPDATE stores SET favicon_url = ? WHERE uuid = ?',
+      [faviconUrl, uuid]
+    );
+    
+    console.log(`🔖 Updated favicon for store: ${store.name}`);
+    
+    res.json({
+      success: true,
+      faviconUrl: faviconUrl,
+      message: 'Favicon uploaded successfully'
+    });
+  } catch (error) {
+    console.error('Error uploading favicon:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 router.post('/admin-v2/store/:uuid/deploy', async (req, res) => {
   try {
     const { uuid } = req.params;

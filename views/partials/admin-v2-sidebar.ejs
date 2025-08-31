@@ -48,7 +48,11 @@
                         <div class="ml-3 mt-1 space-y-1">
                             <% if (typeof shopifyStores !== 'undefined' && shopifyStores && shopifyStores.length > 0) { %>
                                 <% shopifyStores.forEach(shopifyStore => { %>
-                                    <a href="/admin-v2/shopify/<%= shopifyStore.nickname || 'connection' %>" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                    <% 
+                                        // Extract domain part for URL (e.g., "ecominter" from "ecominter.myshopify.com")
+                                        const domainPart = shopifyStore.shopify_domain.replace('.myshopify.com', '');
+                                    %>
+                                    <a href="/admin-v2/shopify/<%= domainPart %>" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
                                         <i data-lucide="shopping-bag" class="w-4 h-4 mr-3"></i>
                                         <%= shopifyStore.shopify_domain %>
                                     </a>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - MultiStore Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .builder-main {
+            height: calc(100vh - 64px); /* Account for header */
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .sections-panel {
+            width: 320px;
+            background: white;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+        }
+        
+        .canvas-area {
+            flex: 1;
+            background: #f9fafb;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .template-canvas {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            min-height: calc(100vh - 64px);
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section-item {
+            padding: 1rem;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        
+        .section-item:hover {
+            background: #f9fafb;
+        }
+        
+        .section-item.sortable-ghost {
+            opacity: 0.5;
+        }
+        
+        .section-item.sortable-chosen {
+            cursor: grabbing;
+        }
+        
+        .canvas-section {
+            position: relative;
+            border: 2px dashed transparent;
+            transition: border-color 0.2s;
+        }
+        
+        .canvas-section:hover {
+            border-color: #3b82f6;
+        }
+        
+        .canvas-section .section-controls {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .canvas-section:hover .section-controls {
+            opacity: 1;
+        }
+        
+        .canvas-section .section-controls button:hover {
+            transform: scale(1.1);
+            transition: transform 0.1s;
+        }
+        
+        .btn-icon {
+            @apply w-8 h-8 flex items-center justify-center rounded bg-white shadow-sm border border-gray-200 hover:bg-gray-50;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar - Include the same navigation as other admin-v2 pages -->
+        <%- include('../partials/admin-v2-sidebar', { 
+            stores: stores || [], 
+            shopifyStores: shopifyStores || [],
+            currentPage: 'template-builder'
+        }) %>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="bg-white border-b border-gray-200">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <nav class="flex text-sm text-gray-500 mb-2">
+                                <a href="/admin-v2" class="hover:text-gray-700">Dashboard</a>
+                                <span class="mx-2">></span>
+                                <a href="/admin-v2/company/design/templates" class="hover:text-gray-700">Product Templates</a>
+                                <span class="mx-2">></span>
+                                <span class="text-gray-900"><%= editMode ? 'Edit' : 'Create' %> Template</span>
+                            </nav>
+                            <h1 class="text-2xl font-bold text-gray-900"><%= title %></h1>
+                            <% if (template && template.name) { %>
+                                <p class="text-gray-600 mt-1">Editing: <%= template.name %></p>
+                            <% } %>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button id="preview-btn" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center">
+                                <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
+                                Preview
+                            </button>
+                            <button id="save-template" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
+                                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                                Save Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Builder Main Area -->
+            <div class="builder-main">
+                <!-- Left Panel - Available Sections -->
+                <div class="sections-panel">
+                    <div class="p-4 border-b border-gray-200">
+                        <h3 class="font-semibold text-gray-900 mb-2">Template Sections</h3>
+                        <p class="text-sm text-gray-600">Drag sections to build your template</p>
+                    </div>
+                    
+                    <div id="available-sections" class="space-y-0">
+                        <!-- Dynamic sections will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Center - Template Canvas -->
+                <div class="canvas-area">
+                    <div class="p-6">
+                        <div class="template-canvas">
+                            <!-- Full-width sections container -->
+                            <div id="header-sections" class="space-y-4 mb-6">
+                                <!-- Header sections go here -->
+                            </div>
+                            
+                            <!-- Split layout container -->
+                            <div id="product-layout" class="grid grid-cols-2 gap-6 mb-6">
+                                <!-- Left column - Product Images -->
+                                <div id="image-sections" class="space-y-4">
+                                    <!-- Product images go here -->
+                                </div>
+                                
+                                <!-- Right column - Content sections -->
+                                <div id="content-sections" class="space-y-4">
+                                    <!-- Content sections go here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Footer sections container -->
+                            <div id="footer-sections" class="space-y-4">
+                                <!-- Footer sections go here -->
+                            </div>
+                            
+                            <!-- Empty state (shown when no sections exist) -->
+                            <div id="empty-state" class="flex items-center justify-center h-96 text-gray-400">
+                                <div class="text-center">
+                                    <i data-lucide="layout" class="w-16 h-16 mx-auto mb-4"></i>
+                                    <p class="text-lg font-medium">Start Building Your Template</p>
+                                    <p class="text-sm mt-2">Click sections from the left panel to create your product page template</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Template Settings</h3>
+                    <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="template-name" class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
+                        <input type="text" id="template-name" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                               value="<%= template ? template.name : '' %>" placeholder="Enter template name">
+                    </div>
+                    <div>
+                        <label for="template-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="template-description" rows="3" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                  placeholder="Describe this template..."><%= template ? template.description : '' %></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeSettingsModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="saveTemplateSettings()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔧 Template Builder: Starting initialization...');
+        
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Template builder state
+        let templateData = {
+            id: <%= editMode && template ? template.id : 'null' %>,
+            name: '<%= template ? template.name : '' %>',
+            description: '<%= template ? template.description : '' %>',
+            elements: <%- template && template.elements ? JSON.stringify(template.elements) : '[]' %>
+        };
+        
+        console.log('🔧 Template Builder: Template data loaded:', templateData);
+        
+        // Available section types - clean list without duplicates
+        const availableSections = [
+            // Header/Navigation sections (above main content)
+            { type: 'FreeShippingBar', name: 'Free Shipping Bar', icon: 'truck', description: 'Free shipping announcement' },
+            { type: 'FreeShippingTeaser', name: 'Free Shipping Teaser', icon: 'gift', description: 'Shipping promotion banner' },
+            { type: 'FlashSaleCountdown', name: 'Flash Sale Timer', icon: 'clock', description: 'Countdown timer for sales' },
+            { type: 'NavigationBar', name: 'Navigation Bar', icon: 'menu', description: 'Site navigation menu' },
+            
+            // Product sections
+            { type: 'ProductImageGallery', name: 'Product Image Gallery', icon: 'image', description: 'Product photo gallery' },
+            { type: 'ProductTitle', name: 'Product Title', icon: 'type', description: 'Main product heading' },
+            { type: 'StarRating', name: 'Star Rating', icon: 'star', description: 'Product rating display' },
+            { type: 'PricingSection', name: 'Pricing Section', icon: 'dollar-sign', description: 'Price and discount display' },
+            
+            // Action buttons
+            { type: 'QuickBuyButton', name: 'Quick Buy Button', icon: 'zap', description: 'Quick purchase button' },
+            { type: 'ATCButton', name: 'Add to Cart Button', icon: 'shopping-cart', description: 'Add to cart button' },
+            
+            // Content sections
+            { type: 'FreeTextField', name: 'Free Text', icon: 'edit-3', description: 'Custom text content' },
+            { type: 'ListSection', name: 'Features List', icon: 'list', description: 'Bullet point features' },
+            
+            // Trust and social proof
+            { type: 'SocialProof', name: 'Social Proof', icon: 'users', description: 'Customer testimonials' },
+            { type: 'GuaranteeBadge', name: 'Guarantee Badge', icon: 'shield-check', description: 'Money back guarantee' },
+            { type: 'TrustIndicators', name: 'Trust Indicators', icon: 'award', description: 'Security and trust badges' },
+            { type: 'SecureCheckout', name: 'Secure Checkout', icon: 'lock', description: 'Security assurance' },
+            
+            // Conversion and urgency elements
+            { type: 'Bundles', name: 'Product Bundles', icon: 'package', description: 'Bundle offers and deals' },
+            { type: 'ScarcityNotice', name: 'Scarcity Notice', icon: 'alert-triangle', description: 'Limited quantity alerts' },
+            { type: 'DiscountBadge', name: 'Discount Badge', icon: 'percent', description: 'Discount promotion badge' },
+            { type: 'SalesCounter', name: 'Sales Counter', icon: 'trending-up', description: 'Sales volume display' }
+        ];
+        
+        // Initialize the builder
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Template Builder: DOM loaded, initializing...');
+            console.log('🔧 Template Builder: Template data:', templateData);
+            console.log('🔧 Template Builder: Available sections count:', availableSections.length);
+            
+            // Load available sections in sidebar
+            loadAvailableSections();
+            
+            // Load existing template if we have elements
+            if (templateData.elements && templateData.elements.length > 0) {
+                console.log('🔧 Template Builder: Loading existing template with', templateData.elements.length, 'elements');
+                loadExistingTemplate();
+            } else {
+                console.log('🔧 Template Builder: No existing template elements, showing empty state');
+            }
+            
+            // Initialize drag and drop for all containers
+            initializeSortable();
+            
+            lucide.createIcons();
+        });
+        
+        function initializeSortable() {
+            console.log('🔧 Template Builder: Initializing drag and drop...');
+            
+            // Make all containers sortable
+            const containers = ['header-sections', 'image-sections', 'content-sections', 'footer-sections'];
+            
+            containers.forEach(containerId => {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    new Sortable(container, {
+                        group: 'template-sections', // Allow dragging between containers
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        chosenClass: 'sortable-chosen',
+                        onEnd: function(evt) {
+                            updateTemplateOrder();
+                        }
+                    });
+                    console.log('🔧 Template Builder: Sortable initialized for', containerId);
+                }
+            });
+        }
+        
+        function loadAvailableSections() {
+            console.log('🔧 Template Builder: Loading available sections, count:', availableSections.length);
+            console.log('🔧 Template Builder: Available sections array:', availableSections);
+            const container = document.getElementById('available-sections');
+            
+            if (!container) {
+                console.error('🔧 Template Builder: ERROR - available-sections container not found!');
+                return;
+            }
+            
+            console.log('🔧 Template Builder: Container found, generating HTML...');
+            try {
+                let sectionsHtml = '';
+                console.log('🔧 Template Builder: Processing', availableSections.length, 'sections');
+                
+                availableSections.forEach((section, index) => {
+                    console.log('🔧 Template Builder: Processing section', index + 1, ':', section.type);
+                    
+                    // Check if this section is already added
+                    const isAdded = templateData.elements.some(el => el.type === section.type);
+                    const addedClass = isAdded ? 'bg-green-50 border-green-200' : 'hover:bg-gray-50';
+                    const iconBgClass = isAdded ? 'bg-green-100' : 'bg-blue-100';
+                    const iconColorClass = isAdded ? 'text-green-600' : 'text-blue-600';
+                    
+                    sectionsHtml += '<div class="section-item border rounded-lg p-3 mb-2 cursor-pointer ' + addedClass + '" data-section-type="' + section.type + '">';
+                    sectionsHtml += '<div class="flex items-center justify-between">';
+                    sectionsHtml += '<div class="flex items-center flex-1" onclick="addSection(\'' + section.type + '\')">';
+                    sectionsHtml += '<div class="w-10 h-10 ' + iconBgClass + ' rounded-lg flex items-center justify-center mr-3">';
+                    sectionsHtml += '<i data-lucide="' + section.icon + '" class="w-5 h-5 ' + iconColorClass + '"></i>';
+                    sectionsHtml += '</div>';
+                    sectionsHtml += '<div class="flex-1">';
+                    sectionsHtml += '<h4 class="font-medium text-gray-900">' + section.name + '</h4>';
+                    sectionsHtml += '<p class="text-sm text-gray-500">' + section.description + '</p>';
+                    sectionsHtml += '</div>';
+                    if (isAdded) {
+                        sectionsHtml += '<div class="ml-2">';
+                        sectionsHtml += '<i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>';
+                        sectionsHtml += '</div>';
+                    }
+                    sectionsHtml += '</div>';
+                    
+                    // Add toggle control if section is added
+                    if (isAdded) {
+                        const sectionElement = templateData.elements.find(el => el.type === section.type);
+                        const isEnabled = !sectionElement.settings || sectionElement.settings.enabled !== false;
+                        
+                        sectionsHtml += '<div class="ml-3 flex items-center" onclick="event.stopPropagation(); toggleSection(\'' + section.type + '\')">';
+                        sectionsHtml += '<label class="inline-flex items-center cursor-pointer">';
+                        sectionsHtml += '<input type="checkbox" class="sr-only peer" ' + (isEnabled ? 'checked' : '') + '>';
+                        sectionsHtml += '<div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>';
+                        sectionsHtml += '</label>';
+                        sectionsHtml += '</div>';
+                    }
+                    
+                    sectionsHtml += '</div>';
+                    sectionsHtml += '</div>';
+                });
+                
+                console.log('🔧 Template Builder: Generated HTML length:', sectionsHtml.length);
+                container.innerHTML = sectionsHtml;
+                console.log('🔧 Template Builder: HTML set, final container length:', container.innerHTML.length);
+            } catch (error) {
+                console.error('🔧 Template Builder: Error generating sections HTML:', error);
+                console.error('🔧 Template Builder: Error stack:', error.stack);
+            }
+            
+            console.log('🔧 Template Builder: HTML generated, container innerHTML length:', container.innerHTML.length);
+            
+            lucide.createIcons();
+            console.log('🔧 Template Builder: Lucide icons created');
+        }
+        
+        function addSection(sectionType) {
+            console.log('🔧 Template Builder: Adding section:', sectionType);
+            
+            const sectionId = 'section-' + Date.now();
+            console.log('🔧 Template Builder: Generated section ID:', sectionId);
+            
+            // Hide empty state
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) {
+                emptyState.classList.add('hidden');
+            }
+            
+            // Determine which container to use based on section type
+            const headerTypes = ['NavigationBar', 'FreeShippingBar', 'FreeShippingTeaser', 'FlashSaleCountdown', 'DiscountBadge'];
+            const imageTypes = ['ProductImageGallery', 'product-images'];
+            const footerTypes = ['TrustIndicators', 'SocialProof', 'GuaranteeBadge', 'SecureCheckout', 'ScarcityNotice', 'SalesCounter', 'Bundles', 'related-products'];
+            
+            let targetContainer;
+            
+            if (headerTypes.includes(sectionType)) {
+                targetContainer = document.getElementById('header-sections');
+            } else if (imageTypes.includes(sectionType)) {
+                targetContainer = document.getElementById('image-sections');
+            } else if (footerTypes.includes(sectionType)) {
+                targetContainer = document.getElementById('footer-sections');
+            } else {
+                // Default: everything else goes to right column (content-sections)
+                targetContainer = document.getElementById('content-sections');
+            }
+            
+            if (!targetContainer) {
+                console.error('🔧 Template Builder: Target container not found!');
+                return;
+            }
+            
+            // Add to template data first
+            const newElement = {
+                type: sectionType,
+                id: sectionId,
+                settings: {}
+            };
+            templateData.elements.push(newElement);
+            
+            // Generate and add the section HTML
+            const sectionHtml = generateSectionHtml(sectionType, sectionId);
+            targetContainer.insertAdjacentHTML('beforeend', sectionHtml);
+            
+            console.log('🔧 Template Builder: Added section to', targetContainer.id, 'container');
+            
+            // Refresh sidebar to show updated indicators
+            loadAvailableSections();
+            
+            lucide.createIcons();
+            console.log('🔧 Template Builder: Section add complete');
+        }
+        
+        function toggleSection(sectionType) {
+            console.log('🔧 Template Builder: Toggling section:', sectionType);
+            
+            // Find the section in template data
+            const sectionElement = templateData.elements.find(el => el.type === sectionType);
+            if (!sectionElement) {
+                console.error('🔧 Template Builder: Section not found in template data:', sectionType);
+                return;
+            }
+            
+            // Initialize settings if not exists
+            if (!sectionElement.settings) {
+                sectionElement.settings = {};
+            }
+            
+            // Toggle enabled state
+            const wasEnabled = sectionElement.settings.enabled !== false;
+            sectionElement.settings.enabled = !wasEnabled;
+            
+            // Find the section element in DOM and update visual state
+            const domElement = document.querySelector('[data-section-type="' + sectionType + '"]');
+            if (domElement) {
+                if (sectionElement.settings.enabled) {
+                    domElement.classList.remove('opacity-50');
+                    domElement.classList.add('opacity-100');
+                } else {
+                    domElement.classList.remove('opacity-100');
+                    domElement.classList.add('opacity-50');
+                }
+            }
+            
+            // Refresh sidebar to show updated toggle state
+            loadAvailableSections();
+            
+            console.log('🔧 Template Builder: Section', sectionType, 'toggled to', sectionElement.settings.enabled ? 'enabled' : 'disabled');
+        }
+        
+        function generateSectionHtml(sectionType, sectionId) {
+            console.log('🔧 Template Builder: Generating HTML for section type:', sectionType);
+            const section = availableSections.find(s => s.type === sectionType);
+            
+            if (!section) {
+                console.error('🔧 Template Builder: Section not found in availableSections for type:', sectionType);
+                return '<div class="p-4 text-red-500">Section type not found: ' + sectionType + '</div>';
+            }
+            
+            console.log('🔧 Template Builder: Found section:', section.name);
+            
+            // Check if section is enabled/disabled
+            const sectionElement = templateData.elements.find(el => el.id === sectionId);
+            const isEnabled = !sectionElement || !sectionElement.settings || sectionElement.settings.enabled !== false;
+            const opacityClass = isEnabled ? 'opacity-100' : 'opacity-50';
+            
+            const html = '<div class="canvas-section p-4 border-b border-gray-100 ' + opacityClass + '" data-section-id="' + sectionId + '" data-section-type="' + sectionType + '">' +
+                '<div class="section-controls">' +
+                    '<button class="btn-icon mr-1" onclick="editSection(\'' + sectionId + '\')" title="Edit">' +
+                        '<i data-lucide="edit" class="w-4 h-4"></i>' +
+                    '</button>' +
+                    '<button class="btn-icon" onclick="removeSection(\'' + sectionId + '\')" title="Remove">' +
+                        '<i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="flex items-center mb-2">' +
+                    '<i data-lucide="' + section.icon + '" class="w-5 h-5 text-gray-600 mr-2"></i>' +
+                    '<h3 class="font-medium text-gray-900">' + section.name + '</h3>' +
+                '</div>' +
+                '<div class="bg-gray-50 p-3 rounded border-2 border-dashed border-gray-200">' +
+                    '<p class="text-sm text-gray-600">' + section.description + '</p>' +
+                    '<p class="text-xs text-gray-500 mt-1">Click edit to customize this section</p>' +
+                '</div>' +
+            '</div>';
+            
+            console.log('🔧 Template Builder: Generated HTML preview:', html.substring(0, 100) + '...');
+            return html;
+        }
+        
+        function loadExistingTemplate() {
+            console.log('🔧 Template Builder: Loading existing template...');
+            
+            // Clear all containers
+            document.getElementById('header-sections').innerHTML = '';
+            document.getElementById('image-sections').innerHTML = '';
+            document.getElementById('content-sections').innerHTML = '';
+            document.getElementById('footer-sections').innerHTML = '';
+            
+            console.log('🔧 Template Builder: Original elements:', templateData.elements);
+            
+            // Convert string elements to objects with IDs if needed
+            templateData.elements = templateData.elements.map((element, index) => {
+                if (typeof element === 'string') {
+                    console.log('🔧 Template Builder: Converting string element:', element);
+                    return {
+                        type: element,
+                        id: 'section-' + Date.now() + '-' + index,
+                        settings: {}
+                    };
+                }
+                // Ensure each element has an ID
+                if (!element.id) {
+                    console.log('🔧 Template Builder: Adding ID to element:', element.type);
+                    element.id = 'section-' + Date.now() + '-' + index;
+                }
+                return element;
+            });
+            
+            console.log('🔧 Template Builder: Processed elements:', templateData.elements);
+            
+            // Hide empty state if we have elements
+            if (templateData.elements.length > 0) {
+                const emptyState = document.getElementById('empty-state');
+                if (emptyState) {
+                    emptyState.classList.add('hidden');
+                }
+            }
+            
+            // Categorize and place sections
+            const headerTypes = ['NavigationBar', 'FreeShippingBar', 'FreeShippingTeaser', 'FlashSaleCountdown', 'DiscountBadge'];
+            const imageTypes = ['ProductImageGallery', 'product-images'];
+            const footerTypes = ['TrustIndicators', 'SocialProof', 'GuaranteeBadge', 'SecureCheckout', 'ScarcityNotice', 'SalesCounter', 'Bundles', 'related-products'];
+            
+            templateData.elements.forEach((element, index) => {
+                console.log('🔧 Template Builder: Loading existing element', index + 1, ':', element.type);
+                
+                const elementType = element.type;
+                let targetContainer;
+                
+                if (headerTypes.includes(elementType)) {
+                    targetContainer = document.getElementById('header-sections');
+                } else if (imageTypes.includes(elementType)) {
+                    targetContainer = document.getElementById('image-sections');
+                } else if (footerTypes.includes(elementType)) {
+                    targetContainer = document.getElementById('footer-sections');
+                } else {
+                    // Default: everything else goes to right column (content-sections)
+                    targetContainer = document.getElementById('content-sections');
+                }
+                
+                try {
+                    const sectionHtml = generateSectionHtml(element.type, element.id);
+                    targetContainer.insertAdjacentHTML('beforeend', sectionHtml);
+                    console.log('🔧 Template Builder: Successfully added element to', targetContainer.id);
+                } catch (error) {
+                    console.error('🔧 Template Builder: Error loading element', element.type, ':', error);
+                }
+            });
+            
+            lucide.createIcons();
+            console.log('🔧 Template Builder: Existing template loaded');
+        }
+        
+        function removeSection(sectionId) {
+            if (confirm('Are you sure you want to remove this section?')) {
+                console.log('🔧 Template Builder: Removing section:', sectionId);
+                
+                // Remove the section element from DOM
+                const sectionElement = document.querySelector('[data-section-id="' + sectionId + '"]');
+                if (sectionElement) {
+                    sectionElement.remove();
+                }
+                
+                // Remove from template data
+                templateData.elements = templateData.elements.filter(el => el.id !== sectionId);
+                
+                // Show empty state if no sections exist
+                if (templateData.elements.length === 0) {
+                    const emptyState = document.getElementById('empty-state');
+                    if (emptyState) {
+                        emptyState.classList.remove('hidden');
+                    }
+                }
+                
+                // Refresh sidebar to show updated indicators
+                loadAvailableSections();
+                
+                console.log('🔧 Template Builder: Section removed, total elements:', templateData.elements.length);
+            }
+        }
+        
+        function editSection(sectionId) {
+            // For now, just show a simple alert - this would open a detailed section editor
+            const element = templateData.elements.find(el => el.id === sectionId);
+            if (element) {
+                alert(`Editing ${element.type} section. Full editor coming soon!`);
+            }
+        }
+        
+        function updateTemplateOrder() {
+            const sections = Array.from(document.querySelectorAll('.canvas-section'));
+            templateData.elements = sections.map(section => {
+                const sectionId = section.dataset.sectionId;
+                return templateData.elements.find(el => el.id === sectionId);
+            }).filter(Boolean);
+        }
+        
+        // Save template
+        document.getElementById('save-template').addEventListener('click', async function() {
+            if (!templateData.name.trim()) {
+                // Open settings modal if no name
+                document.getElementById('settings-modal').classList.remove('hidden');
+                return;
+            }
+            
+            await saveTemplate();
+        });
+        
+        async function saveTemplate() {
+            try {
+                const response = await fetch('/admin-v2/api/templates/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: templateData.id,
+                        name: templateData.name,
+                        description: templateData.description,
+                        elements: templateData.elements
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Template saved successfully!');
+                    if (!templateData.id) {
+                        templateData.id = result.id;
+                        // Update URL to show edit mode
+                        history.replaceState(null, '', `/admin-v2/templates/builder?edit=${result.id}`);
+                    }
+                } else {
+                    alert('Error saving template: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error saving template:', error);
+                alert('Error saving template. Please try again.');
+            }
+        }
+        
+        // Settings modal functions
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+        
+        function saveTemplateSettings() {
+            templateData.name = document.getElementById('template-name').value;
+            templateData.description = document.getElementById('template-description').value;
+            closeSettingsModal();
+            saveTemplate();
+        }
+        
+        // Preview functionality
+        document.getElementById('preview-btn').addEventListener('click', function() {
+            if (templateData.id) {
+                window.open(`/admin-v2/templates/preview/${templateData.id}`, '_blank');
+            } else {
+                alert('Please save the template first to preview it.');
+            }
+        });
+    </script>
+</body>
+</html>
