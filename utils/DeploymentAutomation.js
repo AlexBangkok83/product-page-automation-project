@@ -418,6 +418,33 @@ Co-Authored-By: Claude <noreply@anthropic.com>`;
   }
 
   /**
+   * Create domain alias (explicit alias creation step)
+   */
+  async createDomainAlias(domain, deploymentUrl) {
+    console.log(`🔗 Creating domain alias: ${domain} → ${deploymentUrl}`);
+    
+    try {
+      const command = `vercel alias ${deploymentUrl} ${domain}`;
+      console.log(`🔧 Executing: ${command}`);
+      
+      const { stdout } = await execAsync(command, { timeout: 30000 });
+      console.log(`✅ Domain alias created successfully: ${domain} → ${deploymentUrl}`);
+      console.log(`📋 Alias output:\n${stdout}`);
+      
+      return {
+        success: true,
+        domain,
+        deploymentUrl,
+        output: stdout
+      };
+      
+    } catch (error) {
+      console.error(`❌ Failed to create domain alias for ${domain}: ${error.message}`);
+      throw new Error(`Domain alias creation failed: ${error.message}`);
+    }
+  }
+
+  /**
    * Connect domain to Vercel project using proper CLI workflow
    */
   async connectDomainToProject(domain) {

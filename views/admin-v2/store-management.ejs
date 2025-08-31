@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Management - clipia.de</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Logo/Brand -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center">
+                    <i data-lucide="store" class="w-8 h-8 text-blue-600"></i>
+                    <span class="ml-2 text-lg font-semibold text-gray-900">MultiStore</span>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-1">
+                <!-- Dashboard -->
+                <a href="/admin-v2" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                    Dashboard
+                </a>
+                
+                <!-- Companies -->
+                <div class="pt-4">
+                    <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Companies
+                    </div>
+                    <div class="mt-2 space-y-1 ml-3">
+                        <a href="/admin-v2" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                            <i data-lucide="building-2" class="w-4 h-4 mr-3"></i>
+                            Nextsite
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Nextsite expanded -->
+                <div class="ml-6 space-y-1">
+                    <a href="/admin-v2/company/settings" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                        Company Settings
+                    </a>
+                    <a href="/admin-v2/company/design" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i data-lucide="palette" class="w-4 h-4 mr-3"></i>
+                        Design Library
+                    </a>
+                    <div class="pt-2">
+                        <div class="flex items-center px-3 py-1 text-xs font-medium text-gray-500">
+                            Shopify Connections
+                        </div>
+                        <div class="ml-3 mt-1 space-y-1">
+                            <a href="/admin-v2/shopify/ecominter" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                <i data-lucide="shopping-bag" class="w-4 h-4 mr-3"></i>
+                                ecominter.myshopify.com
+                            </a>
+                            <div class="ml-6 space-y-1">
+                                <!-- Dynamic stores under this connection -->
+                                <% if (typeof stores !== 'undefined' && stores && stores.length > 0) { %>
+                                    <% const ecominterStores = stores.filter(store => store.shopify_domain === 'ecominter.myshopify.com'); %>
+                                    <% ecominterStores.forEach(storeItem => { %>
+                                        <% if (storeItem.status === 'active' || storeItem.status === 'setup') { %>
+                                            <a href="/admin-v2/store/<%= storeItem.uuid %>" class="flex items-center px-3 py-2 text-sm font-medium <%= storeItem.uuid === store.uuid ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50' %> rounded-lg">
+                                                <i data-lucide="globe" class="w-3 h-3 mr-3"></i>
+                                                <%= storeItem.domain %>
+                                            </a>
+                                        <% } else if (storeItem.status === 'draft') { %>
+                                            <a href="/admin-v2/store/<%= storeItem.uuid %>/setup" class="flex items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg">
+                                                <i data-lucide="file-text" class="w-3 h-3 mr-3"></i>
+                                                <span class="opacity-60"><%= storeItem.domain %></span>
+                                                <span class="ml-1 text-xs text-red-500">(draft)</span>
+                                            </a>
+                                        <% } %>
+                                    <% }); %>
+                                <% } else { %>
+                                    <!-- Fallback if no dynamic data -->
+                                    <a href="/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9" class="flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg">
+                                        <i data-lucide="globe" class="w-3 h-3 mr-3"></i>
+                                        clipia.de
+                                    </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Bottom section -->
+            <div class="px-4 py-4 border-t border-gray-200">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">Admin</div>
+                        <div class="text-xs text-gray-500">admin@company.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-semibold text-gray-900">clipia.de</h1>
+                        <p class="text-sm text-gray-500 mt-1">Manage your store pages, products, and settings</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <a href="https://clipia.de" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                            <i data-lucide="external-link" class="w-4 h-4 mr-2"></i>
+                            View Live Site
+                        </a>
+                        <button id="deploy-changes" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700">
+                            <i data-lucide="rocket" class="w-4 h-4 mr-2"></i>
+                            Deploy Changes
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-6xl mx-auto space-y-6">
+                    
+                    <!-- Store Status -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900">Store Status</h3>
+                                <p class="text-sm text-gray-500 mt-1">clipia.de</p>
+                            </div>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>
+                                Live
+                            </span>
+                        </div>
+                        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-semibold text-gray-900">8</div>
+                                <div class="text-sm text-gray-500">Pages</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-semibold text-gray-900">2</div>
+                                <div class="text-sm text-gray-500">Products</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-semibold text-gray-900">DE</div>
+                                <div class="text-sm text-gray-500">Market</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-semibold text-gray-900">EUR</div>
+                                <div class="text-sm text-gray-500">Currency</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Pages -->
+                        <div class="bg-white rounded-xl border border-gray-200">
+                            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                <h3 class="text-lg font-medium text-gray-900">Pages</h3>
+                                <button id="add-page" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                                    Add Page
+                                </button>
+                            </div>
+                            <div class="p-6 space-y-3">
+                                <!-- Page Items -->
+                                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i data-lucide="home" class="w-4 h-4 text-gray-500 mr-3"></i>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Home</div>
+                                            <div class="text-xs text-gray-500">Welcome page</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Published
+                                        </span>
+                                        <button class="edit-button text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i data-lucide="shopping-cart" class="w-4 h-4 text-gray-500 mr-3"></i>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Products</div>
+                                            <div class="text-xs text-gray-500">Product catalog</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Published
+                                        </span>
+                                        <button class="edit-button text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i data-lucide="info" class="w-4 h-4 text-gray-500 mr-3"></i>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">About</div>
+                                            <div class="text-xs text-gray-500">Company information</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Published
+                                        </span>
+                                        <button class="edit-button text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i data-lucide="mail" class="w-4 h-4 text-gray-500 mr-3"></i>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Contact</div>
+                                            <div class="text-xs text-gray-500">Contact information</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Published
+                                        </span>
+                                        <button class="edit-button text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center py-2">
+                                    <button id="view-all-pages" class="text-sm text-gray-500 hover:text-gray-700">
+                                        View all pages (8)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Products -->
+                        <div class="bg-white rounded-xl border border-gray-200">
+                            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                <h3 class="text-lg font-medium text-gray-900">Products</h3>
+                                <button id="sync-products" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                                    Sync
+                                </button>
+                            </div>
+                            <div class="p-6 space-y-3">
+                                <!-- Product Items -->
+                                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                            <i data-lucide="package" class="w-5 h-5 text-gray-500"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Elegante Solbriller for Alle</div>
+                                            <div class="text-xs text-gray-500">€29.95 • In Stock</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Active
+                                        </span>
+                                        <button class="edit-button text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                                            <i data-lucide="package" class="w-5 h-5 text-gray-500"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900">Klipia - Sätt upp håret</div>
+                                            <div class="text-xs text-gray-500">€19.95 • In Stock</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            Active
+                                        </span>
+                                        <button class="edit-button text-gray-400 hover:text-gray-600">
+                                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center py-2">
+                                    <button id="manage-all-products" class="text-sm text-gray-500 hover:text-gray-700">
+                                        Manage all products
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Theme & Settings -->
+                    <div class="bg-white rounded-xl border border-gray-200">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-medium text-gray-900">Theme & Settings</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-900 mb-3">Store Theme</h4>
+                                    <div class="border border-gray-200 rounded-lg p-4">
+                                        <div class="flex items-center mb-4">
+                                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <i data-lucide="palette" class="w-6 h-6 text-blue-600"></i>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">Current: <span id="current-theme-name">Default Theme</span></div>
+                                                <div class="text-xs text-gray-500">Choose a theme for your store</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Theme Selector -->
+                                        <div class="space-y-3">
+                                            <label class="text-sm font-medium text-gray-700">Select Theme:</label>
+                                            <select id="theme-selector" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                                <option value="default">Default Theme</option>
+                                                <option value="1">Modern E-commerce</option>
+                                                <option value="2">Bold Red Commerce</option>
+                                                <option value="3">Elegant Red Luxury</option>
+                                                <option value="4">Ocean Blue Fresh</option>
+                                                <option value="5">Forest Green Nature</option>
+                                            </select>
+                                            
+                                            <!-- Theme Preview Colors -->
+                                            <div id="theme-preview" class="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                                                <div class="text-xs text-gray-500">Preview:</div>
+                                                <div id="preview-primary" class="w-6 h-6 rounded border"></div>
+                                                <div id="preview-secondary" class="w-6 h-6 rounded border"></div>
+                                                <div id="preview-accent" class="w-6 h-6 rounded border"></div>
+                                            </div>
+                                            
+                                            <div class="flex space-x-3">
+                                                <button id="save-theme" class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                                                    Save Theme
+                                                </button>
+                                                <button id="deploy-theme" class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 disabled:opacity-50">
+                                                    Deploy Changes
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-900 mb-3">Store Settings</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                                            <div class="text-sm text-gray-700">Language</div>
+                                            <div class="text-sm font-medium text-gray-900">German (DE)</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                                            <div class="text-sm text-gray-700">Currency</div>
+                                            <div class="text-sm font-medium text-gray-900">EUR (€)</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                                            <div class="text-sm text-gray-700">Domain</div>
+                                            <div class="text-sm font-medium text-gray-900">clipia.de</div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <button id="edit-store-settings" class="text-sm text-blue-600 hover:text-blue-700">Edit Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+        lucide.createIcons();
+        
+        // Deploy Changes functionality
+        document.getElementById('deploy-changes')?.addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Deploying...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/admin-v2/store/deploy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ storeId: '882eacac-d9fa-411c-a9f8-7415c26240b9' })
+                });
+                
+                if (response.ok) {
+                    button.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-2"></i>Deployed!';
+                    button.classList.add('bg-green-600');
+                    button.classList.remove('bg-blue-600');
+                    
+                    showNotification('Store deployed successfully', 'success');
+                } else {
+                    throw new Error('Deployment failed');
+                }
+            } catch (error) {
+                console.error('Deployment error:', error);
+                button.innerHTML = '<i data-lucide="x" class="w-4 h-4 mr-2"></i>Failed';
+                button.classList.add('bg-red-600');
+                button.classList.remove('bg-blue-600');
+                
+                showNotification('Deployment failed', 'error');
+            } finally {
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    button.classList.remove('bg-green-600', 'bg-red-600');
+                    button.classList.add('bg-blue-600');
+                    lucide.createIcons();
+                }, 3000);
+            }
+        });
+        
+        // Add Page functionality
+        document.getElementById('add-page')?.addEventListener('click', function() {
+            window.location.href = '/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9/page/create';
+        });
+        
+        // Sync Products functionality
+        document.getElementById('sync-products')?.addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Syncing...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('/admin-v2/shopify/sync-products', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showNotification('Products synced successfully', 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error('Sync failed');
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                showNotification('Product sync failed', 'error');
+            } finally {
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    lucide.createIcons();
+                }, 2000);
+            }
+        });
+        
+        // Edit buttons for pages and products
+        document.querySelectorAll('.edit-button').forEach((button, index) => {
+            button.addEventListener('click', function() {
+                const pageTypes = ['home', 'products', 'about', 'contact'];
+                const productHandles = ['elegante-solbriller-for-alle', 'klipia-clip'];
+                
+                // First 4 buttons are pages, next 2 are products
+                if (index < 4) {
+                    const pageType = pageTypes[index];
+                    window.location.href = `/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9/page/${pageType}/edit`;
+                } else {
+                    const productIndex = index - 4;
+                    if (productHandles[productIndex]) {
+                        window.location.href = `/admin-v2/product/${productHandles[productIndex]}/edit`;
+                    }
+                }
+            });
+        });
+        
+        // View all pages
+        document.getElementById('view-all-pages')?.addEventListener('click', function() {
+            window.location.href = '/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9/pages';
+        });
+        
+        // Manage all products
+        document.getElementById('manage-all-products')?.addEventListener('click', function() {
+            window.location.href = '/admin-v2/products';
+        });
+        
+        // Theme Management
+        const themeSelector = document.getElementById('theme-selector');
+        const saveThemeBtn = document.getElementById('save-theme');
+        const deployThemeBtn = document.getElementById('deploy-theme');
+        const currentThemeName = document.getElementById('current-theme-name');
+        
+        // Theme colors for preview
+        const themeColors = {
+            'default': { primary: '#667eea', secondary: '#764ba2', accent: '#f093fb' },
+            '1': { primary: '#667eea', secondary: '#764ba2', accent: '#f093fb' },
+            '2': { primary: '#dc2626', secondary: '#991b1b', accent: '#f59e0b' },
+            '3': { primary: '#b91c1c', secondary: '#7f1d1d', accent: '#d97706' },
+            '4': { primary: '#0ea5e9', secondary: '#0284c7', accent: '#06b6d4' },
+            '5': { primary: '#059669', secondary: '#047857', accent: '#10b981' }
+        };
+        
+        const themeNames = {
+            'default': 'Default Theme',
+            '1': 'Modern E-commerce',
+            '2': 'Bold Red Commerce', 
+            '3': 'Elegant Red Luxury',
+            '4': 'Ocean Blue Fresh',
+            '5': 'Forest Green Nature'
+        };
+        
+        // Set current theme in selector
+        themeSelector.value = '<%= store.theme_id || "default" %>';
+        currentThemeName.textContent = themeNames[themeSelector.value];
+        updateThemePreview();
+        
+        // Theme selector change handler
+        themeSelector.addEventListener('change', function() {
+            updateThemePreview();
+            saveThemeBtn.disabled = false;
+        });
+        
+        // Update theme preview colors
+        function updateThemePreview() {
+            const selectedTheme = themeSelector.value;
+            const colors = themeColors[selectedTheme];
+            
+            document.getElementById('preview-primary').style.backgroundColor = colors.primary;
+            document.getElementById('preview-secondary').style.backgroundColor = colors.secondary;
+            document.getElementById('preview-accent').style.backgroundColor = colors.accent;
+        }
+        
+        // Save theme
+        saveThemeBtn.addEventListener('click', async function() {
+            const originalText = saveThemeBtn.textContent;
+            saveThemeBtn.textContent = 'Saving...';
+            saveThemeBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/admin-v2/store/<%= store.uuid %>/theme`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        theme_id: themeSelector.value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentThemeName.textContent = themeNames[themeSelector.value];
+                    deployThemeBtn.disabled = false;
+                    
+                    // Show success message
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+                    successMsg.textContent = 'Theme saved successfully!';
+                    document.body.appendChild(successMsg);
+                    
+                    setTimeout(() => successMsg.remove(), 3000);
+                } else {
+                    alert('Failed to save theme: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error saving theme: ' + error.message);
+            } finally {
+                saveThemeBtn.textContent = originalText;
+                saveThemeBtn.disabled = false;
+            }
+        });
+        
+        // Deploy theme changes
+        deployThemeBtn.addEventListener('click', async function() {
+            const originalText = deployThemeBtn.textContent;
+            deployThemeBtn.textContent = 'Deploying...';
+            deployThemeBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/admin-v2/store/<%= store.uuid %>/deploy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+                    successMsg.innerHTML = `
+                        <div><strong>Theme deployed successfully!</strong></div>
+                        <div class="text-sm mt-1">Live URL: <a href="https://<%= store.domain %>" target="_blank" class="underline">https://<%= store.domain %></a></div>
+                    `;
+                    document.body.appendChild(successMsg);
+                    
+                    setTimeout(() => successMsg.remove(), 8000);
+                } else {
+                    alert('Failed to deploy theme: ' + result.error);
+                }
+            } catch (error) {
+                alert('Error deploying theme: ' + error.message);
+            } finally {
+                deployThemeBtn.textContent = originalText;
+                deployThemeBtn.disabled = false;
+            }
+        });
+        
+        // Edit Store Settings
+        document.getElementById('edit-store-settings')?.addEventListener('click', function() {
+            window.location.href = '/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9/settings';
+        });
+        
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const existing = document.querySelector('.notification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.className = `notification fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-600 text-white' : 
+                type === 'error' ? 'bg-red-600 text-white' : 
+                'bg-blue-600 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

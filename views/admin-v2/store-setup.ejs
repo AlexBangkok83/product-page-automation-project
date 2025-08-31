@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - MultiStore Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="text-center">
+                <i data-lucide="store" class="w-12 h-12 text-blue-600 mx-auto mb-4"></i>
+                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    Complete Store Setup
+                </h2>
+                <p class="mt-2 text-center text-sm text-gray-600">
+                    <%= store.name %> - Step <%= step %> of 3
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                <!-- Progress Bar -->
+                <div class="mb-8">
+                    <div class="flex items-center">
+                        <div class="flex-1 relative">
+                            <div class="h-2 bg-gray-200 rounded-full">
+                                <div class="h-2 bg-blue-600 rounded-full" style="width: <%= (step/3) * 100 %>%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 mt-2">
+                        <span>Basic Info</span>
+                        <span>Configuration</span>
+                        <span>Launch</span>
+                    </div>
+                </div>
+
+                <% if (step === 2) { %>
+                    <!-- Step 2: Page and Product Configuration -->
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Configure Your Store</h3>
+                            <p class="text-sm text-gray-600 mb-6">Your store "<%= store.name %>" has been saved as a draft. Select which pages and products to include.</p>
+                            
+                            <!-- Store Summary -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                <h4 class="font-medium text-blue-900">Store Details</h4>
+                                <p class="text-sm text-blue-700 mt-1">
+                                    <strong><%= store.domain %></strong><br>
+                                    Language: <%= store.language %> | Currency: <%= store.currency %>
+                                </p>
+                            </div>
+
+                            <!-- Page Selection -->
+                            <div class="space-y-6">
+                                <div>
+                                    <h4 class="text-lg font-medium text-gray-900 mb-3">Select Pages to Include</h4>
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="home" checked class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Home Page</div>
+                                                <div class="text-xs text-gray-500">Main landing page (required)</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="products" checked class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Products Page</div>
+                                                <div class="text-xs text-gray-500">Product catalog listing</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="about" checked class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">About Page</div>
+                                                <div class="text-xs text-gray-500">Company information</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="contact" checked class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Contact Page</div>
+                                                <div class="text-xs text-gray-500">Contact form and information</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="privacy" class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Privacy Policy</div>
+                                                <div class="text-xs text-gray-500">Legal privacy information</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="terms" class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Terms of Service</div>
+                                                <div class="text-xs text-gray-500">Legal terms and conditions</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="cookies" class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Cookie Policy</div>
+                                                <div class="text-xs text-gray-500">Cookie usage and consent information</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="returns" class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Return Policy</div>
+                                                <div class="text-xs text-gray-500">Return and refund information</div>
+                                            </div>
+                                        </label>
+                                        
+                                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                                            <input type="checkbox" name="pages" value="shipping" class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900">Shipping Policy</div>
+                                                <div class="text-xs text-gray-500">Delivery terms and conditions</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Product Selection -->
+                                <div>
+                                    <h4 class="text-lg font-medium text-gray-900 mb-3">Select Products to Include</h4>
+                                    <div id="products-loading" class="text-center py-4">
+                                        <i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-blue-600 mb-2"></i>
+                                        <p class="text-sm text-gray-500">Loading products from Shopify...</p>
+                                    </div>
+                                    
+                                    <div id="products-list" class="hidden">
+                                        <!-- Products will be loaded here via JavaScript -->
+                                    </div>
+                                    
+                                    <div id="products-error" class="hidden text-center py-4">
+                                        <i data-lucide="alert-circle" class="w-6 h-6 mx-auto text-red-500 mb-2"></i>
+                                        <p class="text-sm text-red-600">Failed to load products. You can configure products after launch.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <a href="/admin-v2" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                                Back to Dashboard
+                            </a>
+                            <button onclick="saveConfigurationAndNextStep()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                Continue to Launch
+                                <i data-lucide="arrow-right" class="w-4 h-4 ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                <% } else if (step === 3) { %>
+                    <!-- Step 3: Launch Store -->
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Ready to Launch</h3>
+                            <p class="text-sm text-gray-600 mb-6">Your store is configured and ready to be published. This will:</p>
+                            
+                            <ul class="space-y-2 text-sm text-gray-600 mb-6">
+                                <li class="flex items-center">
+                                    <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2"></i>
+                                    Generate store files and pages
+                                </li>
+                                <li class="flex items-center">
+                                    <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2"></i>
+                                    Deploy to Vercel with custom domain
+                                </li>
+                                <li class="flex items-center">
+                                    <i data-lucide="check" class="w-4 h-4 text-green-500 mr-2"></i>
+                                    Make your store live at <%= store.domain %>
+                                </li>
+                            </ul>
+                            
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 class="font-medium text-blue-900">Store Details</h4>
+                                <p class="text-sm text-blue-700 mt-1">
+                                    <strong><%= store.name %></strong><br>
+                                    Domain: <%= store.domain %><br>
+                                    Language: <%= store.language %> | Currency: <%= store.currency %>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <button onclick="previousStep()" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                                Back
+                            </button>
+                            <button onclick="publishStore()" id="publish-button" class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                <i data-lucide="rocket" class="w-4 h-4 mr-2"></i>
+                                Publish Store
+                            </button>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Load products on step 2
+        <% if (step === 2) { %>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+        });
+
+        async function loadProducts() {
+            try {
+                const response = await fetch(`/admin-v2/store/<%= store.uuid %>/products`);
+                const data = await response.json();
+                
+                const loadingDiv = document.getElementById('products-loading');
+                const listDiv = document.getElementById('products-list');
+                const errorDiv = document.getElementById('products-error');
+                
+                loadingDiv.classList.add('hidden');
+                
+                if (data.success && data.products && data.products.length > 0) {
+                    listDiv.innerHTML = generateProductsHTML(data.products);
+                    listDiv.classList.remove('hidden');
+                } else {
+                    errorDiv.classList.remove('hidden');
+                }
+                
+                lucide.createIcons();
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('products-loading').classList.add('hidden');
+                document.getElementById('products-error').classList.remove('hidden');
+            }
+        }
+
+        function generateProductsHTML(products) {
+            return `
+                <div class="grid grid-cols-1 gap-3">
+                    ${products.map(product => `
+                        <label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                            <input type="checkbox" name="products" value="${product.id}" checked class="text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <div class="ml-3 flex-1">
+                                <div class="text-sm font-medium text-gray-900">${product.title}</div>
+                                <div class="text-xs text-gray-500">${product.handle || 'No handle'}</div>
+                                ${product.featuredImage ? `<div class="text-xs text-gray-400 mt-1">Has image</div>` : ''}
+                            </div>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        async function saveConfigurationAndNextStep() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Saving...';
+            button.disabled = true;
+            
+            try {
+                // Get selected pages
+                const selectedPages = Array.from(document.querySelectorAll('input[name="pages"]:checked'))
+                    .map(cb => cb.value);
+                
+                // Get selected products
+                const selectedProducts = Array.from(document.querySelectorAll('input[name="products"]:checked'))
+                    .map(cb => cb.value);
+                
+                const response = await fetch(`/admin-v2/store/<%= store.uuid %>/configure`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pages: selectedPages,
+                        products: selectedProducts
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-2"></i>Saved!';
+                    
+                    // Redirect to next step
+                    setTimeout(() => {
+                        window.location.href = `/admin-v2/store/<%= store.uuid %>/setup?step=3`;
+                    }, 1000);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Configuration error:', error);
+                button.innerHTML = '<i data-lucide="x" class="w-4 h-4 mr-2"></i>Failed';
+                alert('Failed to save configuration: ' + error.message);
+                
+                // Reset button
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                    lucide.createIcons();
+                }, 3000);
+            }
+        }
+        <% } %>
+
+        function nextStep() {
+            const currentStep = <%= step %>;
+            window.location.href = `/admin-v2/store/<%= store.uuid %>/setup?step=${currentStep + 1}`;
+        }
+
+        function previousStep() {
+            const currentStep = <%= step %>;
+            if (currentStep > 2) {
+                window.location.href = `/admin-v2/store/<%= store.uuid %>/setup?step=${currentStep - 1}`;
+            }
+        }
+
+        async function publishStore() {
+            const button = document.getElementById('publish-button');
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i>Publishing...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`/admin-v2/store/<%= store.uuid %>/publish`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerHTML = '<i data-lucide="check" class="w-4 h-4 mr-2"></i>Published!';
+                    button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    button.classList.add('bg-green-500');
+                    
+                    // Redirect after success
+                    setTimeout(() => {
+                        window.location.href = result.redirectUrl;
+                    }, 1500);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('Publish error:', error);
+                button.innerHTML = '<i data-lucide="x" class="w-4 h-4 mr-2"></i>Failed';
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-red-600', 'hover:bg-red-700');
+                
+                alert('Failed to publish store: ' + error.message);
+            } finally {
+                // Reset button after delay if failed
+                if (button.innerHTML.includes('Failed')) {
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        button.classList.remove('bg-red-600', 'hover:bg-red-700');
+                        button.classList.add('bg-green-600', 'hover:bg-green-700');
+                        lucide.createIcons();
+                    }, 3000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

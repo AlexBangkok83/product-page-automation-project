@@ -11,6 +11,15 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- SortableJS for drag and drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
     <style>
         body {
             background: #f8f9fa;
@@ -96,9 +105,12 @@
             align-items: center;
             justify-content: center;
             margin-right: 1rem;
-            font-size: 0.75rem;
-            font-weight: 600;
             transition: all 0.3s ease;
+        }
+        
+        .toggle-icon svg {
+            width: 14px;
+            height: 14px;
         }
         
         .section-toggle.active .toggle-icon {
@@ -163,6 +175,38 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        
+        .sortable-section {
+            position: relative;
+        }
+        
+        .drag-handle {
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: grab;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: #667eea;
+            z-index: 1;
+        }
+        
+        .section-toggle:hover .drag-handle {
+            opacity: 1;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+        
+        .sortable-chosen {
+            transform: scale(1.02);
+        }
     </style>
 </head>
 <body>
@@ -172,8 +216,8 @@
             <div class="container-fluid">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
-                        <a href="/admin/templates" class="btn btn-outline-secondary me-3">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Templates
+                        <a href="/admin-v2/company/design/templates" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 me-3">
+                            <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>Back to Design Library
                         </a>
                         <input type="text" 
                                class="template-name-input" 
@@ -182,11 +226,11 @@
                                id="templateName">
                     </div>
                     <div>
-                        <button type="button" class="btn cancel-btn me-2" onclick="cancelTemplate()">
-                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 me-2" onclick="cancelTemplate()">
+                            <i data-lucide="x-circle" class="w-4 h-4 mr-2"></i>Cancel
                         </button>
-                        <button type="button" class="btn save-btn" onclick="openSaveModal()">
-                            <i class="bi bi-check-circle me-1"></i>Save Template
+                        <button type="button" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" onclick="openSaveModal()">
+                            <i data-lucide="check-circle" class="w-4 h-4 mr-2"></i>Save Template
                         </button>
                     </div>
                 </div>
@@ -200,35 +244,41 @@
                 <div class="element-category">
                     <h6><i class="bi bi-layout-text-window me-2"></i>Header Elements</h6>
                     
-                    <div class="section-toggle active" data-section="FreeShippingBar" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Free Shipping Bar</h6>
-                            <small>Top announcement banner with shipping offer</small>
+                    <div id="header-sections" class="sortable-container">
+                        <div class="section-toggle active sortable-section" data-section="FreeShippingBar" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Free Shipping Bar</h6>
+                                <small>Top announcement banner with shipping offer</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="FlashSaleCountdown" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Flash Sale Countdown</h6>
-                            <small>Urgency timer with sale end countdown</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="FlashSaleCountdown" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Flash Sale Countdown</h6>
+                                <small>Urgency timer with sale end countdown</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="FreeShippingTeaser" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Free Shipping Teaser</h6>
-                            <small>Free shipping threshold progress bar</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="FreeShippingTeaser" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Free Shipping Teaser</h6>
+                                <small>Free shipping threshold progress bar</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="NavigationBar" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Navigation Bar</h6>
-                            <small>Site navigation header with logo, menu links, and action buttons</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="NavigationBar" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Navigation Bar</h6>
+                                <small>Site navigation header with logo, menu links, and action buttons</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -247,12 +297,12 @@
                     <!-- Gallery Sub-items -->
                     <div class="sub-items" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem; margin-bottom: 1.5rem; padding: 0;">
                         <div class="sub-item-toggle active" data-section="DiscountBadge" onclick="toggleSubSection(this)" style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; background: white; font-size: 0.75rem; font-weight: 500; width: 100%; box-sizing: border-box;">
-                            <div class="toggle-icon" style="width: 16px; height: 16px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; font-size: 0.6rem;">✓</div>
+                            <div class="toggle-icon" style="width: 16px; height: 16px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 10px; height: 10px;"><polyline points="20,6 9,17 4,12"></polyline></svg></div>
                             <span>Discount Badge</span>
                         </div>
                         
                         <div class="sub-item-toggle active" data-section="SalesCounter" onclick="toggleSubSection(this)" style="display: flex; align-items: center; padding: 0.75rem; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; background: white; font-size: 0.75rem; font-weight: 500; width: 100%; box-sizing: border-box;">
-                            <div class="toggle-icon" style="width: 16px; height: 16px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem; font-size: 0.6rem;">✓</div>
+                            <div class="toggle-icon" style="width: 16px; height: 16px; border-radius: 50%; background: #667eea; color: white; display: flex; align-items: center; justify-content: center; margin-right: 0.5rem;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 10px; height: 10px;"><polyline points="20,6 9,17 4,12"></polyline></svg></div>
                             <span>Sales Counter</span>
                         </div>
                     </div>
@@ -261,107 +311,122 @@
                 <div class="element-category">
                     <h6><i class="bi bi-info-circle me-2"></i>Product Information</h6>
                     
-                    <div class="section-toggle active" data-section="GuaranteeBadge" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Guarantee Badge</h6>
-                            <small>Trust indicator with satisfaction guarantee promise</small>
+                    <div id="product-sections" class="sortable-container">
+                        <div class="section-toggle active sortable-section" data-section="GuaranteeBadge" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Guarantee Badge</h6>
+                                <small>Trust indicator with satisfaction guarantee promise</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="ProductTitle" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Product Title</h6>
-                            <small>Product name and headline</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="ProductTitle" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Product Title</h6>
+                                <small>Product name and headline</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="StarRating" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Star Rating</h6>
-                            <small>Customer rating stars and review count</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="StarRating" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Star Rating</h6>
+                                <small>Customer rating stars and review count</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="PricingSection" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Pricing Section</h6>
-                            <small>Regular price, discount price, and savings amount</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="PricingSection" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Pricing Section</h6>
+                                <small>Regular price, discount price, and savings amount</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="QuickBuyButton" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Quick Buy Button</h6>
-                            <small>Main purchase button with pricing</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="QuickBuyButton" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Quick Buy Button</h6>
+                                <small>Main purchase button with pricing</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="FreeTextField" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Free Text Field</h6>
-                            <small>Custom text content area</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="FreeTextField" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Free Text Field</h6>
+                                <small>Custom text content area</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="ListSection" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>List Section</h6>
-                            <small>Custom bullet point list with multiple items</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="ListSection" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>List Section</h6>
+                                <small>Custom bullet point list with multiple items</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="SocialProof" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Social Proof</h6>
-                            <small>Customer avatars with purchase count</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="SocialProof" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Social Proof</h6>
+                                <small>Customer avatars with purchase count</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="Bundles" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Bundles</h6>
-                            <small>Package selection with quantity discounts</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="Bundles" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Bundles</h6>
+                                <small>Package selection with quantity discounts</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="ATCButton" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>ATC Button</h6>
-                            <small>Main add-to-cart button</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="ATCButton" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>ATC Button</h6>
+                                <small>Main add-to-cart button</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="TrustIndicators" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Trust Indicators</h6>
-                            <small>Security, guarantee and shipping icons</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="TrustIndicators" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Trust Indicators</h6>
+                                <small>Security, guarantee and shipping icons</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="SecureCheckout" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Secure Checkout</h6>
-                            <small>Payment method options display</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="SecureCheckout" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Secure Checkout</h6>
+                                <small>Payment method options display</small>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="section-toggle active" data-section="ScarcityNotice" onclick="toggleSection(this)">
-                        <div class="toggle-icon">✓</div>
-                        <div class="section-info">
-                            <h6>Scarcity Notice</h6>
-                            <small>Urgency messaging to encourage immediate purchase</small>
+                        
+                        <div class="section-toggle active sortable-section" data-section="ScarcityNotice" onclick="toggleSection(this)">
+                            <div class="drag-handle"><i data-lucide="grip-vertical"></i></div>
+                            <div class="toggle-icon">✓</div>
+                            <div class="section-info">
+                                <h6>Scarcity Notice</h6>
+                                <small>Urgency messaging to encourage immediate purchase</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -513,11 +578,11 @@
             if (activeSections.has(sectionName)) {
                 activeSections.delete(sectionName);
                 element.classList.remove('active');
-                icon.innerHTML = '✕';
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
             } else {
                 activeSections.add(sectionName);
                 element.classList.add('active');
-                icon.innerHTML = '✓';
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"></polyline></svg>';
             }
             
             updatePreview();
@@ -530,13 +595,13 @@
             if (activeSections.has(sectionName)) {
                 activeSections.delete(sectionName);
                 element.classList.remove('active');
-                icon.innerHTML = '✕';
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
                 icon.style.background = '#e9ecef';
                 icon.style.color = '#666';
             } else {
                 activeSections.add(sectionName);
                 element.classList.add('active');
-                icon.innerHTML = '✓';
+                icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"></polyline></svg>';
                 icon.style.background = '#667eea';
                 icon.style.color = 'white';
             }
@@ -548,9 +613,11 @@
             const preview = document.getElementById('templatePreview');
             let previewHTML = '';
             
-            // Header sections
-            const headerSections = ['FreeShippingBar', 'FlashSaleCountdown', 'FreeShippingTeaser', 'NavigationBar'];
-            headerSections.forEach(sectionName => {
+            // Header sections - get order from DOM
+            const headerContainer = document.getElementById('header-sections');
+            const headerElements = headerContainer ? headerContainer.querySelectorAll('.section-toggle') : [];
+            headerElements.forEach(element => {
+                const sectionName = element.dataset.section;
                 if (activeSections.has(sectionName)) {
                     previewHTML += generateSectionHTML(sectionName);
                 }
@@ -600,25 +667,33 @@
                     previewHTML += '<div>';
                     previewHTML += '<h6 style="text-align: center; color: #666; font-family: monospace; margin-bottom: 1rem;">PRODUCT INFO</h6>';
                     
-                    // Product info sections in proper order
-                    const productInfoOrder = ['GuaranteeBadge', 'ProductTitle', 'PricingSection', 'QuickBuyButton', 'StarRating', 'FreeTextField', 'ListSection', 'SocialProof', 'Bundles', 'ATCButton', 'TrustIndicators', 'SecureCheckout', 'ScarcityNotice'];
+                    // Product info sections - get order from DOM
+                    const productContainer = document.getElementById('product-sections');
+                    const productElements = productContainer ? productContainer.querySelectorAll('.section-toggle') : [];
+                    let skipQuickBuy = false;
                     
-                    productInfoOrder.forEach(sectionName => {
+                    productElements.forEach((element, index) => {
+                        const sectionName = element.dataset.section;
                         if (activeSections.has(sectionName)) {
                             if (sectionName === 'PricingSection' && activeSections.has('QuickBuyButton')) {
-                                // Combined pricing and buy button layout
-                                previewHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0;">';
-                                previewHTML += '<div style="border: 2px dashed #ccc; padding: 10px; margin: 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[PRICING]</strong><br>💲 Price with discount display</div>';
-                                previewHTML += '<div style="border: 2px solid #ff69b4; padding: 10px; margin: 0; background: #ff69b4; text-align: center; color: white; font-family: monospace; font-size: 12px;"><strong>[BUY BUTTON]</strong><br>🛒 Quick purchase button</div>';
-                                previewHTML += '</div>';
-                                // Skip QuickBuyButton since it's handled here
+                                // Check if QuickBuyButton comes right after PricingSection
+                                const nextElement = element.nextElementSibling;
+                                if (nextElement && nextElement.dataset.section === 'QuickBuyButton' && activeSections.has('QuickBuyButton')) {
+                                    // Combined pricing and buy button layout
+                                    previewHTML += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 5px 0;">';
+                                    previewHTML += '<div style="border: 2px dashed #ccc; padding: 10px; margin: 0; background: #f9f9f9; text-align: left; color: #666; font-family: monospace; font-size: 12px;"><strong>[PRICING]</strong><br>💲 Price with discount display</div>';
+                                    previewHTML += '<div style="border: 2px solid #ff69b4; padding: 10px; margin: 0; background: #ff69b4; text-align: center; color: white; font-family: monospace; font-size: 12px;"><strong>[BUY BUTTON]</strong><br>🛒 Quick purchase button</div>';
+                                    previewHTML += '</div>';
+                                    skipQuickBuy = true;
+                                    return;
+                                }
+                            } else if (sectionName === 'QuickBuyButton' && skipQuickBuy) {
+                                // Skip this as it was already handled with PricingSection
+                                skipQuickBuy = false;
                                 return;
-                            } else if (sectionName === 'QuickBuyButton' && activeSections.has('PricingSection')) {
-                                // Already handled above
-                                return;
-                            } else {
-                                previewHTML += generateSectionHTML(sectionName);
                             }
+                            
+                            previewHTML += generateSectionHTML(sectionName);
                         }
                     });
                     
@@ -714,8 +789,8 @@
                 saveBtn.disabled = true;
                 
                 const url = editMode ? 
-                    `/admin/templates/${templateId}` : 
-                    '/admin/templates';
+                    `/admin-v2/templates/${templateId}` : 
+                    '/admin-v2/templates';
                 const method = editMode ? 'PUT' : 'POST';
                 
                 const response = await fetch(url, {
@@ -735,7 +810,7 @@
                     document.getElementById('templateName').value = templateName;
                     
                     alert(`Template ${editMode ? 'updated' : 'saved'} successfully!`);
-                    window.location.href = '/admin/templates';
+                    window.location.href = '/admin-v2/company/design/templates';
                 } else {
                     alert('Failed to save template: ' + result.error);
                     // Restore button
@@ -753,7 +828,7 @@
         
         function cancelTemplate() {
             if (confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
-                window.location.href = '/admin/templates';
+                window.location.href = '/admin-v2/company/design/templates';
             }
         }
         
@@ -765,10 +840,10 @@
                 
                 if (activeSections.has(sectionName)) {
                     toggle.classList.add('active');
-                    icon.innerHTML = '✓';
+                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"></polyline></svg>';
                 } else {
                     toggle.classList.remove('active');
-                    icon.innerHTML = '✕';
+                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
                 }
             });
             
@@ -779,20 +854,59 @@
                 
                 if (activeSections.has(sectionName)) {
                     toggle.classList.add('active');
-                    icon.innerHTML = '✓';
+                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20,6 9,17 4,12"></polyline></svg>';
                     icon.style.background = '#667eea';
                     icon.style.color = 'white';
                 } else {
                     toggle.classList.remove('active');
-                    icon.innerHTML = '✕';
+                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
                     icon.style.background = '#e9ecef';
                     icon.style.color = '#666';
                 }
             });
         }
         
+        // Initialize drag and drop functionality
+        function initializeDragAndDrop() {
+            // Header sections sortable
+            const headerContainer = document.getElementById('header-sections');
+            if (headerContainer) {
+                Sortable.create(headerContainer, {
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    animation: 150,
+                    onEnd: function(evt) {
+                        console.log('Header sections reordered');
+                        updatePreview();
+                    }
+                });
+            }
+            
+            // Product sections sortable
+            const productContainer = document.getElementById('product-sections');
+            if (productContainer) {
+                Sortable.create(productContainer, {
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    animation: 150,
+                    onEnd: function(evt) {
+                        console.log('Product sections reordered');
+                        updatePreview();
+                    }
+                });
+            }
+        }
+        
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Lucide icons
+            lucide.createIcons();
+            
+            // Initialize drag and drop
+            initializeDragAndDrop();
+            
             // Give a small delay to ensure template loading completes first
             setTimeout(() => {
                 updateToggleStates();

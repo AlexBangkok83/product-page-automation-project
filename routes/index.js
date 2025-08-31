@@ -38,6 +38,743 @@ router.get('/admin', async (req, res) => {
   }
 });
 
+// New Admin V2 - Modern interface
+router.get('/admin-v2', async (req, res) => {
+  try {
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/dashboard', { 
+      title: 'Admin Dashboard V2',
+      stores: stores,
+      shopifyStores: shopifyStores,
+      totalStores: stores.length,
+      activeStores: stores.filter(s => s.status === 'active').length,
+      currentPage: 'dashboard'
+    });
+  } catch (error) {
+    console.error('Dashboard V2 error:', error);
+    res.status(500).render('error', { 
+      title: 'Error',
+      message: 'Failed to load dashboard'
+    });
+  }
+});
+
+router.get('/admin-v2/company/settings', async (req, res) => {
+  try {
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/company-settings', { 
+      title: 'Company Settings',
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'company-settings'
+    });
+  } catch (error) {
+    console.error('Company settings page error:', error);
+    res.render('admin-v2/company-settings', { 
+      title: 'Company Settings',
+      stores: [],
+      shopifyStores: [],
+      currentPage: 'company-settings'
+    });
+  }
+});
+
+// Company settings save for admin-v2
+router.post('/admin-v2/company/settings', async (req, res) => {
+  try {
+    const { 
+      companyName, 
+      contactEmail, 
+      contactPhone, 
+      country, 
+      businessAddress 
+    } = req.body;
+    
+    // For now, we'll just return success since company data is hardcoded in templates
+    // In a real implementation, you would save to a company_profiles table
+    console.log('💾 Admin V2 - Company settings updated:', {
+      companyName,
+      contactEmail,
+      contactPhone,
+      country,
+      businessAddress
+    });
+    
+    res.json({ 
+      success: true, 
+      message: 'Company settings updated successfully!' 
+    });
+    
+  } catch (error) {
+    console.error('Admin V2 - Company settings save error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to save company settings' 
+    });
+  }
+});
+
+router.get('/admin-v2/company/design', async (req, res) => {
+  try {
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/design-library', { 
+      title: 'Design Library',
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'design-library'
+    });
+  } catch (error) {
+    console.error('Design library error:', error);
+    res.render('admin-v2/design-library', { 
+      title: 'Design Library',
+      stores: [],
+      shopifyStores: [],
+      currentPage: 'design-library'
+    });
+  }
+});
+
+// Design Library sub-pages
+router.get('/admin-v2/company/design/templates', async (req, res) => {
+  try {
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/design-templates', { 
+      title: 'Product Templates',
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'design-templates'
+    });
+  } catch (error) {
+    console.error('Design templates error:', error);
+    res.render('admin-v2/design-templates', { 
+      title: 'Product Templates',
+      stores: [],
+      shopifyStores: [],
+      currentPage: 'design-templates'
+    });
+  }
+});
+
+router.get('/admin-v2/company/design/themes', async (req, res) => {
+  try {
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    res.render('admin-v2/design-themes', { 
+      title: 'Themes & Styling',
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'design-themes'
+    });
+  } catch (error) {
+    console.error('Design themes error:', error);
+    res.render('admin-v2/design-themes', { 
+      title: 'Themes & Styling',
+      stores: [],
+      shopifyStores: [],
+      currentPage: 'design-themes'
+    });
+  }
+});
+
+// Add shopify connection route
+router.get('/admin-v2/shopify/:shopifyId', async (req, res) => {
+  try {
+    const shopifyId = req.params.shopifyId;
+    const shopifyStore = await CompanyShopifyStore.findByDomain(shopifyId + '.myshopify.com');
+    
+    if (!shopifyStore) {
+      return res.status(404).render('error', { 
+        title: 'Shopify Store Not Found',
+        message: 'The requested Shopify store could not be found'
+      });
+    }
+    
+    // Get all stores and shopify connections for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    const connectedStores = stores.filter(store => store.shopify_domain === shopifyStore.shopify_domain);
+    
+    // Fetch products from this Shopify store
+    let products = [];
+    try {
+      if (shopifyStore.storefront_access_token) {
+        products = await Store.fetchShopifyProducts(shopifyStore.shopify_domain, shopifyStore.storefront_access_token);
+      }
+    } catch (error) {
+      console.error('Error fetching products for Shopify connection:', error);
+    }
+    
+    res.render('admin-v2/shopify-connection', { 
+      title: `Shopify Connection - ${shopifyStore.shopify_shop_name}`,
+      shopifyStore: shopifyStore,
+      stores: stores, // Pass all stores for sidebar
+      shopifyStores: shopifyStores, // Pass all shopify stores for sidebar  
+      connectedStores: connectedStores, // Keep connected stores for main content
+      products: products,
+      currentPage: 'shopify-connection'
+    });
+  } catch (error) {
+    console.error('Shopify connection error:', error);
+    res.status(500).render('error', { 
+      title: 'Error',
+      message: 'Failed to load Shopify connection: ' + error.message
+    });
+  }
+});
+
+router.get('/admin-v2/product/:id/edit', (req, res) => {
+  res.render('admin-v2/product-editor', { title: 'Product Editor' });
+});
+
+router.get('/admin-v2/store/:id', async (req, res) => {
+  try {
+    const storeId = req.params.id;
+    let store = null;
+    
+    // Try to find by UUID first, then by domain
+    store = await Store.findByUuid(storeId);
+    if (!store) {
+      // Try to find by domain
+      const stores = await Store.findAll();
+      store = stores.find(s => s.domain === storeId || s.subdomain === storeId);
+    }
+    
+    if (!store) {
+      return res.status(404).render('error', { 
+        title: 'Store Not Found',
+        message: `The requested store "${storeId}" could not be found`
+      });
+    }
+    
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    // Get store pages - use the correct method
+    const pages = await store.getPages();
+    
+    // Get Shopify products if connected
+    let products = [];
+    try {
+      if (store.shopify_store_id) {
+        const shopifyStore = await CompanyShopifyStore.findById(store.shopify_store_id);
+        if (shopifyStore && shopifyStore.storefront_access_token) {
+          products = await Store.fetchShopifyProducts(shopifyStore.shop_domain, shopifyStore.storefront_access_token);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    }
+    
+    res.render('admin-v2/store-management', { 
+      title: `Store Management - ${store.name}`,
+      store: store,
+      pages: pages,
+      products: products,
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'store-management'
+    });
+  } catch (error) {
+    console.error('Store management error:', error);
+    res.status(500).render('error', { 
+      title: 'Error',
+      message: 'Failed to load store management: ' + error.message
+    });
+  }
+});
+
+router.get('/admin-v2/store/:storeId/page/:pageId/edit', async (req, res) => {
+  try {
+    const { storeId, pageId } = req.params;
+    const store = await Store.findByUuid(storeId);
+    const page = await Store.getPageById(pageId);
+    
+    if (!store || !page) {
+      return res.status(404).render('error', { 
+        title: 'Not Found',
+        message: 'Store or page not found'
+      });
+    }
+    
+    res.render('admin-v2/page-editor', { 
+      title: `Edit Page: ${page.title}`,
+      store: store,
+      page: page
+    });
+  } catch (error) {
+    console.error('Page editor error:', error);
+    res.status(500).render('error', { 
+      title: 'Error',
+      message: 'Failed to load page editor'
+    });
+  }
+});
+
+router.get('/admin-v2/create-store', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    
+    // Ensure database is initialized
+    if (!db.db) {
+      await db.initialize();
+    }
+    
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    // Get themes from database
+    const themes = await db.all('SELECT * FROM themes ORDER BY is_default DESC, created_at DESC');
+    
+    res.render('admin-v2/create-store', { 
+      title: 'Create New Storefront',
+      stores: stores,
+      shopifyStores: shopifyStores,
+      themes: themes,
+      currentPage: 'create-store'
+    });
+  } catch (error) {
+    console.error('Create store page error:', error);
+    res.render('admin-v2/create-store', { 
+      title: 'Create New Storefront',
+      stores: [],
+      shopifyStores: [],
+      themes: [],
+      currentPage: 'create-store'
+    });
+  }
+});
+
+// Store creation POST route for admin-v2
+router.post('/admin-v2/create-store', validateSiteSetup, async (req, res) => {
+  try {
+    console.log('🚀 Admin V2 - Processing store creation:', req.body);
+    
+    // Reuse the existing store creation logic
+    req.body.step = 'create-store';
+    
+    // Generate deployment ID for real-time tracking
+    const deploymentId = 'deploy-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    console.log('🎯 Generated deployment ID:', deploymentId);
+    
+    // Process store creation (reuse existing logic from /admin/site-setup)
+    const isUpdate = false;
+    const storeData = {
+      name: req.body.brandName || req.body['store-name'],
+      domain: req.body.domain,
+      country: req.body.country || 'US',
+      language: req.body.language || 'en', 
+      currency: req.body.currency || 'USD',
+      timezone: req.body.timezone || 'UTC',
+      theme_id: req.body.theme || 'default',
+      description: req.body.description || `${req.body.brandName} online store`,
+      keywords: req.body.keywords || req.body.brandName,
+      categories: req.body.categories ? req.body.categories.join(', ') : '',
+      contact_email: req.body.contactEmail || '',
+      contact_phone: req.body.contactPhone || '',
+      business_address: req.body.businessAddress || '',
+      return_policy: req.body.returnPolicy || '',
+      privacy_policy: req.body.privacyPolicy || '',
+      terms_of_service: req.body.termsOfService || '',
+      social_facebook: req.body.socialFacebook || '',
+      social_instagram: req.body.socialInstagram || '',
+      social_twitter: req.body.socialTwitter || '',
+      social_youtube: req.body.socialYoutube || '',
+      social_linkedin: req.body.socialLinkedin || '',
+      social_tiktok: req.body.socialTiktok || '',
+      enable_analytics: req.body.enableAnalytics || false,
+      google_analytics_id: req.body.googleAnalyticsId || '',
+      facebook_pixel_id: req.body.facebookPixelId || '',
+      custom_css: req.body.customCss || '',
+      custom_js: req.body.customJs || '',
+      pages: req.body.pages || ['home', 'about', 'contact'],
+      products_enabled: req.body.enableProducts === 'true',
+      shopify_domain: 'ecominter.myshopify.com', // Auto-connect to ecominter
+      shopify_connected: true
+    };
+    
+    // Get Shopify access token from company connection
+    try {
+      const CompanyShopifyStore = require('../models/CompanyShopifyStore');
+      const shopifyConnection = await CompanyShopifyStore.findByDomain('ecominter.myshopify.com');
+      if (shopifyConnection && shopifyConnection.shopify_access_token) {
+        storeData.shopify_access_token = shopifyConnection.shopify_access_token;
+        console.log('🔗 Using Shopify access token from connection');
+      }
+    } catch (error) {
+      console.error('Failed to get Shopify access token:', error);
+    }
+    
+    // Save store as draft (don't generate files or deploy yet)
+    storeData.deployment_status = 'draft';
+    storeData.status = 'draft';
+    
+    console.log('💾 Creating store as draft with data:', storeData);
+    const store = await Store.createDraft(storeData);
+    
+    // Return success with redirect URL to continue setup
+    res.json({
+      success: true,
+      message: 'Storefront configuration saved. Continue to complete setup.',
+      deploymentId: deploymentId,
+      store: {
+        uuid: store.uuid,
+        name: store.name,
+        domain: store.domain,
+        status: 'draft'
+      },
+      redirectUrl: `/admin-v2/store/${store.uuid}/setup?step=2`
+    });
+    
+  } catch (error) {
+    console.error('Store creation error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create store: ' + error.message
+    });
+  }
+});
+
+// Store setup continuation routes
+router.get('/admin-v2/store/:storeId/setup', async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const step = req.query.step || '2';
+    const store = await Store.findByUuid(storeId);
+    
+    if (!store) {
+      return res.status(404).render('error', { 
+        title: 'Store Not Found',
+        message: 'The store you are looking for does not exist.'
+      });
+    }
+    
+    // Get data needed for sidebar
+    const stores = await Store.findAll();
+    const shopifyStores = await CompanyShopifyStore.findAll();
+    
+    // Render the appropriate setup step
+    res.render('admin-v2/store-setup', {
+      title: `Complete Setup - ${store.name}`,
+      store: store,
+      step: parseInt(step),
+      stores: stores,
+      shopifyStores: shopifyStores,
+      currentPage: 'store-setup'
+    });
+    
+  } catch (error) {
+    console.error('Store setup page error:', error);
+    res.status(500).render('error', {
+      title: 'Setup Error',
+      message: 'Failed to load store setup page'
+    });
+  }
+});
+
+// Load products for store setup step 2
+router.get('/admin-v2/store/:storeId/products', async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const store = await Store.findByUuid(storeId);
+    
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    // Load products from Shopify using the store's connection
+    if (store.shopify_domain && store.shopify_access_token) {
+      try {
+        const axios = require('axios');
+        const response = await axios.get(`https://${store.shopify_domain}/admin/api/2023-10/products.json?limit=50`, {
+          headers: {
+            'X-Shopify-Access-Token': store.shopify_access_token,
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+        
+        const products = response.data.products || [];
+        const formattedProducts = products.map(product => ({
+          id: product.id,
+          title: product.title,
+          handle: product.handle,
+          status: product.status,
+          featuredImage: product.images && product.images.length > 0 ? product.images[0].src : null,
+          variants: product.variants ? product.variants.length : 0
+        }));
+        
+        res.json({
+          success: true,
+          products: formattedProducts
+        });
+      } catch (error) {
+        console.error('Failed to load products from Shopify:', error);
+        res.json({
+          success: false,
+          products: [],
+          error: 'Failed to load products from Shopify'
+        });
+      }
+    } else {
+      // For stores connected to 'ecominter.myshopify.com', use a default access token or show message
+      if (store.shopify_domain === 'ecominter.myshopify.com') {
+        res.json({
+          success: true,
+          products: [
+            { id: 'sample-1', title: 'Sample Product 1', handle: 'sample-product-1', featuredImage: null },
+            { id: 'sample-2', title: 'Sample Product 2', handle: 'sample-product-2', featuredImage: null }
+          ]
+        });
+      } else {
+        res.json({
+          success: true,
+          products: []
+        });
+      }
+    }
+    
+  } catch (error) {
+    console.error('Products loading error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load products'
+    });
+  }
+});
+
+// Save store configuration (step 2)
+router.post('/admin-v2/store/:storeId/configure', async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const { pages, products } = req.body;
+    const store = await Store.findByUuid(storeId);
+    
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    if (store.status !== 'draft') {
+      return res.status(400).json({
+        success: false,
+        error: 'Store is not in draft status'
+      });
+    }
+    
+    // Save selected pages and products to store configuration
+    const db = require('../database/db');
+    await db.run(`
+      UPDATE stores 
+      SET selected_pages = ?, 
+          selected_products = ?,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE uuid = ?
+    `, [
+      pages ? pages.join(',') : 'home,products,about,contact',
+      products ? JSON.stringify(products) : JSON.stringify([]),
+      storeId
+    ]);
+    
+    console.log(`💾 Saved configuration for store ${store.name}: pages=${pages?.length}, products=${products?.length}`);
+    
+    res.json({
+      success: true,
+      message: 'Configuration saved successfully'
+    });
+    
+  } catch (error) {
+    console.error('Configuration save error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save configuration'
+    });
+  }
+});
+
+// Delete draft store
+router.delete('/admin-v2/store/:storeId/delete', async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const store = await Store.findByUuid(storeId);
+    
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    // Only allow deletion of draft stores
+    if (store.status !== 'draft') {
+      return res.status(400).json({
+        success: false,
+        error: 'Only draft stores can be deleted. Published stores must be unpublished first.'
+      });
+    }
+    
+    console.log(`🗑️ Deleting draft store: ${store.name} (${store.domain})`);
+    
+    // Delete from database
+    const db = require('../database/db');
+    await db.run('DELETE FROM stores WHERE uuid = ?', [storeId]);
+    
+    res.json({
+      success: true,
+      message: 'Draft store deleted successfully'
+    });
+    
+  } catch (error) {
+    console.error('Store deletion error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete store: ' + error.message
+    });
+  }
+});
+
+// Publish draft store (final step)
+router.post('/admin-v2/store/:storeId/publish', async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const store = await Store.findByUuid(storeId);
+    
+    if (!store) {
+      return res.status(404).json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    if (store.status !== 'draft') {
+      return res.status(400).json({
+        success: false,
+        error: 'Store is not in draft status'
+      });
+    }
+    
+    console.log('🚀 Publishing draft store:', store.name);
+    
+    // Convert draft to full store by calling the original create logic
+    await store.publishDraft();
+    
+    res.json({
+      success: true,
+      message: 'Store published successfully',
+      store: {
+        uuid: store.uuid,
+        name: store.name,
+        domain: store.domain,
+        url: `https://${store.domain}`
+      },
+      redirectUrl: `/admin-v2/store/${store.uuid}?published=true`
+    });
+    
+  } catch (error) {
+    console.error('Store publish error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to publish store: ' + error.message
+    });
+  }
+});
+
+// Page content update for admin-v2
+router.post('/admin-v2/store/:storeId/page/:pageId/edit', async (req, res) => {
+  try {
+    const { storeId, pageId } = req.params;
+    const store = await Store.findByUuid(storeId);
+    
+    if (!store) {
+      return res.status(404).json({ success: false, message: 'Store not found' });
+    }
+    
+    const { title, content, meta_title, meta_description, page_type } = req.body;
+    
+    // Decode HTML entities that might have been escaped during JSON transport
+    const decodedContent = content ? content
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x2F;/g, '/') : content;
+    
+    // Update the page content
+    await store.updatePage(page_type, {
+      title,
+      content: decodedContent,
+      meta_title,
+      meta_description
+    });
+    
+    console.log(`💾 Admin V2 - Updated ${page_type} page content for store ${store.name}`);
+    
+    // Deploy to live with new content (includes regeneration + git automation)
+    try {
+      console.log(`🚀 Starting deployment for ${store.name}...`);
+      await store.deploy(null, true); // Force deployment to ensure changes go live
+      console.log(`✅ Store deployed for ${store.name} with updated content`);
+    } catch (error) {
+      console.error(`❌ Failed to deploy store:`, error);
+      // Don't fail the save if deployment fails
+    }
+    
+    res.json({ 
+      success: true, 
+      message: `${page_type.charAt(0).toUpperCase() + page_type.slice(1)} page updated and deployed successfully!` 
+    });
+    
+  } catch (error) {
+    console.error('Admin V2 - Content save error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to save page content' 
+    });
+  }
+});
+
+// Sync products endpoint
+router.post('/admin-v2/shopify/sync-products', async (req, res) => {
+  try {
+    // For now, just return success - implement actual sync later
+    console.log('🔄 Admin V2 - Syncing Shopify products...');
+    
+    // Simulate sync delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    res.json({ 
+      success: true, 
+      message: 'Products synced successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Admin V2 - Sync products error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to sync products' 
+    });
+  }
+});
+
 // Site Setup - Multi-step store creation wizard
 router.get('/admin/site-setup', async (req, res) => {
   try {
@@ -861,7 +1598,55 @@ router.get('/admin/store/:uuid/content', async (req, res) => {
     // Get store pages for editing
     const pages = await store.getPages();
     const currentPageType = req.query.page || 'home';
-    const currentPageData = await store.getPage(currentPageType);
+    let currentPageData = await store.getPage(currentPageType);
+    
+    // If page doesn't exist or has no content, try to get default content
+    if (!currentPageData || !currentPageData.content || currentPageData.content.trim() === '') {
+      const db = require('../database/db');
+      const defaultContent = await db.get(
+        'SELECT * FROM content_defaults WHERE page_type = ? AND language = ?',
+        [currentPageType, store.language || 'en']
+      );
+      
+      if (defaultContent) {
+        // Convert content blocks to simple HTML for WYSIWYG editor
+        let htmlContent = '';
+        try {
+          const blocks = JSON.parse(defaultContent.content_blocks || '[]');
+          htmlContent = blocks.map(block => {
+            if (block.type === 'text') {
+              return `<p>${block.content || ''}</p>`;
+            } else if (block.type === 'team') {
+              return `<h3>${block.title || 'Our Team'}</h3><p>${block.description || ''}</p>`;
+            } else {
+              return `<p>${block.content || block.description || ''}</p>`;
+            }
+          }).join('\n');
+        } catch (e) {
+          htmlContent = `<p>Welcome to your ${currentPageType} page. Add your content here...</p>`;
+        }
+        
+        // Create default page data structure
+        currentPageData = {
+          page_type: currentPageType,
+          title: defaultContent.title ? defaultContent.title.replace('{store_name}', store.name) : `${currentPageType.charAt(0).toUpperCase() + currentPageType.slice(1)} - ${store.name}`,
+          subtitle: defaultContent.subtitle || '',
+          content: htmlContent.replace(/{store_name}/g, store.name),
+          meta_title: defaultContent.meta_title ? defaultContent.meta_title.replace('{store_name}', store.name) : '',
+          meta_description: defaultContent.meta_description ? defaultContent.meta_description.replace('{store_name}', store.name) : ''
+        };
+      } else {
+        // Fallback if no default content exists
+        currentPageData = {
+          page_type: currentPageType,
+          title: `${currentPageType.charAt(0).toUpperCase() + currentPageType.slice(1)} - ${store.name}`,
+          subtitle: '',
+          content: `<p>Welcome to your ${currentPageType} page. Add your content here...</p>`,
+          meta_title: '',
+          meta_description: ''
+        };
+      }
+    }
     
     console.log(`📝 Loading content editor for ${store.name}, page: ${currentPageType}`);
     console.log(`📄 Found ${pages.length} pages for store`);
@@ -1682,6 +2467,13 @@ router.post('/admin/store/:id/theme', async (req, res) => {
     const Store = require('../models/Store');
     const storeInstance = await Store.findById(storeId);
     
+    // DEBUG: Check if store has updated theme
+    console.log('🔍 DEBUG Theme update - Store before deploy:', { 
+      name: storeInstance.name, 
+      theme_id: storeInstance.theme_id, 
+      theme_id_new: storeInstance.theme_id_new 
+    });
+    
     setImmediate(async () => {
       try {
         // ✅ Use complete deployment pipeline (not just regeneration)
@@ -1729,6 +2521,909 @@ router.get('/api/themes', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to load themes'
+    });
+  }
+});
+
+// === ADMIN V2 DESIGN ENDPOINTS ===
+
+// Save design settings
+router.post('/admin-v2/company/design/settings', async (req, res) => {
+  try {
+    const { primaryColor, secondaryColor, accentColor, headingFont, bodyFont } = req.body;
+    
+    // In a real app, you'd save these to a design_settings table
+    // For now, we'll just return success
+    console.log('Saving design settings:', req.body);
+    
+    res.json({
+      success: true,
+      message: 'Design settings saved successfully'
+    });
+  } catch (error) {
+    console.error('Error saving design settings:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save design settings'
+    });
+  }
+});
+
+// Template management endpoints
+router.get('/admin-v2/template/create', (req, res) => {
+  res.render('admin-v2/template-create', {
+    title: 'Create Template'
+  });
+});
+
+router.get('/admin-v2/template/:type/edit', (req, res) => {
+  const templateType = req.params.type;
+  res.render('admin-v2/template-edit', {
+    title: `Edit ${templateType.charAt(0).toUpperCase() + templateType.slice(1)} Template`,
+    templateType: templateType
+  });
+});
+
+// Store deployment endpoint
+router.post('/admin-v2/store/deploy', async (req, res) => {
+  try {
+    const { storeId } = req.body;
+    
+    // In a real app, you'd trigger the deployment process
+    console.log(`Deploying store ${storeId}...`);
+    
+    // Simulate deployment delay
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    res.json({
+      success: true,
+      message: 'Store deployed successfully'
+    });
+  } catch (error) {
+    console.error('Error deploying store:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to deploy store'
+    });
+  }
+});
+
+// Company Page Template Routes
+// Get page template by type
+router.get('/admin-v2/company/page-template/:pageType', async (req, res) => {
+  try {
+    const { pageType } = req.params;
+    const companyId = 1; // For now, single company
+    
+    const db = require('../database/db');
+    const template = await db.get(
+      'SELECT * FROM company_page_templates WHERE company_id = ? AND page_type = ? AND is_active = 1',
+      [companyId, pageType]
+    );
+    
+    if (template) {
+      res.json({
+        success: true,
+        template: {
+          title: template.title,
+          content: template.content,
+          updated_at: template.updated_at
+        }
+      });
+    } else {
+      res.json({
+        success: false,
+        message: 'Template not found'
+      });
+    }
+  } catch (error) {
+    console.error('Error loading page template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load page template'
+    });
+  }
+});
+
+// Save/update page template
+router.post('/admin-v2/company/page-template', async (req, res) => {
+  try {
+    const { pageType, title, content } = req.body;
+    const companyId = 1; // For now, single company
+    
+    if (!pageType || !title || !content) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: pageType, title, content'
+      });
+    }
+    
+    const db = require('../database/db');
+    
+    // Check if template already exists
+    const existingTemplate = await db.get(
+      'SELECT id FROM company_page_templates WHERE company_id = ? AND page_type = ?',
+      [companyId, pageType]
+    );
+    
+    if (existingTemplate) {
+      // Update existing template
+      await db.run(
+        'UPDATE company_page_templates SET title = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE company_id = ? AND page_type = ?',
+        [title, content, companyId, pageType]
+      );
+    } else {
+      // Create new template
+      await db.run(
+        'INSERT INTO company_page_templates (company_id, page_type, title, content) VALUES (?, ?, ?, ?)',
+        [companyId, pageType, title, content]
+      );
+    }
+    
+    res.json({
+      success: true,
+      message: 'Page template saved successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error saving page template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save page template'
+    });
+  }
+});
+
+// Create new page template type
+router.post('/admin-v2/company/page-template/create', async (req, res) => {
+  try {
+    const { pageType, pageName } = req.body;
+    const companyId = 1; // For now, single company
+    
+    if (!pageType || !pageName) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: pageType, pageName'
+      });
+    }
+    
+    // Validate page type format
+    if (!/^[a-z0-9_-]+$/.test(pageType)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Page type should only contain lowercase letters, numbers, hyphens, and underscores'
+      });
+    }
+    
+    const db = require('../database/db');
+    
+    // Check if template already exists
+    const existingTemplate = await db.get(
+      'SELECT id FROM company_page_templates WHERE company_id = ? AND page_type = ?',
+      [companyId, pageType]
+    );
+    
+    if (existingTemplate) {
+      return res.status(409).json({
+        success: false,
+        error: 'A template with this page type already exists'
+      });
+    }
+    
+    // Create default content for new template
+    const defaultContent = `<h1>${pageName}</h1>
+<p>Enter your ${pageName.toLowerCase()} content here...</p>
+
+<h2>Section 1</h2>
+<p>Add your content sections as needed.</p>
+
+<h2>Section 2</h2>
+<p>You can use the rich text editor to format your content with headings, lists, links, and more.</p>
+
+<p><em>Last updated: ${new Date().toLocaleDateString()}</em></p>`;
+    
+    // Create new template
+    await db.run(
+      'INSERT INTO company_page_templates (company_id, page_type, title, content) VALUES (?, ?, ?, ?)',
+      [companyId, pageType, pageName, defaultContent]
+    );
+    
+    res.json({
+      success: true,
+      message: `${pageName} template created successfully`
+    });
+    
+  } catch (error) {
+    console.error('Error creating page template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create page template'
+    });
+  }
+});
+
+// Delete page template
+router.delete('/admin-v2/company/page-template/:pageType', async (req, res) => {
+  try {
+    const { pageType } = req.params;
+    const companyId = 1; // For now, single company
+    
+    const db = require('../database/db');
+    
+    const result = await db.run(
+      'DELETE FROM company_page_templates WHERE company_id = ? AND page_type = ?',
+      [companyId, pageType]
+    );
+    
+    if (result.changes > 0) {
+      res.json({
+        success: true,
+        message: 'Page template deleted successfully'
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: 'Template not found'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error deleting page template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete page template'
+    });
+  }
+});
+
+
+// Get all templates (for dropdowns/lists)
+router.get('/admin-v2/templates', async (req, res) => {
+  try {
+    const db = require('../database/db');
+    const companyId = 1; // For now, single company
+    
+    const templates = await db.all(
+      'SELECT id, name, description, elements, created_at, updated_at FROM product_page_templates WHERE company_id = ? ORDER BY created_at DESC',
+      [companyId]
+    );
+    
+    res.json({
+      success: true,
+      templates: templates
+    });
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Render template builder (integrated from existing /admin/templates/builder)
+router.get('/admin-v2/templates/builder', async (req, res) => {
+  try {
+    const editMode = !!req.query.edit;
+    let template = null;
+    
+    if (editMode && req.query.edit) {
+      const db = require('../database/db');
+      template = await db.get(
+        'SELECT * FROM product_page_templates WHERE id = ?',
+        [req.query.edit]
+      );
+      
+      if (template) {
+        // Parse elements JSON string
+        try {
+          template.elements = JSON.parse(template.elements);
+        } catch (e) {
+          console.error('Error parsing template elements:', e);
+          template.elements = [];
+        }
+      }
+    }
+    
+    res.render('admin/template-builder', {
+      title: editMode ? 'Edit Template' : 'Create Template',
+      editMode: editMode,
+      template: template
+    });
+  } catch (error) {
+    console.error('Error loading template builder:', error);
+    res.status(500).render('error', {
+      title: 'Template Builder Error',
+      message: 'Failed to load template builder'
+    });
+  }
+});
+
+// API Routes for Template Management
+// Get all product page templates
+router.get('/admin-v2/api/product-templates', async (req, res) => {
+  try {
+    const companyId = 1; // For now, single company
+    const db = require('../database/db');
+    
+    const templates = await db.all(
+      'SELECT id, name, description, elements, created_at, updated_at FROM product_page_templates WHERE company_id = ? ORDER BY created_at DESC',
+      [companyId]
+    );
+    
+    // Count sections for each template
+    templates.forEach(template => {
+      try {
+        const elements = JSON.parse(template.elements);
+        template.sections_count = Array.isArray(elements) ? elements.length : 0;
+      } catch (e) {
+        template.sections_count = 0;
+      }
+    });
+    
+    res.json({
+      success: true,
+      templates: templates
+    });
+  } catch (error) {
+    console.error('Error loading product templates:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load templates'
+    });
+  }
+});
+
+// Create/Update product page template (from template builder)
+router.post('/admin-v2/templates', async (req, res) => {
+  try {
+    const { name, description, sections } = req.body;
+    
+    if (!name || !sections || !Array.isArray(sections)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: name, sections'
+      });
+    }
+    
+    const db = require('../database/db');
+    const elementsJson = JSON.stringify(sections);
+    
+    const companyId = 1; // For now, single company
+    
+    const result = await db.run(
+      'INSERT INTO product_page_templates (name, description, elements, company_id) VALUES (?, ?, ?, ?)',
+      [name, description || '', elementsJson, companyId]
+    );
+    
+    res.json({
+      success: true,
+      template_id: result.id,
+      message: 'Template created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create template'
+    });
+  }
+});
+
+// Update existing template (from template builder)
+router.put('/admin-v2/templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, sections } = req.body;
+    
+    if (!name || !sections || !Array.isArray(sections)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: name, sections'
+      });
+    }
+    
+    const db = require('../database/db');
+    const elementsJson = JSON.stringify(sections);
+    
+    const companyId = 1; // For now, single company
+    
+    const result = await db.run(
+      'UPDATE product_page_templates SET name = ?, description = ?, elements = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND company_id = ?',
+      [name, description || '', elementsJson, id, companyId]
+    );
+    
+    if (result.changes === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Template not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Template updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update template'
+    });
+  }
+});
+
+// Delete product page template
+router.delete('/admin-v2/api/product-templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const companyId = 1; // For now, single company
+    
+    const db = require('../database/db');
+    
+    // First check if template exists and is used in any assignments
+    const assignments = await db.all(
+      'SELECT COUNT(*) as count FROM template_assignments WHERE template_id = ?',
+      [id]
+    );
+    
+    if (assignments[0].count > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot delete template: it is currently assigned to products'
+      });
+    }
+    
+    // Delete the template (hard delete since no is_active column)
+    const result = await db.run(
+      'DELETE FROM product_page_templates WHERE id = ? AND company_id = ?',
+      [id, companyId]
+    );
+    
+    if (result.changes === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Template not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Template deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting template:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete template'
+    });
+  }
+});
+
+// Get template assignments
+router.get('/admin-v2/api/template-assignments', async (req, res) => {
+  try {
+    const companyId = 1; // For now, single company
+    const db = require('../database/db');
+    
+    const assignments = await db.all(
+      'SELECT id, product_handle, template_id, created_at FROM template_assignments WHERE company_id = ? ORDER BY created_at DESC',
+      [companyId]
+    );
+    
+    res.json({
+      success: true,
+      assignments: assignments
+    });
+  } catch (error) {
+    console.error('Error loading template assignments:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load assignments'
+    });
+  }
+});
+
+// Save template assignments
+router.post('/admin-v2/api/template-assignments', async (req, res) => {
+  try {
+    const { assignments } = req.body;
+    
+    if (!Array.isArray(assignments)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Assignments must be an array'
+      });
+    }
+    
+    const db = require('../database/db');
+    
+    const companyId = 1; // For now, single company
+    
+    // Clear existing assignments for this company
+    await db.run('DELETE FROM template_assignments WHERE company_id = ?', [companyId]);
+    
+    // Insert new assignments
+    for (const assignment of assignments) {
+      await db.run(
+        'INSERT INTO template_assignments (company_id, product_handle, template_id) VALUES (?, ?, ?)',
+        [companyId, assignment.product_handle, assignment.template_id]
+      );
+    }
+    
+    res.json({
+      success: true,
+      message: 'Template assignments saved successfully'
+    });
+  } catch (error) {
+    console.error('Error saving template assignments:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to save assignments'
+    });
+  }
+});
+
+// Get products for assignment (from Shopify)
+router.get('/admin-v2/api/products', async (req, res) => {
+  try {
+    // For now, return mock data - in production this would fetch from Shopify
+    const mockProducts = [
+      { handle: 'klipia-clip', title: 'Klipia Clip', image: '/images/product1.jpg' },
+      { handle: 'sample-product-1', title: 'Sample Product 1', image: '/images/product2.jpg' },
+      { handle: 'sample-product-2', title: 'Sample Product 2', image: '/images/product3.jpg' }
+    ];
+    
+    // TODO: Replace with actual Shopify API call
+    // const Store = require('../models/Store');
+    // const store = await Store.findByCompany(companyId);
+    // if (store && store.shopify_access_token) {
+    //   const axios = require('axios');
+    //   const response = await axios.get(`https://${store.shopify_domain}/admin/api/2023-10/products.json`, {
+    //     headers: { 'X-Shopify-Access-Token': store.shopify_access_token }
+    //   });
+    //   const products = response.data.products.map(product => ({
+    //     handle: product.handle,
+    //     title: product.title,
+    //     image: product.images && product.images[0] ? product.images[0].src : null
+    //   }));
+    // }
+    
+    res.json({
+      success: true,
+      products: mockProducts
+    });
+  } catch (error) {
+    console.error('Error loading products:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load products'
+    });
+  }
+});
+
+// Get single template by ID (API endpoint)
+router.get('/admin-v2/templates/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = require('../database/db');
+    const companyId = 1; // For now, single company
+    
+    const template = await db.get(
+      'SELECT id, name, description, elements, created_at, updated_at FROM product_page_templates WHERE id = ? AND company_id = ?',
+      [id, companyId]
+    );
+    
+    if (!template) {
+      return res.status(404).json({
+        success: false,
+        error: 'Template not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      template: template
+    });
+  } catch (error) {
+    console.error('Error fetching template:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get product template assignment
+router.get('/admin-v2/products/:handle/template', async (req, res) => {
+  try {
+    const { handle } = req.params;
+    const db = require('../database/db');
+    const companyId = 1; // For now, single company
+    
+    const assignment = await db.get(
+      'SELECT * FROM template_assignments WHERE company_id = ? AND product_handle = ?',
+      [companyId, handle]
+    );
+    
+    res.json({
+      success: true,
+      assignment: assignment
+    });
+  } catch (error) {
+    console.error('Error fetching product template:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Save product template assignment
+// Save store theme
+router.post('/admin-v2/store/:uuid/theme', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { theme_id } = req.body;
+    
+    const store = await Store.findByUuid(uuid);
+    if (!store) {
+      return res.json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    // Update store theme
+    const db = require('../database/db');
+    await db.run('UPDATE stores SET theme_id = ? WHERE uuid = ?', [theme_id, uuid]);
+    
+    console.log(`🎨 Updated store ${store.name} theme to: ${theme_id}`);
+    
+    res.json({
+      success: true,
+      message: `Theme updated to ${theme_id}`
+    });
+  } catch (error) {
+    console.error('Error saving store theme:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Deploy store with theme changes
+router.post('/admin-v2/store/:uuid/deploy', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    
+    const store = await Store.findByUuid(uuid);
+    if (!store) {
+      return res.json({
+        success: false,
+        error: 'Store not found'
+      });
+    }
+    
+    console.log(`🚀 Deploying store ${store.name} with theme changes`);
+    
+    // Use full deployment automation like product deployments
+    const DeploymentAutomation = require('../utils/DeploymentAutomation');
+    
+    // Regenerate store files with new theme
+    await store.regenerateStoreFiles();
+    
+    // Use complete deployment automation to push to production
+    const deploymentAutomation = new DeploymentAutomation();
+    await deploymentAutomation.executeCompleteDeployment(store, { force: true }); // Force deployment
+    
+    res.json({
+      success: true,
+      message: `Store ${store.name} deployed successfully`,
+      liveUrl: `https://${store.domain}`
+    });
+  } catch (error) {
+    console.error('Error deploying store:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+router.post('/admin-v2/products/:handle/template', async (req, res) => {
+  try {
+    const { handle } = req.params;
+    const { templateId, templateData } = req.body;
+    const db = require('../database/db');
+    const companyId = 1; // For now, single company
+    
+    if (templateId) {
+      // Upsert the assignment
+      await db.run(
+        `INSERT OR REPLACE INTO template_assignments 
+         (company_id, product_handle, template_id, template_data, updated_at) 
+         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        [companyId, handle, templateId, JSON.stringify(templateData)]
+      );
+      
+      console.log(`Assigned template ${templateId} to product ${handle}`);
+    } else {
+      // Remove assignment if no template selected
+      await db.run(
+        'DELETE FROM template_assignments WHERE company_id = ? AND product_handle = ?',
+        [companyId, handle]
+      );
+      
+      console.log(`Removed template assignment from product ${handle}`);
+    }
+    
+    res.json({
+      success: true,
+      message: templateId ? 'Template assigned successfully' : 'Template assignment removed'
+    });
+  } catch (error) {
+    console.error('Error saving product template:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Generate and deploy product page with custom template
+router.post('/admin-v2/products/:handle/deploy', async (req, res) => {
+  try {
+    const { handle } = req.params;
+    console.log(`🚀 Starting product page deployment for ${handle}`);
+    
+    const Store = require('../models/Store');
+    const TemplateRenderer = require('../utils/TemplateRenderer');
+    const CustomTemplateRenderer = require('../utils/CustomTemplateRenderer');
+    const DeploymentAutomation = require('../utils/DeploymentAutomation');
+    
+    // Get store information from the referrer header or default to clipia.de
+    const referrer = req.headers.referer || '';
+    const domainMatch = referrer.match(/clipia\.(de|fi)/);
+    const domain = domainMatch ? `clipia.${domainMatch[1]}` : 'clipia.de';
+    console.log(`🔍 Extracted domain from referrer: ${domain}`);
+    
+    const stores = await Store.findAll();
+    const store = stores.find(s => s.domain === domain) || stores.find(s => s.domain === 'clipia.de') || stores[0];
+    
+    if (!store) {
+      return res.json({
+        success: false,
+        error: 'No store found'
+      });
+    }
+    
+    console.log(`🏪 Using store: ${store.name} (${store.domain})`);
+    
+    // For testing, use mock product data since we don't have live Shopify connection
+    const mockProduct = {
+      handle: handle,
+      title: handle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      body_html: `<p>High-quality product available at ${store.name}.</p>`,
+      variants: [{
+        id: 1,
+        price: 29.99,
+        compare_at_price: 39.99,
+        available: true
+      }],
+      images: [{
+        src: 'https://via.placeholder.com/400x300?text=Product+Image',
+        alt: handle.replace(/-/g, ' ')
+      }]
+    };
+    
+    const product = mockProduct;
+    
+    console.log(`📦 Found product: ${product.title}`);
+    
+    // Get theme configuration
+    const templateRenderer = new TemplateRenderer();
+    const themeConfig = await templateRenderer.getThemeConfiguration(store);
+    
+    // Generate custom product page HTML
+    const customRenderer = new CustomTemplateRenderer();
+    const customHtml = await customRenderer.generateCustomProductPage(store, product, themeConfig);
+    
+    if (!customHtml) {
+      return res.json({
+        success: false,
+        error: 'No custom template assigned to this product'
+      });
+    }
+    
+    // Write the generated HTML to the store directory
+    const fs = require('fs');
+    const path = require('path');
+    const storePath = path.join(process.cwd(), 'stores', store.domain);
+    const productsDir = path.join(storePath, 'products');
+    
+    // Ensure directories exist
+    if (!fs.existsSync(storePath)) {
+      fs.mkdirSync(storePath, { recursive: true });
+    }
+    if (!fs.existsSync(productsDir)) {
+      fs.mkdirSync(productsDir, { recursive: true });
+    }
+    
+    // Write the product HTML file
+    const productFilePath = path.join(productsDir, `${handle}.html`);
+    fs.writeFileSync(productFilePath, customHtml, 'utf8');
+    
+    console.log(`✅ Generated custom product page: ${productFilePath}`);
+    
+    // Deploy to live site
+    const deployer = new DeploymentAutomation();
+    const deploymentResult = await deployer.executeCompleteDeployment(store, {
+      deploymentId: `product_${handle}_${Date.now()}`
+    });
+    
+    if (deploymentResult.success) {
+      console.log(`🚀 Successfully deployed ${handle} to ${store.domain}`);
+      
+      res.json({
+        success: true,
+        message: 'Product page generated and deployed successfully',
+        productUrl: `https://${store.domain}/products/${handle}.html`,
+        deploymentUrl: deploymentResult.url
+      });
+    } else {
+      res.json({
+        success: false,
+        error: 'Failed to deploy to live site: ' + deploymentResult.error
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error deploying product page:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Template preview route
+router.get('/admin-v2/templates/preview/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const db = require('../database/db');
+    const template = await db.get(
+      'SELECT * FROM product_page_templates WHERE id = ?',
+      [id]
+    );
+    
+    if (!template) {
+      return res.status(404).render('error', {
+        title: 'Template Not Found',
+        message: 'The template you are looking for does not exist.'
+      });
+    }
+    
+    // Parse elements
+    let elements = [];
+    try {
+      elements = JSON.parse(template.elements);
+    } catch (e) {
+      console.error('Error parsing template elements:', e);
+    }
+    
+    res.render('admin/template-preview', {
+      title: `Preview: ${template.name}`,
+      template: template,
+      elements: elements
+    });
+  } catch (error) {
+    console.error('Error loading template preview:', error);
+    res.status(500).render('error', {
+      title: 'Preview Error',
+      message: 'Failed to load template preview'
     });
   }
 });

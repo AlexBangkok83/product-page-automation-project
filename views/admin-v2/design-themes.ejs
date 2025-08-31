@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Themes & Styling - MultiStore Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Logo/Brand -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center">
+                    <i data-lucide="store" class="w-8 h-8 text-blue-600"></i>
+                    <span class="ml-2 text-lg font-semibold text-gray-900">MultiStore</span>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-1">
+                <!-- Dashboard -->
+                <a href="/admin-v2" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                    Dashboard
+                </a>
+                
+                <!-- Companies -->
+                <div class="pt-4">
+                    <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Companies
+                    </div>
+                    <div class="mt-2 space-y-1 ml-3">
+                        <a href="/admin-v2" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                            <i data-lucide="building-2" class="w-4 h-4 mr-3"></i>
+                            Nextsite
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Nextsite expanded -->
+                <div class="ml-6 space-y-1">
+                    <a href="/admin-v2/company/settings" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                        Company Settings
+                    </a>
+                    <!-- Design Library with submenu -->
+                    <div class="design-menu">
+                        <button onclick="toggleDesignMenu()" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i data-lucide="palette" class="w-4 h-4 mr-3"></i>
+                                Design Library
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 design-chevron transition-transform" id="design-chevron"></i>
+                        </button>
+                        <div class="design-submenu ml-6 mt-1 space-y-1" id="design-submenu">
+                            <a href="/admin-v2/company/design/templates" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                <i data-lucide="layout-template" class="w-3 h-3 mr-2"></i>
+                                Product Templates
+                            </a>
+                            <a href="/admin-v2/company/design/themes" class="flex items-center px-3 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg">
+                                <i data-lucide="brush" class="w-3 h-3 mr-2"></i>
+                                Themes & Styling
+                            </a>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <div class="flex items-center px-3 py-1 text-xs font-medium text-gray-500">
+                            Shopify Connections
+                        </div>
+                        <div class="ml-3 mt-1 space-y-1">
+                            <a href="/admin-v2/shopify/ecominter" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                <i data-lucide="shopping-bag" class="w-4 h-4 mr-3"></i>
+                                ecominter.myshopify.com
+                            </a>
+                            <div class="ml-6 space-y-1">
+                                <!-- Dynamic stores under this connection -->
+                                <% if (typeof stores !== 'undefined' && stores && stores.length > 0) { %>
+                                    <% const ecominterStores = stores.filter(store => store.shopify_domain === 'ecominter.myshopify.com'); %>
+                                    <% ecominterStores.forEach(store => { %>
+                                        <% if (store.status === 'active' || store.status === 'setup') { %>
+                                            <a href="/admin-v2/store/<%= store.uuid %>" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                                <i data-lucide="globe" class="w-3 h-3 mr-3"></i>
+                                                <%= store.domain %>
+                                            </a>
+                                        <% } else if (store.status === 'draft') { %>
+                                            <a href="/admin-v2/store/<%= store.uuid %>/setup" class="flex items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg">
+                                                <i data-lucide="file-text" class="w-3 h-3 mr-3"></i>
+                                                <span class="opacity-60"><%= store.domain %></span>
+                                                <span class="ml-1 text-xs text-red-500">(draft)</span>
+                                            </a>
+                                        <% } %>
+                                    <% }); %>
+                                <% } else { %>
+                                    <!-- Fallback if no dynamic data -->
+                                    <a href="/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9" class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg">
+                                        <i data-lucide="globe" class="w-3 h-3 mr-3"></i>
+                                        clipia.de
+                                    </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Bottom section -->
+            <div class="px-4 py-4 border-t border-gray-200">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">Admin</div>
+                        <div class="text-xs text-gray-500">admin@company.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- Page Header -->
+            <div class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <!-- Breadcrumb -->
+                        <nav class="flex text-sm text-gray-500 mb-2">
+                            <a href="/admin-v2" class="hover:text-gray-700">Dashboard</a>
+                            <span class="mx-2">></span>
+                            <a href="/admin-v2/company/design" class="hover:text-gray-700">Design Library</a>
+                            <span class="mx-2">></span>
+                            <span class="text-gray-900">Themes & Styling</span>
+                        </nav>
+                        
+                        <h1 class="text-2xl font-bold text-gray-900">Themes & Styling</h1>
+                        <p class="text-gray-600 mt-1">Customize the look and feel of your store with themes and global styles</p>
+                    </div>
+                    
+                    <div>
+                        <button type="button" onclick="openCustomThemeModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <i data-lucide="palette" class="w-4 h-4 mr-2"></i>
+                            Create Custom Theme
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white border-b border-gray-200">
+                <div class="px-6">
+                    <nav class="flex space-x-8">
+                        <a href="/admin-v2/company/design" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4 mr-2"></i>
+                            Overview
+                        </a>
+                        <a href="/admin-v2/company/design/templates" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                            <i data-lucide="layout-template" class="w-4 h-4 mr-2"></i>
+                            Product Templates
+                        </a>
+                        <a href="/admin-v2/company/design/themes" class="border-blue-500 text-blue-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                            <i data-lucide="brush" class="w-4 h-4 mr-2"></i>
+                            Themes & Styling
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6 space-y-8">
+                <!-- Available Themes -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-medium text-gray-900">Available Themes</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium theme-filter active" onclick="filterThemes('all')" data-filter="all">All</button>
+                            <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium theme-filter" onclick="filterThemes('default')" data-filter="default">Default</button>
+                            <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium theme-filter" onclick="filterThemes('custom')" data-filter="custom">Custom</button>
+                            <button class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium theme-filter" onclick="filterThemes('premium')" data-filter="premium">Premium</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Default Theme -->
+                        <div class="theme-card border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300" data-theme="default" data-category="default">
+                            <div class="h-32 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+                                <div class="w-20 h-12 bg-white rounded shadow-sm flex items-center justify-center">
+                                    <div class="w-16 h-8 bg-gray-200 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-medium text-gray-900">Default Theme</h3>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-4">Clean and modern design perfect for any product</p>
+                                <div class="flex space-x-2">
+                                    <button onclick="customizeTheme('default')" class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200">Customize</button>
+                                    <button onclick="previewTheme('default')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">Preview</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modern Theme -->
+                        <div class="theme-card border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300" data-theme="modern" data-category="default">
+                            <div class="h-32 bg-gradient-to-br from-purple-50 to-pink-100 flex items-center justify-center">
+                                <div class="w-20 h-12 bg-white rounded shadow-sm flex items-center justify-center">
+                                    <div class="w-16 h-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-medium text-gray-900">Modern</h3>
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Available</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-4">Bold typography and vibrant colors for standout products</p>
+                                <div class="flex space-x-2">
+                                    <button onclick="previewTheme('modern')" class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200">Preview</button>
+                                    <button onclick="customizeTheme('modern')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">Customize</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Minimal Theme -->
+                        <div class="theme-card border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300" data-theme="minimal" data-category="default">
+                            <div class="h-32 bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                                <div class="w-20 h-12 bg-white rounded shadow-sm flex items-center justify-center">
+                                    <div class="w-12 h-6 bg-gray-300 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-medium text-gray-900">Minimal</h3>
+                                    <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Available</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-4">Clean lines and plenty of whitespace for elegant simplicity</p>
+                                <div class="flex space-x-2">
+                                    <button onclick="previewTheme('minimal')" class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200">Preview</button>
+                                    <button onclick="customizeTheme('minimal')" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">Customize</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Premium Theme -->
+                        <div class="theme-card border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 relative" data-theme="premium" data-category="premium">
+                            <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 px-2 py-1 text-xs font-bold rounded">PRO</div>
+                            <div class="h-32 bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
+                                <div class="w-20 h-12 bg-white rounded shadow-md flex items-center justify-center">
+                                    <div class="w-16 h-8 bg-gradient-to-r from-yellow-400 to-orange-400 rounded"></div>
+                                </div>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-medium text-gray-900">Premium Pro</h3>
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Premium</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-4">Advanced animations and premium styling options</p>
+                                <div class="flex space-x-2">
+                                    <button onclick="previewTheme('premium')" class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200">Preview</button>
+                                    <button onclick="upgradeForTheme('premium')" class="flex-1 bg-yellow-500 text-white px-3 py-2 rounded text-sm hover:bg-yellow-600">Upgrade</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Global Styling -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-6">Global Styling</h2>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Colors -->
+                        <div class="space-y-6">
+                            <h3 class="flex items-center text-base font-medium text-gray-900">
+                                <i data-lucide="palette" class="w-5 h-5 mr-2"></i>Colors
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" id="primary-color" value="#3b82f6" class="w-12 h-10 border border-gray-300 rounded cursor-pointer" onchange="updateColor('primary', this.value)">
+                                        <input type="text" id="primary-color-text" value="#3b82f6" class="flex-1 border-gray-300 rounded-md shadow-sm text-sm" onchange="updateColorFromText('primary', this.value)">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" id="secondary-color" value="#6b7280" class="w-12 h-10 border border-gray-300 rounded cursor-pointer" onchange="updateColor('secondary', this.value)">
+                                        <input type="text" id="secondary-color-text" value="#6b7280" class="flex-1 border-gray-300 rounded-md shadow-sm text-sm" onchange="updateColorFromText('secondary', this.value)">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Accent Color</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" id="accent-color" value="#10b981" class="w-12 h-10 border border-gray-300 rounded cursor-pointer" onchange="updateColor('accent', this.value)">
+                                        <input type="text" id="accent-color-text" value="#10b981" class="flex-1 border-gray-300 rounded-md shadow-sm text-sm" onchange="updateColorFromText('accent', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typography -->
+                        <div class="space-y-6">
+                            <h3 class="flex items-center text-base font-medium text-gray-900">
+                                <i data-lucide="type" class="w-5 h-5 mr-2"></i>Typography
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="heading-font" class="block text-sm font-medium text-gray-700 mb-2">Heading Font</label>
+                                    <select id="heading-font" class="w-full border-gray-300 rounded-md shadow-sm text-sm" onchange="updateFont('heading', this.value)">
+                                        <option value="Inter">Inter</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Open Sans">Open Sans</option>
+                                        <option value="Montserrat">Montserrat</option>
+                                        <option value="Lato">Lato</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="body-font" class="block text-sm font-medium text-gray-700 mb-2">Body Font</label>
+                                    <select id="body-font" class="w-full border-gray-300 rounded-md shadow-sm text-sm" onchange="updateFont('body', this.value)">
+                                        <option value="Inter">Inter</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="Open Sans">Open Sans</option>
+                                        <option value="Source Sans Pro">Source Sans Pro</option>
+                                        <option value="Lato">Lato</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="font-scale" class="block text-sm font-medium text-gray-700 mb-2">Font Size Scale</label>
+                                    <select id="font-scale" class="w-full border-gray-300 rounded-md shadow-sm text-sm" onchange="updateFontScale(this.value)">
+                                        <option value="small">Small</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="large">Large</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Layout -->
+                        <div class="space-y-6">
+                            <h3 class="flex items-center text-base font-medium text-gray-900">
+                                <i data-lucide="layout" class="w-5 h-5 mr-2"></i>Layout
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="container-width" class="block text-sm font-medium text-gray-700 mb-2">Container Width</label>
+                                    <select id="container-width" class="w-full border-gray-300 rounded-md shadow-sm text-sm" onchange="updateContainerWidth(this.value)">
+                                        <option value="narrow">Narrow (800px)</option>
+                                        <option value="medium" selected>Medium (1200px)</option>
+                                        <option value="wide">Wide (1400px)</option>
+                                        <option value="full">Full Width</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="section-spacing" class="block text-sm font-medium text-gray-700 mb-2">Section Spacing</label>
+                                    <select id="section-spacing" class="w-full border-gray-300 rounded-md shadow-sm text-sm" onchange="updateSectionSpacing(this.value)">
+                                        <option value="tight">Tight</option>
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="loose">Loose</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="border-radius" class="block text-sm font-medium text-gray-700 mb-2">Border Radius</label>
+                                    <select id="border-radius" class="w-full border-gray-300 rounded-md shadow-sm text-sm" onchange="updateBorderRadius(this.value)">
+                                        <option value="none">None</option>
+                                        <option value="small" selected>Small</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="large">Large</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                        <button type="button" onclick="resetStyles()" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200">Reset to Defaults</button>
+                        <button type="button" onclick="saveStyles()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom Theme Modal -->
+    <div id="custom-theme-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Create Custom Theme</h3>
+                    <button onclick="closeCustomThemeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="theme-name" class="block text-sm font-medium text-gray-700 mb-1">Theme Name</label>
+                        <input type="text" id="theme-name" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="My Custom Theme">
+                    </div>
+                    
+                    <div>
+                        <label for="theme-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="theme-description" rows="3" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Describe your custom theme..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="base-theme" class="block text-sm font-medium text-gray-700 mb-1">Base Theme</label>
+                        <select id="base-theme" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="default">Default Theme</option>
+                            <option value="modern">Modern Theme</option>
+                            <option value="minimal">Minimal Theme</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Start with an existing theme as a foundation</p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeCustomThemeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="createCustomTheme()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Create Theme
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Design menu toggle functionality
+        function toggleDesignMenu() {
+            const submenu = document.getElementById('design-submenu');
+            const chevron = document.getElementById('design-chevron');
+            
+            if (submenu.style.display === 'none') {
+                submenu.style.display = 'block';
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // Keep design menu open since we're on a design page
+        document.addEventListener('DOMContentLoaded', function() {
+            const submenu = document.getElementById('design-submenu');
+            const chevron = document.getElementById('design-chevron');
+            submenu.style.display = 'block';
+            chevron.style.transform = 'rotate(180deg)';
+        });
+
+        // Theme management
+        function filterThemes(category) {
+            const cards = document.querySelectorAll('.theme-card');
+            const buttons = document.querySelectorAll('.theme-filter');
+            
+            // Update active button
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-blue-100', 'text-blue-800');
+                btn.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            document.querySelector(`[data-filter="${category}"]`).classList.remove('bg-gray-100', 'text-gray-600');
+            document.querySelector(`[data-filter="${category}"]`).classList.add('bg-blue-100', 'text-blue-800');
+            
+            // Filter cards
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function previewTheme(themeId) {
+            window.open(`/preview/${themeId}`, '_blank');
+        }
+
+
+        function customizeTheme(themeId) {
+            showSuccess(`Opening customization panel for ${themeId} theme...`);
+        }
+
+        function upgradeForTheme(themeId) {
+            if (confirm('This is a premium theme. Would you like to upgrade your plan?')) {
+                window.open('/upgrade', '_blank');
+            }
+        }
+
+        // Custom theme creation
+        function openCustomThemeModal() {
+            document.getElementById('custom-theme-modal').classList.remove('hidden');
+        }
+
+        function closeCustomThemeModal() {
+            document.getElementById('custom-theme-modal').classList.add('hidden');
+        }
+
+        function createCustomTheme() {
+            const name = document.getElementById('theme-name').value.trim();
+            const description = document.getElementById('theme-description').value.trim();
+            const baseTheme = document.getElementById('base-theme').value;
+
+            if (!name) {
+                showError('Please enter a theme name');
+                return;
+            }
+
+            showSuccess(`Custom theme "${name}" created successfully!`);
+            closeCustomThemeModal();
+            
+            // Clear form
+            document.getElementById('theme-name').value = '';
+            document.getElementById('theme-description').value = '';
+            document.getElementById('base-theme').value = 'default';
+        }
+
+        // Style controls
+        function updateColor(type, value) {
+            document.getElementById(`${type}-color-text`).value = value;
+            // TODO: Apply color change in real-time
+        }
+
+        function updateColorFromText(type, value) {
+            document.getElementById(`${type}-color`).value = value;
+            // TODO: Apply color change in real-time
+        }
+
+        function updateFont(type, value) {
+            // TODO: Apply font change in real-time
+        }
+
+        function updateFontScale(value) {
+            // TODO: Apply font scale change in real-time
+        }
+
+        function updateContainerWidth(value) {
+            // TODO: Apply container width change in real-time
+        }
+
+        function updateSectionSpacing(value) {
+            // TODO: Apply section spacing change in real-time
+        }
+
+        function updateBorderRadius(value) {
+            // TODO: Apply border radius change in real-time
+        }
+
+        function resetStyles() {
+            if (confirm('Are you sure you want to reset all styling to defaults?')) {
+                // Reset form controls
+                document.getElementById('primary-color').value = '#3b82f6';
+                document.getElementById('primary-color-text').value = '#3b82f6';
+                document.getElementById('secondary-color').value = '#6b7280';
+                document.getElementById('secondary-color-text').value = '#6b7280';
+                document.getElementById('accent-color').value = '#10b981';
+                document.getElementById('accent-color-text').value = '#10b981';
+                document.getElementById('heading-font').value = 'Inter';
+                document.getElementById('body-font').value = 'Inter';
+                document.getElementById('font-scale').value = 'medium';
+                document.getElementById('container-width').value = 'medium';
+                document.getElementById('section-spacing').value = 'normal';
+                document.getElementById('border-radius').value = 'small';
+                
+                showSuccess('Styles reset to defaults');
+            }
+        }
+
+        function saveStyles() {
+            showSuccess('Styles saved successfully!');
+        }
+
+        // Helper functions
+        function showSuccess(message) {
+            alert(message); // Replace with better notification system
+        }
+
+        function showError(message) {
+            alert(message); // Replace with better notification system
+        }
+    </script>
+</body>
+</html>

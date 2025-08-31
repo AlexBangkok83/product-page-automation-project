@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const handlebars = require('handlebars');
 const db = require('../database/db');
 
 class TemplateRenderer {
@@ -55,6 +56,12 @@ class TemplateRenderer {
         }
       }
 
+      // Generate individual product detail pages
+      const productsPage = pages.find(p => p.page_type === 'products');
+      if (productsPage) {
+        await this.generateIndividualProductPages(store, storePath, themeConfig, generatedFiles);
+      }
+
       // Generate additional static files
       await this.generateStaticFiles(store, storePath, themeConfig);
 
@@ -73,8 +80,9 @@ class TemplateRenderer {
   async getThemeConfiguration(store) {
     try {
       // First try to get theme from new theme system
-      if (store.theme_id_new) {
-        const theme = await db.get('SELECT * FROM themes WHERE id = ? AND is_active = 1', [store.theme_id_new]);
+      const themeId = store.theme_id_new || store.theme_id;
+      if (themeId && themeId !== 'default') {
+        const theme = await db.get('SELECT * FROM themes WHERE id = ? AND is_active = 1', [themeId]);
         if (theme) {
           console.log(`🎨 Using new theme system: ${theme.name} (ID: ${theme.id})`);
           
@@ -167,16 +175,20 @@ class TemplateRenderer {
       favicon_url: store.favicon_url || '',
       
       // Navigation and footer
-      nav_links: this.generateNavLinks(store, page.page_type),
-      footer_content: this.generateFooterContent(store)
+      nav_links: await this.generateNavLinks(store, page.page_type),
+      footer_content: await this.generateFooterContent(store),
+      
+      // Utility variables
+      current_year: new Date().getFullYear(),
+      
+      // Path variables (root level pages)
+      css_path: 'styles.css',
+      js_path: 'scripts.js'
     };
 
-    // Replace template variables
-    let html = template;
-    for (const [key, value] of Object.entries(variables)) {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      html = html.replace(regex, value);
-    }
+    // Compile and render with Handlebars
+    const compiledTemplate = handlebars.compile(template);
+    const html = compiledTemplate(variables);
 
     return html;
   }
@@ -242,16 +254,16 @@ class TemplateRenderer {
         theme_surface: themeConfig.surface || '#f8f9fa',
         
         // Navigation and footer
-        nav_links: this.generateNavLinks(store, 'products'),
-        footer_content: this.generateFooterContent(store)
+        nav_links: await this.generateNavLinks(store, 'products'),
+        footer_content: await this.generateFooterContent(store),
+        
+        // Utility variables
+        current_year: new Date().getFullYear()
       };
 
-      // Replace template variables
-      let html = template;
-      for (const [key, value] of Object.entries(variables)) {
-        const regex = new RegExp(`{{${key}}}`, 'g');
-        html = html.replace(regex, value);
-      }
+      // Compile and render with Handlebars
+      const compiledTemplate = handlebars.compile(template);
+      const html = compiledTemplate(variables);
 
       return html;
 
@@ -314,6 +326,280 @@ class TemplateRenderer {
   }
 
   /**
+   * Generate individual product detail pages as static HTML files
+   */
+  async generateIndividualProductPages(store, storePath, themeConfig, generatedFiles) {
+    try {
+      console.log(`🛍️ Generating individual product detail pages for ${store.name}...`);
+      
+      // Fetch products from store
+      const products = await store.fetchShopifyProducts(50);
+      
+      // Get selected products
+      let selectedProductHandles = [];
+      if (store.selected_products) {
+        try {
+          selectedProductHandles = typeof store.selected_products === 'string' 
+            ? JSON.parse(store.selected_products)
+            : store.selected_products;
+        } catch (parseError) {
+          console.warn('⚠️ Failed to parse selected_products, generating pages for all products');
+          selectedProductHandles = [];
+        }
+      }
+
+      // Filter products if selection exists
+      let displayProducts = products;
+      if (selectedProductHandles.length > 0) {
+        displayProducts = products.filter(product => selectedProductHandles.includes(product.handle));
+        console.log(`📦 Generating detail pages for ${displayProducts.length} selected products`);
+      } else {
+        console.log(`📦 Generating detail pages for all ${displayProducts.length} products`);
+      }
+
+      // Create products subdirectory
+      const productsDir = path.join(storePath, 'products');
+      this.ensureDirectoryExists(productsDir);
+
+      // Generate individual product pages
+      for (const product of displayProducts) {
+        try {
+          const fileName = `${product.handle}.html`;
+          const filePath = path.join(productsDir, fileName);
+          
+          console.log(`📄 Generating ${fileName} for product: ${product.title}...`);
+          
+          const htmlContent = await this.generateProductDetailPage(store, product, themeConfig);
+          
+          // Write file
+          fs.writeFileSync(filePath, htmlContent, 'utf8');
+          generatedFiles.push(`products/${fileName}`);
+          
+          console.log(`✅ Generated products/${fileName} (${this.formatFileSize(htmlContent.length)})`);
+          
+        } catch (productError) {
+          console.error(`❌ Error generating page for product ${product.handle}:`, productError.message);
+          // Continue with other products
+        }
+      }
+
+      console.log(`✅ Generated ${displayProducts.length} individual product detail pages`);
+
+    } catch (error) {
+      console.error(`❌ Error generating individual product pages:`, error.message);
+      // Don't throw - this is optional functionality
+    }
+  }
+
+  /**
+   * Generate HTML for a single product detail page
+   */
+  async generateProductDetailPage(store, product, themeConfig) {
+    try {
+      // Get primary variant and image
+      const primaryVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+      const primaryImage = product.images && product.images.length > 0 ? product.images[0] : null;
+      
+      // Format price
+      const price = primaryVariant ? `${primaryVariant.price.toFixed(2)} ${store.currency}` : 'Price unavailable';
+      const compareAtPrice = primaryVariant && primaryVariant.compare_at_price 
+        ? `${primaryVariant.compare_at_price.toFixed(2)} ${store.currency}`
+        : null;
+
+      // Generate image gallery HTML
+      const imageGalleryHtml = product.images && product.images.length > 0 
+        ? product.images.map((image, index) => `
+          <div class="product-image ${index === 0 ? 'active' : ''}" data-image-index="${index}">
+            <img src="${image.src}" alt="${image.alt}" loading="lazy">
+          </div>
+        `).join('')
+        : '<div class="product-image-placeholder">No Images Available</div>';
+
+      // Generate variants HTML if multiple variants exist
+      const variantsHtml = product.variants && product.variants.length > 1 
+        ? `
+          <div class="product-variants">
+            <h4>Available Options:</h4>
+            ${product.variants.map(variant => `
+              <div class="variant-option ${variant.available ? '' : 'unavailable'}">
+                <span class="variant-title">${variant.title}</span>
+                <span class="variant-price">${variant.price.toFixed(2)} ${store.currency}</span>
+                ${!variant.available ? '<span class="variant-status">(Out of Stock)</span>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : '';
+
+      // Prepare template variables
+      const variables = {
+        // Store information
+        store_name: store.name,
+        store_domain: store.domain,
+        support_email: store.support_email || `support@${store.domain}`,
+        
+        // Page meta
+        page_title: product.title,
+        meta_title: `${product.title} - ${store.name}`,
+        meta_description: product.body_html ? product.body_html.substring(0, 160).replace(/<[^>]*>/g, '') : `Buy ${product.title} at ${store.name}`,
+        
+        // Product information
+        product_title: product.title,
+        product_vendor: product.vendor || '',
+        product_type: product.product_type || '',
+        product_description: product.body_html || '',
+        product_handle: product.handle,
+        product_id: product.id,
+        
+        // Pricing
+        product_price: price,
+        product_compare_price: compareAtPrice,
+        product_on_sale: compareAtPrice && primaryVariant.compare_at_price > primaryVariant.price,
+        
+        // Availability
+        product_available: primaryVariant && primaryVariant.available,
+        product_stock_status: primaryVariant && primaryVariant.available ? 'In Stock' : 'Out of Stock',
+        
+        // Images and variants
+        product_images: imageGalleryHtml,
+        product_variants: variantsHtml,
+        product_image_count: product.images ? product.images.length : 0,
+        product_variant_count: product.variants ? product.variants.length : 0,
+        
+        // Theme variables
+        theme_primary: themeConfig.primary,
+        theme_secondary: themeConfig.secondary,
+        theme_accent: themeConfig.accent || themeConfig.primary,
+        theme_background: themeConfig.background || '#ffffff',
+        theme_surface: themeConfig.surface || '#f8f9fa',
+        
+        // Navigation and footer
+        nav_links: await this.generateNavLinks(store, 'product'),
+        footer_content: await this.generateFooterContent(store),
+        
+        // Utility variables
+        current_year: new Date().getFullYear(),
+        
+        // Path variables for subdirectory
+        css_path: '../styles.css',
+        js_path: '../scripts.js'
+      };
+
+      // Load product detail template or use default
+      let template;
+      try {
+        template = await this.loadTemplate('product-detail');
+      } catch (error) {
+        // Fallback to basic product detail template
+        template = this.getDefaultProductDetailTemplate();
+      }
+
+      // Compile and render with Handlebars
+      const compiledTemplate = handlebars.compile(template);
+      const html = compiledTemplate(variables);
+
+      return html;
+
+    } catch (error) {
+      console.error(`❌ Error generating product detail page for ${product.handle}:`, error.message);
+      
+      // Return a basic fallback page
+      return this.getDefaultProductDetailTemplate()
+        .replace('{{product_title}}', product.title)
+        .replace('{{store_name}}', store.name);
+    }
+  }
+
+  /**
+   * Get default product detail template
+   */
+  getDefaultProductDetailTemplate() {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{meta_title}}</title>
+    <meta name="description" content="{{meta_description}}">
+    <link rel="icon" href="">
+    <link rel="stylesheet" href="{{css_path}}">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="nav-brand">
+                <h1>{{store_name}}</h1>
+            </div>
+            <div class="nav-links">
+                {{{nav_links}}}
+            </div>
+        </nav>
+    </header>
+
+    <main class="product-detail">
+        <div class="container">
+            <div class="product-header">
+                <h1>{{product_title}}</h1>
+                {{#if product_vendor}}
+                <p class="product-vendor">by {{product_vendor}}</p>
+                {{/if}}
+            </div>
+
+            <div class="product-content">
+                <div class="product-images">
+                    {{{product_images}}}
+                </div>
+
+                <div class="product-info">
+                    <div class="product-price-container">
+                        {{#if product_on_sale}}
+                        <span class="product-price-sale">{{product_price}}</span>
+                        <span class="product-price-original">{{product_compare_price}}</span>
+                        {{else}}
+                        <span class="product-price">{{product_price}}</span>
+                        {{/if}}
+                    </div>
+
+                    <div class="product-availability">
+                        <span class="stock-status {{#unless product_available}}out-of-stock{{/unless}}">
+                            {{product_stock_status}}
+                        </span>
+                    </div>
+
+                    {{#if product_description}}
+                    <div class="product-description">
+                        <h3>Description</h3>
+                        {{{product_description}}}
+                    </div>
+                    {{/if}}
+
+                    {{{product_variants}}}
+
+                    <div class="product-actions">
+                        {{#if product_available}}
+                        <button class="btn btn-primary btn-large">Add to Cart</button>
+                        {{else}}
+                        <button class="btn btn-secondary btn-large" disabled>Out of Stock</button>
+                        {{/if}}
+                        <a href="../products.html" class="btn btn-outline">← Back to Products</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        {{{footer_content}}}
+        <div class="footer-bottom">
+            <p>&copy; {{current_year}} {{store_name}}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{{js_path}}"></script>
+</body>
+</html>`;
+  }
+
+  /**
    * Process page content (handle JSON blocks or HTML)
    */
   processPageContent(content) {
@@ -371,24 +657,74 @@ class TemplateRenderer {
   /**
    * Generate navigation links
    */
-  generateNavLinks(store, currentPageType) {
-    const links = [
-      { href: '/', text: 'Home', type: 'home' },
-      { href: '/products.html', text: 'Products', type: 'products' },
-      { href: '/about.html', text: 'About', type: 'about' },
-      { href: '/contact.html', text: 'Contact', type: 'contact' }
-    ];
-
-    return links.map(link => {
-      const activeClass = link.type === currentPageType ? ' class="active"' : '';
-      return `<a href="${link.href}"${activeClass}>${link.text}</a>`;
-    }).join('\n');
+  async generateNavLinks(store, currentPageType) {
+    // Get all pages for this store from database
+    const pages = await store.getPages();
+    
+    // Define navigation order and which pages to include in main nav (no legal pages)
+    const navOrder = ['home', 'products', 'about', 'contact', 'delivery'];
+    
+    // Filter and sort pages for navigation
+    const navPages = pages
+      .filter(page => navOrder.includes(page.page_type))
+      .sort((a, b) => navOrder.indexOf(a.page_type) - navOrder.indexOf(b.page_type));
+    
+    // Generate navigation links
+    const links = navPages.map(page => {
+      const href = page.page_type === 'home' ? '/' : `/${page.slug || page.page_type}.html`;
+      const activeClass = page.page_type === currentPageType ? ' class="active"' : '';
+      let text = page.title;
+      
+      // Clean up title text for navigation
+      if (text.includes(store.name)) {
+        text = text.replace(store.name + ' - ', '').replace('Welcome to ', '');
+      }
+      if (text.includes('Clipia Deuchland')) {
+        text = text.replace('About Clipia Deuchland', 'About')
+                  .replace('Contact Clipia Deuchland', 'Contact');
+      }
+      
+      return `<a href="${href}"${activeClass}>${text}</a>`;
+    });
+    
+    return links.join('\n');
   }
 
   /**
    * Generate footer content
    */
-  generateFooterContent(store) {
+  async generateFooterContent(store) {
+    // Get all pages for this store from database
+    const pages = await store.getPages();
+    
+    // Define legal pages that should appear in footer
+    const legalPageTypes = ['terms', 'privacy', 'refund', 'delivery'];
+    
+    // Filter legal pages that exist
+    const legalPages = pages
+      .filter(page => legalPageTypes.includes(page.page_type))
+      .sort((a, b) => legalPageTypes.indexOf(a.page_type) - legalPageTypes.indexOf(b.page_type));
+    
+    // Generate legal links
+    const legalLinks = legalPages.map(page => {
+      const href = `/${page.slug || page.page_type}.html`;
+      let text = page.title;
+      
+      // Clean up title text for footer
+      if (text.includes(store.name)) {
+        text = text.replace(store.name + ' - ', '').replace('Welcome to ', '');
+      }
+      // Map common legal page titles
+      const legalTitleMap = {
+        'PP': 'Privacy Policy',
+        'RETURN': 'Return Policy',
+        'Shipping': 'Shipping Policy'
+      };
+      text = legalTitleMap[text] || text;
+      
+      return `<li><a href="${href}">${text}</a></li>`;
+    }).join('\n          ');
+    
     return `
     <div class="footer-content">
       <div class="footer-section">
@@ -406,13 +742,12 @@ class TemplateRenderer {
           <li><a href="/contact.html">Contact</a></li>
         </ul>
       </div>
-      <div class="footer-section">
+      ${legalPages.length > 0 ? `<div class="footer-section">
         <h4>Legal</h4>
         <ul>
-          <li><a href="/terms.html">Terms of Service</a></li>
-          <li><a href="/privacy.html">Privacy Policy</a></li>
+          ${legalLinks}
         </ul>
-      </div>
+      </div>` : ''}
     </div>`;
   }
 
@@ -752,9 +1087,8 @@ footer {
 
 // Product view function
 function viewProduct(handle) {
-  // For now, just show an alert
-  // In the future, this could open a product modal or redirect to a product page
-  alert('Product details for: ' + handle + '\\n\\nThis feature will be enhanced in future updates.');
+  // Navigate to the product detail page
+  window.location.href = '/products/' + handle;
 }
 
 // Basic smooth scrolling for anchor links
@@ -823,7 +1157,7 @@ Sitemap: https://${store.domain}/sitemap.xml
     <title>{{meta_title}}</title>
     <meta name="description" content="{{meta_description}}">
     ${`{{favicon_url}}` ? `<link rel="icon" href="{{favicon_url}}">` : ''}
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{css_path}}">
 </head>
 <body>
     <header>
@@ -836,7 +1170,7 @@ Sitemap: https://${store.domain}/sitemap.xml
                 {{/if}}
             </div>
             <div class="nav-links">
-                {{nav_links}}
+                {{{nav_links}}}
             </div>
         </nav>
     </header>
@@ -852,23 +1186,23 @@ Sitemap: https://${store.domain}/sitemap.xml
         {{/if}}
 
         <div class="page-content">
-            {{page_content}}
+            {{{page_content}}}
         </div>
 
         {{#if products_html}}
         <div class="products-section">
             <h2>Our Products</h2>
             <div class="products-grid">
-                {{products_html}}
+                {{{products_html}}}
             </div>
         </div>
         {{/if}}
     </main>
 
     <footer>
-        {{footer_content}}
+        {{{footer_content}}}
         <div class="footer-bottom">
-            <p>&copy; {{new Date().getFullYear()}} {{store_name}}. All rights reserved.</p>
+            <p>&copy; {{current_year}} {{store_name}}. All rights reserved.</p>
         </div>
     </footer>
 
@@ -916,6 +1250,7 @@ Sitemap: https://${store.domain}/sitemap.xml
       fs.mkdirSync(dirPath, { recursive: true });
     }
   }
+
 
   /**
    * Format file size for logging

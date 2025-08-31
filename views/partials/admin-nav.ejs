@@ -27,16 +27,39 @@
                     </a>
                 </li>
 
-
-
-                <!-- Themes -->
+                <!-- Stores -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <%= currentPage === 'themes' || currentPage === 'theme-builder' || currentPage === 'theme-assignments' ? 'active' : '' %>" 
+                    <a class="nav-link dropdown-toggle <%= currentPage === 'stores' || currentPage === 'store-edit' || currentPage === 'store-details' || currentPage === 'product-edit' ? 'active' : '' %>" 
                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-palette"></i>
-                        <span>Themes</span>
+                        <i class="bi bi-shop"></i>
+                        <span>Stores</span>
                     </a>
                     <ul class="dropdown-menu admin-dropdown">
+                        <li>
+                            <a class="dropdown-item" href="/admin">
+                                <i class="bi bi-grid-3x3-gap"></i>
+                                All Stores
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="/admin/site-setup">
+                                <i class="bi bi-plus-circle"></i>
+                                Create New Store
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Design & Customization -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <%= currentPage === 'themes' || currentPage === 'theme-builder' || currentPage === 'templates' || currentPage === 'template-builder' ? 'active' : '' %>" 
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-palette"></i>
+                        <span>Design</span>
+                    </a>
+                    <ul class="dropdown-menu admin-dropdown">
+                        <li><h6 class="dropdown-header">Themes</h6></li>
                         <li>
                             <a class="dropdown-item <%= currentPage === 'themes' ? 'active' : '' %>" href="/admin/themes">
                                 <i class="bi bi-palette"></i>
@@ -49,17 +72,8 @@
                                 Create Theme
                             </a>
                         </li>
-                    </ul>
-                </li>
-
-                <!-- Templates -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle <%= currentPage === 'templates' || currentPage === 'template-builder' || currentPage === 'template-assignments' ? 'active' : '' %>" 
-                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="bi bi-collection"></i>
-                        <span>Templates</span>
-                    </a>
-                    <ul class="dropdown-menu admin-dropdown">
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Templates</h6></li>
                         <li>
                             <a class="dropdown-item <%= currentPage === 'templates' ? 'active' : '' %>" href="/admin/templates">
                                 <i class="bi bi-collection"></i>
@@ -81,14 +95,6 @@
                     </ul>
                 </li>
 
-
-                <!-- Company Profile -->
-                <li class="nav-item">
-                    <a class="nav-link <%= currentPage === 'company-profile' ? 'active' : '' %>" href="/admin/company-profile">
-                        <i class="bi bi-building"></i>
-                        <span>Company Profile</span>
-                    </a>
-                </li>
             </ul>
 
             <!-- Right Side Actions -->
@@ -160,6 +166,12 @@
                             <a class="dropdown-item" href="#" onclick="alert('Preferences coming soon!'); return false;">
                                 <i class="bi bi-gear"></i>
                                 Preferences
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item <%= currentPage === 'company-profile' ? 'active' : '' %>" href="/admin/company-profile">
+                                <i class="bi bi-building"></i>
+                                Company Profile
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>

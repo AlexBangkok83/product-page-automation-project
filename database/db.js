@@ -224,6 +224,56 @@ class Database {
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         
         UNIQUE(shopify_domain)
+      )`,
+
+      // Company Page Templates - for company-specific page templates
+      `CREATE TABLE IF NOT EXISTS company_page_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id INTEGER NOT NULL DEFAULT 1, -- For now, single company
+        page_type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        
+        /* Template metadata */
+        is_active BOOLEAN DEFAULT 1,
+        
+        /* Timestamps */
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        
+        UNIQUE(company_id, page_type)
+      )`,
+
+      // Product Page Templates - for template builder templates
+      `CREATE TABLE IF NOT EXISTS product_page_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id INTEGER NOT NULL DEFAULT 1, -- For now, single company
+        name TEXT NOT NULL,
+        description TEXT,
+        elements TEXT NOT NULL, -- JSON string of selected sections
+        
+        /* Template metadata */
+        is_active BOOLEAN DEFAULT 1,
+        sections_count INTEGER DEFAULT 0,
+        
+        /* Timestamps */
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+      // Template Assignments - assign templates to specific products
+      `CREATE TABLE IF NOT EXISTS template_assignments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id INTEGER NOT NULL DEFAULT 1,
+        product_handle TEXT NOT NULL,
+        template_id INTEGER NOT NULL,
+        
+        /* Timestamps */
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        
+        FOREIGN KEY (template_id) REFERENCES product_page_templates (id) ON DELETE CASCADE,
+        UNIQUE(company_id, product_handle)
       )`
     ];
 

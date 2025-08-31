@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - MultiStore Platform</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Logo/Brand -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center">
+                    <i data-lucide="store" class="w-8 h-8 text-blue-600"></i>
+                    <span class="ml-2 text-lg font-semibold text-gray-900">MultiStore</span>
+                </div>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex-1 px-4 py-6 space-y-1">
+                <!-- Dashboard -->
+                <a href="/admin-v2" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                    Dashboard
+                </a>
+                
+                <!-- Companies -->
+                <div class="pt-4">
+                    <div class="flex items-center px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Companies
+                    </div>
+                    <div class="mt-2 space-y-1 ml-3">
+                        <a href="/admin-v2" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                            <i data-lucide="building-2" class="w-4 h-4 mr-3"></i>
+                            Nextsite
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Nextsite expanded -->
+                <div class="ml-6 space-y-1">
+                    <a href="/admin-v2/company/settings" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                        Company Settings
+                    </a>
+                    <!-- Design Library with submenu -->
+                    <div class="design-menu">
+                        <button onclick="toggleDesignMenu()" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i data-lucide="palette" class="w-4 h-4 mr-3"></i>
+                                Design Library
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 design-chevron transition-transform" id="design-chevron"></i>
+                        </button>
+                        <div class="design-submenu ml-6 mt-1 space-y-1" id="design-submenu">
+                            <a href="/admin-v2/company/design/templates" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                <i data-lucide="layout-template" class="w-3 h-3 mr-2"></i>
+                                Product Templates
+                            </a>
+                            <a href="/admin-v2/company/design/themes" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                <i data-lucide="brush" class="w-3 h-3 mr-2"></i>
+                                Themes & Styling
+                            </a>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <div class="flex items-center px-3 py-1 text-xs font-medium text-gray-500">
+                            Shopify Connections
+                        </div>
+                        <div class="ml-3 mt-1 space-y-1">
+                            <a href="/admin-v2/shopify/ecominter" class="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                <i data-lucide="shopping-bag" class="w-4 h-4 mr-3"></i>
+                                ecominter.myshopify.com
+                            </a>
+                            <div class="ml-6 space-y-1">
+                                <!-- Dynamic stores under this connection -->
+                                <% if (typeof stores !== 'undefined' && stores && stores.length > 0) { %>
+                                    <% const ecominterStores = stores.filter(store => store.shopify_domain === 'ecominter.myshopify.com'); %>
+                                    <% ecominterStores.forEach(store => { %>
+                                        <% if (store.status === 'active' || store.status === 'setup') { %>
+                                            <a href="/admin-v2/store/<%= store.uuid %>" class="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                                                <i data-lucide="globe" class="w-3 h-3 mr-3"></i>
+                                                <%= store.domain %>
+                                            </a>
+                                        <% } else if (store.status === 'draft') { %>
+                                            <a href="/admin-v2/store/<%= store.uuid %>/setup" class="flex items-center px-3 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg">
+                                                <i data-lucide="file-text" class="w-3 h-3 mr-3"></i>
+                                                <span class="opacity-60"><%= store.domain %></span>
+                                                <span class="ml-1 text-xs text-red-500">(draft)</span>
+                                            </a>
+                                        <% } %>
+                                    <% }); %>
+                                <% } else { %>
+                                    <!-- Fallback if no dynamic data -->
+                                    <a href="/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9" class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg">
+                                        <i data-lucide="globe" class="w-3 h-3 mr-3"></i>
+                                        clipia.de
+                                    </a>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Bottom section -->
+            <div class="px-4 py-4 border-t border-gray-200">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-600"></i>
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">Admin</div>
+                        <div class="text-xs text-gray-500">admin@company.com</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- Page Header -->
+            <div class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <!-- Breadcrumb -->
+                        <nav class="flex text-sm text-gray-500 mb-2">
+                            <a href="/admin-v2" class="hover:text-gray-700">Dashboard</a>
+                            <span class="mx-2">></span>
+                            <span class="text-gray-900">Design Library</span>
+                        </nav>
+                        
+                        <h1 class="text-2xl font-bold text-gray-900">Design Library</h1>
+                        <p class="text-gray-600 mt-1">Manage templates, themes, and design elements for your store</p>
+                    </div>
+                    
+                    <div>
+                        <button type="button" onclick="openTemplateBuilder()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Create Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white border-b border-gray-200">
+                <nav class="px-6 flex space-x-8">
+                    <button class="tab-btn py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm" onclick="switchTab('overview')" data-tab="overview">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 inline mr-2"></i>
+                        Overview
+                    </button>
+                    <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" onclick="switchTab('templates')" data-tab="templates">
+                        <i data-lucide="layout-template" class="w-4 h-4 inline mr-2"></i>
+                        Product Templates
+                    </button>
+                    <button class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" onclick="switchTab('themes')" data-tab="themes">
+                        <i data-lucide="brush" class="w-4 h-4 inline mr-2"></i>
+                        Themes & Styling
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Content Area -->
+            <div class="p-6">
+                <!-- Overview Tab -->
+                <div id="overview-tab" class="tab-content">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i data-lucide="layout" class="w-4 h-4 text-blue-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Templates</dt>
+                                            <dd class="text-lg font-medium text-gray-900" id="templates-count">-</dd>
+                                            <dd class="text-sm text-green-600">+2 this week</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <i data-lucide="link" class="w-4 h-4 text-purple-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Assignments</dt>
+                                            <dd class="text-lg font-medium text-gray-900" id="assignments-count">-</dd>
+                                            <dd class="text-sm text-green-600">+5 this week</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                            <i data-lucide="palette" class="w-4 h-4 text-orange-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Active Theme</dt>
+                                            <dd class="text-lg font-medium text-gray-900">1</dd>
+                                            <dd class="text-sm text-gray-600">Default</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white overflow-hidden shadow rounded-lg">
+                            <div class="p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
+                                        </div>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 truncate">Performance</dt>
+                                            <dd class="text-lg font-medium text-gray-900">98%</dd>
+                                            <dd class="text-sm text-green-600">+3% this week</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mb-8">
+                        <h2 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-md transition-shadow" onclick="openTemplateBuilder()">
+                                <div class="p-6 text-center">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="plus" class="w-6 h-6 text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-sm font-medium text-gray-900">Create Template</h3>
+                                    <p class="text-xs text-gray-500 mt-2">Build a new product page template with our visual editor</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-md transition-shadow" onclick="goToTemplates()">
+                                <div class="p-6 text-center">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="layout" class="w-6 h-6 text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-sm font-medium text-gray-900">Manage Templates</h3>
+                                    <p class="text-xs text-gray-500 mt-2">View and organize all your product page templates</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-md transition-shadow" onclick="goToThemes()">
+                                <div class="p-6 text-center">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="palette" class="w-6 h-6 text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-sm font-medium text-gray-900">Customize Theme</h3>
+                                    <p class="text-xs text-gray-500 mt-2">Adjust colors, fonts, and layout for your store</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white overflow-hidden shadow rounded-lg cursor-pointer hover:shadow-md transition-shadow" onclick="openAssignmentManager()">
+                                <div class="p-6 text-center">
+                                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i data-lucide="link" class="w-6 h-6 text-blue-600"></i>
+                                    </div>
+                                    <h3 class="text-sm font-medium text-gray-900">Assign Templates</h3>
+                                    <p class="text-xs text-gray-500 mt-2">Connect templates to specific products</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white shadow overflow-hidden rounded-lg">
+                        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+                                <button onclick="viewAllActivity()" class="text-sm text-blue-600 hover:text-blue-700">View All</button>
+                            </div>
+                        </div>
+                        <div class="px-4 py-5 sm:p-6">
+                            <div class="flow-root">
+                                <ul class="-mb-8">
+                                    <li>
+                                        <div class="relative pb-8">
+                                            <span class="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                            <div class="relative flex items-start space-x-3">
+                                                <div class="relative">
+                                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                        <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div>
+                                                        <div class="text-sm text-gray-900">
+                                                            <strong>Created new template "Modern Product Page"</strong>
+                                                        </div>
+                                                        <p class="mt-0.5 text-sm text-gray-500">Added 4 sections with custom styling</p>
+                                                        <div class="mt-2 text-sm text-gray-500">
+                                                            <time>2 hours ago</time>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="relative pb-8">
+                                            <span class="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                            <div class="relative flex items-start space-x-3">
+                                                <div class="relative">
+                                                    <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                                                        <i data-lucide="link" class="w-5 h-5 text-purple-600"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div>
+                                                        <div class="text-sm text-gray-900">
+                                                            <strong>Assigned template to product "cool-sunglasses"</strong>
+                                                        </div>
+                                                        <p class="mt-0.5 text-sm text-gray-500">Template: Hero + Features + Reviews</p>
+                                                        <div class="mt-2 text-sm text-gray-500">
+                                                            <time>1 day ago</time>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="relative pb-8">
+                                            <span class="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                            <div class="relative flex items-start space-x-3">
+                                                <div class="relative">
+                                                    <div class="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                                                        <i data-lucide="edit" class="w-5 h-5 text-orange-600"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div>
+                                                        <div class="text-sm text-gray-900">
+                                                            <strong>Updated theme colors</strong>
+                                                        </div>
+                                                        <p class="mt-0.5 text-sm text-gray-500">Changed primary color to #007bff</p>
+                                                        <div class="mt-2 text-sm text-gray-500">
+                                                            <time>3 days ago</time>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="relative">
+                                            <div class="relative flex items-start space-x-3">
+                                                <div class="relative">
+                                                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                                        <i data-lucide="plus" class="w-5 h-5 text-blue-600"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="min-w-0 flex-1">
+                                                    <div>
+                                                        <div class="text-sm text-gray-900">
+                                                            <strong>Created template "Minimal Landing"</strong>
+                                                        </div>
+                                                        <p class="mt-0.5 text-sm text-gray-500">Clean design for premium products</p>
+                                                        <div class="mt-2 text-sm text-gray-500">
+                                                            <time>1 week ago</time>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates Tab (placeholder - will redirect) -->
+                <div id="templates-tab" class="tab-content hidden">
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 mx-auto mb-4 text-blue-600">
+                            <i data-lucide="layout-template" class="w-16 h-16"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">Redirecting to Product Templates...</h3>
+                        <p class="text-gray-500 mt-2">You'll be taken to the full templates management page.</p>
+                    </div>
+                </div>
+
+                <!-- Themes Tab (placeholder - will redirect) -->
+                <div id="themes-tab" class="tab-content hidden">
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 mx-auto mb-4 text-blue-600">
+                            <i data-lucide="palette" class="w-16 h-16"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">Redirecting to Themes & Styling...</h3>
+                        <p class="text-gray-500 mt-2">You'll be taken to the full themes management page.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Template Assignment Modal -->
+    <div id="assignment-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Quick Template Assignment</h3>
+                    <button onclick="closeAssignmentModal()" class="text-gray-400 hover:text-gray-600">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label for="product-handle" class="block text-sm font-medium text-gray-700 mb-1">Product Handle</label>
+                        <input type="text" id="product-handle" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Enter product handle">
+                        <p class="text-xs text-gray-500 mt-1">Product handle from your store (e.g. "cool-sunglasses")</p>
+                    </div>
+                    
+                    <div>
+                        <label for="template-select" class="block text-sm font-medium text-gray-700 mb-1">Template</label>
+                        <select id="template-select" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <option value="">Select a template...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeAssignmentModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Cancel
+                    </button>
+                    <button onclick="saveQuickAssignment()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Save Assignment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Design menu toggle functionality
+        function toggleDesignMenu() {
+            const submenu = document.getElementById('design-submenu');
+            const chevron = document.getElementById('design-chevron');
+            
+            if (submenu.style.display === 'none') {
+                submenu.style.display = 'block';
+                chevron.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.style.display = 'none';
+                chevron.style.transform = 'rotate(0deg)';
+            }
+        }
+        
+        // Keep design menu open since we're on a design page
+        document.addEventListener('DOMContentLoaded', function() {
+            const submenu = document.getElementById('design-submenu');
+            const chevron = document.getElementById('design-chevron');
+            submenu.style.display = 'block';
+            chevron.style.transform = 'rotate(180deg)';
+        });
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOverviewData();
+        });
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Handle redirects for templates and themes tabs
+            if (tabName === 'templates') {
+                window.location.href = '/admin-v2/company/design/templates';
+                return;
+            }
+            
+            if (tabName === 'themes') {
+                window.location.href = '/admin-v2/company/design/themes';
+                return;
+            }
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-blue-500', 'text-blue-600');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+        }
+
+        // Load overview data
+        async function loadOverviewData() {
+            try {
+                // Load templates count
+                const templatesResponse = await fetch('/admin-v2/api/product-templates');
+                if (templatesResponse.ok) {
+                    const templatesData = await templatesResponse.json();
+                    if (templatesData.success) {
+                        document.getElementById('templates-count').textContent = templatesData.templates.length;
+                        populateTemplateDropdown(templatesData.templates);
+                    }
+                }
+
+                // Load assignments count
+                const assignmentsResponse = await fetch('/admin-v2/api/template-assignments');
+                if (assignmentsResponse.ok) {
+                    const assignmentsData = await assignmentsResponse.json();
+                    if (assignmentsData.success) {
+                        document.getElementById('assignments-count').textContent = assignmentsData.assignments.length;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading overview data:', error);
+            }
+        }
+
+        // Quick actions
+        function openTemplateBuilder() {
+            window.location.href = '/admin-v2/templates/builder';
+        }
+
+        function goToTemplates() {
+            window.location.href = '/admin-v2/company/design/templates';
+        }
+
+        function goToThemes() {
+            window.location.href = '/admin-v2/company/design/themes';
+        }
+
+        function viewAllActivity() {
+            // TODO: Implement activity log page
+            alert('Activity log coming soon!');
+        }
+
+        // Quick assignment modal
+        function openAssignmentManager() {
+            document.getElementById('assignment-modal').classList.remove('hidden');
+        }
+
+        function closeAssignmentModal() {
+            document.getElementById('assignment-modal').classList.add('hidden');
+        }
+
+        async function saveQuickAssignment() {
+            const productHandle = document.getElementById('product-handle').value.trim();
+            const templateId = document.getElementById('template-select').value;
+
+            if (!productHandle || !templateId) {
+                alert('Please enter a product handle and select a template');
+                return;
+            }
+
+            try {
+                const response = await fetch('/admin-v2/api/template-assignments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        assignments: [{
+                            product_handle: productHandle,
+                            template_id: parseInt(templateId)
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Assignment saved successfully!');
+                    closeAssignmentModal();
+                    loadOverviewData(); // Refresh stats
+                    // Clear form
+                    document.getElementById('product-handle').value = '';
+                    document.getElementById('template-select').value = '';
+                } else {
+                    alert(data.error || 'Failed to save assignment');
+                }
+            } catch (error) {
+                console.error('Error saving assignment:', error);
+                alert('Error saving assignment');
+            }
+        }
+
+        // Helper functions
+        function populateTemplateDropdown(templates) {
+            const select = document.getElementById('template-select');
+            select.innerHTML = '<option value="">Select a template...</option>';
+            
+            templates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                select.appendChild(option);
+            });
+        }
+    </script>
+</body>
+</html>

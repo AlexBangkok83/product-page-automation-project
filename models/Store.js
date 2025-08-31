@@ -66,6 +66,47 @@ class Store {
     this.deployed_at = data.deployed_at;
   }
 
+  static async createDraft(storeData) {
+    console.log('📝 Creating store as draft:', storeData.name);
+    const store = new Store(storeData);
+    
+    // Validate required fields
+    if (!store.name || !store.domain || !store.country || !store.language || !store.currency) {
+      throw new Error('Missing required fields: name, domain, country, language, currency');
+    }
+
+    // Check for domain conflicts
+    const existingStore = await Store.findByDomain(store.domain);
+    if (existingStore) {
+      throw new Error(`Domain conflict: A store already exists with domain "${store.domain}". Please choose a different domain or update the existing store.`);
+    }
+
+    try {
+      // Generate UUID for the store
+      store.uuid = require('crypto').randomUUID();
+      
+      // Save store to database as draft (no files generated)  
+      const result = await db.run(`
+        INSERT INTO stores (
+          uuid, name, domain, country, language, currency, timezone,
+          shopify_domain, shopify_access_token, theme_id, deployment_status, status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', 'draft', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `, [
+        store.uuid, store.name, store.domain, store.country, 
+        store.language, store.currency, store.timezone, store.shopify_domain, 
+        store.shopify_access_token, store.theme_id
+      ]);
+      
+      store.id = result.lastID;
+      console.log('✅ Store draft created successfully with ID:', store.id);
+      
+      return store;
+    } catch (error) {
+      console.error('❌ Error creating store draft:', error.message);
+      throw error;
+    }
+  }
+
   static async create(storeData) {
     console.log('🏪 Creating new store:', storeData.name);
     const store = new Store(storeData);
@@ -174,6 +215,49 @@ class Store {
     }
   }
 
+  async publishDraft() {
+    if (this.status !== 'draft') {
+      throw new Error('Store is not in draft status');
+    }
+    
+    console.log('📋 Publishing draft store:', this.name);
+    
+    try {
+      // Create default pages for the store
+      await this.createDefaultPages();
+      console.log('✅ Default pages created for store:', this.name);
+      
+      // Generate physical store files
+      await this.generateStoreFiles();
+      console.log('✅ Store files generated for:', this.name);
+      
+      // Update status to published and trigger deployment
+      await this.update({ 
+        status: 'active',
+        deployment_status: 'pending',
+        files_generated_at: new Date().toISOString()
+      });
+      
+      console.log('✅ Store published successfully:', this.name);
+      return this;
+      
+    } catch (error) {
+      console.error('❌ Error publishing store:', error.message);
+      
+      // Update deployment status to failed
+      try {
+        await this.update({ 
+          status: 'failed',
+          deployment_status: 'failed' 
+        });
+      } catch (updateError) {
+        console.error('❌ Failed to update deployment status:', updateError.message);
+      }
+      
+      throw error;
+    }
+  }
+
   static async findById(id) {
     const row = await db.get('SELECT * FROM stores WHERE id = ?', [id]);
     return row ? new Store(row) : null;
@@ -188,7 +272,7 @@ class Store {
   }
 
   static async findByDomain(domain) {
-    const row = await db.get('SELECT * FROM stores WHERE domain = ? OR subdomain = ?', [domain, domain]);
+    const row = await db.get('SELECT * FROM stores WHERE LOWER(domain) = LOWER(?) OR LOWER(subdomain) = LOWER(?)', [domain, domain]);
     return row ? new Store(row) : null;
   }
 
@@ -422,8 +506,18 @@ class Store {
         ? this.selected_pages.split(',') 
         : this.selected_pages;
       
-      // Add any additional selected pages
-      pagesToCreate = [...new Set([...pagesToCreate, ...selectedArray])];
+      // Map selected page names to internal page types
+      const pageMapping = {
+        'privacy-policy': 'privacy',
+        'terms-of-service': 'terms',
+        'return-policy': 'refund',
+        'shipping-policy': 'delivery',
+        'blog': 'blog',
+        'faq': 'faq'
+      };
+      
+      const mappedPages = selectedArray.map(page => pageMapping[page] || page);
+      pagesToCreate = [...new Set([...pagesToCreate, ...mappedPages])];
     } else {
       // Default set including legal pages
       pagesToCreate = ['home', 'products', 'about', 'contact', 'terms', 'privacy', 'refund', 'delivery'];

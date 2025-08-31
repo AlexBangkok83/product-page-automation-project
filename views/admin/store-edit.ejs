@@ -510,7 +510,9 @@
             <div id="pages" class="content-section">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="section-title mb-0">Page Management</h5>
-                    <small class="text-muted">Click "Edit" to modify page content</small>
+                    <button class="btn btn-primary btn-sm" onclick="showAddPageModal()">
+                        <i class="bi bi-plus-circle"></i> Add Page
+                    </button>
                 </div>
                 
                 <div class="page-list">
@@ -1125,6 +1127,10 @@
             const grid = document.getElementById('themesGrid');
             if (!grid) return;
             
+            // Prevent multiple simultaneous renders
+            if (grid.dataset.rendering === 'true') return;
+            grid.dataset.rendering = 'true';
+            
             grid.innerHTML = '';
             
             availableThemes.forEach(theme => {
@@ -1171,6 +1177,9 @@
                 
                 grid.appendChild(themeCard);
             });
+            
+            // Reset rendering flag
+            grid.dataset.rendering = 'false';
         }
         
         function renderFallbackThemes() {
@@ -1294,6 +1303,112 @@
                 console.log('Current theme ID from database:', selectedThemeId);
             }
         };
+        
+        // Add Page Modal Functions
+        function showAddPageModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add New Page</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addPageForm">
+                                <div class="mb-3">
+                                    <label for="pageType" class="form-label">Page Type</label>
+                                    <select class="form-select" id="pageType" required>
+                                        <option value="">Choose page type...</option>
+                                        <option value="about">About</option>
+                                        <option value="contact">Contact</option>
+                                        <option value="products">Products</option>
+                                        <option value="blog">Blog</option>
+                                        <option value="faq">FAQ</option>
+                                        <option value="privacy">Privacy Policy</option>
+                                        <option value="terms">Terms of Service</option>
+                                        <option value="refund">Return Policy</option>
+                                        <option value="delivery">Shipping Policy</option>
+                                        <option value="custom">Custom Page</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="pageTitle" class="form-label">Page Title</label>
+                                    <input type="text" class="form-control" id="pageTitle" required>
+                                </div>
+                                <div class="mb-3" id="customSlugContainer" style="display: none;">
+                                    <label for="pageSlug" class="form-label">Page URL Slug</label>
+                                    <input type="text" class="form-control" id="pageSlug" placeholder="custom-page-url">
+                                    <small class="text-muted">Only needed for custom pages</small>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="addNewPage()">Add Page</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Show custom slug field for custom pages
+            document.getElementById('pageType').addEventListener('change', function() {
+                const customContainer = document.getElementById('customSlugContainer');
+                customContainer.style.display = this.value === 'custom' ? 'block' : 'none';
+            });
+            
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+            
+            // Clean up modal when hidden
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.removeChild(modal);
+            });
+        }
+        
+        async function addNewPage() {
+            const form = document.getElementById('addPageForm');
+            const formData = new FormData(form);
+            
+            const pageData = {
+                pageType: document.getElementById('pageType').value,
+                title: document.getElementById('pageTitle').value,
+                slug: document.getElementById('pageSlug').value
+            };
+            
+            if (!pageData.pageType || !pageData.title) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/stores/<%= store.uuid %>/pages`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(pageData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast('Page added successfully!', 'success');
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.querySelector('.modal'));
+                    modal.hide();
+                    // Reload page to show new page
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(result.message || 'Failed to add page', 'danger');
+                }
+            } catch (error) {
+                console.error('Error adding page:', error);
+                showToast('Error adding page', 'danger');
+            }
+        }
     </script>
 </body>
 </html>

@@ -824,6 +824,49 @@ router.post('/stores/:uuid/deploy', async (req, res) => {
   }
 });
 
+// === PAGES MANAGEMENT ENDPOINTS ===
+
+// Add new page to store
+router.post('/stores/:uuid/pages', async (req, res) => {
+  try {
+    const store = await Store.findByUuid(req.params.uuid);
+    if (!store) {
+      return res.status(404).json({ error: 'Store not found' });
+    }
+    
+    const { pageType, title, slug } = req.body;
+    
+    if (!pageType || !title) {
+      return res.status(400).json({ error: 'Page type and title are required' });
+    }
+    
+    // Create the page in database
+    const db = require('../database/db');
+    const pageSlug = slug || pageType;
+    
+    await db.run(`
+      INSERT INTO store_pages (store_id, page_type, title, slug, content, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+    `, [store.id, pageType, title, pageSlug, '']);
+    
+    // Regenerate store files to include new page
+    await store.regenerateStoreFiles();
+    
+    res.json({
+      success: true,
+      message: 'Page added successfully',
+      page: { pageType, title, slug: pageSlug }
+    });
+    
+  } catch (error) {
+    console.error('Error adding page:', error);
+    res.status(500).json({ 
+      error: 'Failed to add page',
+      details: error.message 
+    });
+  }
+});
+
 // === DOMAIN AND VALIDATION ENDPOINTS ===
 
 // Check domain availability
