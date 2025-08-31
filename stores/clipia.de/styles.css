@@ -1,11 +1,11 @@
 
-/* Generated CSS for theme: Ocean Blue Fresh */
+/* Generated CSS for theme: Motion Modern */
 :root {
-  --theme-primary: #0ea5e9;
-  --theme-secondary: #0284c7;
-  --theme-accent: #06b6d4;
+  --theme-primary: #007cba;
+  --theme-secondary: #f8f9fa;
+  --theme-accent: #007cba;
   --theme-background: #ffffff;
-  --theme-surface: #f0f9ff;
+  --theme-surface: #f8f9fa;
 }
 
 /* Reset and base styles */

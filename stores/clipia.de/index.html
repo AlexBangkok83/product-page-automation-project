@@ -1,40 +1,213 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to Clipia Deuchland</title>
     <meta name="description" content="">
-    <link rel="icon" href="">
+    
+    
+    <!-- Preload Critical Fonts -->
+    
+    
+    <!-- Modern Styles -->
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- Theme Colors for Browser UI -->
+    <meta name="theme-color" content="#007cba">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Welcome to Clipia Deuchland">
+    <meta property="og:description" content="">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://clipia.de">
+    
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Clipia Deuchland",
+      "url": "https://clipia.de",
+      "description": "",
+      
+      "email": "cto@nextsite.io",
+      "foundingDate": "2024"
+    }
+    </script>
 </head>
-<body>
-    <header>
-        <nav>
-            <div class="nav-brand">
-                <h1>Clipia Deuchland</h1>
+<body class="antialiased">
+    <!-- Modern Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo-section">
+                <a href="/" class="logo">Clipia Deuchland</a>
             </div>
-            <div class="nav-links">
+            
+            <nav class="nav-menu hidden md:flex" role="navigation" aria-label="Main navigation">
                 <a href="/" class="active">Clipia Deuchland</a>
 <a href="/products.html">Our Products</a>
 <a href="/about.html">About</a>
 <a href="/contact.html">Contact</a>
 <a href="/delivery.html">Shipping</a>
+            </nav>
+            
+            <div class="header-actions flex items-center gap-4">
+                
+                <a href="/contact.html" class="cta-button cta-">
+                    Get Started
+                </a>
+                
+                <!-- Mobile Menu Toggle -->
+                <button type="button" data-mobile-toggle class="p-2 md:hidden rounded-lg hover:bg-gray-100" 
+                        aria-label="Toggle menu" aria-expanded="false">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
-        </nav>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div data-mobile-menu class="mobile-menu hidden md:hidden border-t border-gray-200 bg-white">
+            <nav class="container py-4" role="navigation" aria-label="Mobile navigation">
+                <div class="flex flex-col gap-2">
+                    <a href="/" class="active">Clipia Deuchland</a>
+<a href="/products.html">Our Products</a>
+<a href="/about.html">About</a>
+<a href="/contact.html">Contact</a>
+<a href="/delivery.html">Shipping</a>
+                </div>
+            </nav>
+        </div>
     </header>
 
-    <main>
-        <h1>Welcome to Clipia Deuchland</h1>
+    <!-- Hero Section -->
+    <main role="main">
+        <section class="hero-section relative overflow-hidden">
+            <div class="container py-20 lg:py-32">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div class="order-2 lg:order-1" data-animate>
+                        <h1 class="hero-title mb-6">
+                            Welcome to Clipia Deuchland
+                        </h1>
+                        <p class="hero-subtitle mb-8">
+                            Discover amazing products crafted just for you. Quality, style, and exceptional service in everything we do.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <a href="/products.html" class="cta-button cta-primary">
+                                Shop Now
+                                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                </svg>
+                            </a>
+                            <a href="/about.html" class="cta-button border border-current hover:bg-gray-50">
+                                Learn More
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="order-1 lg:order-2 text-center" data-animate>
+                        <!-- Hero Image/Illustration Placeholder -->
+                        <div class="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-16 mx-auto max-w-md">
+                            <div class="text-6xl mb-4">🏪</div>
+                            <div class="text-lg font-medium text-gray-700">Your Store</div>
+                            <div class="text-sm text-gray-500 mt-2">Premium Quality Products</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Background Decorations -->
+            <div class="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full opacity-20 blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 -mb-16 -ml-16 w-48 h-48 bg-gradient-to-br from-pink-100 to-yellow-100 rounded-full opacity-20 blur-2xl"></div>
+        </section>
 
-        <div class="page-content">
-            <p>Discover amazing products and quality service at Clipia Deuchland.</p>
-        </div>
+        <!-- Features Section -->
+        <section class="features-section py-20 bg-gray-50">
+            <div class="container">
+                <div class="text-center mb-16" data-animate>
+                    <h2 class="text-3xl lg:text-4xl font-bold mb-4">Why Choose Clipia Deuchland?</h2>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                        We're committed to providing exceptional products and service that exceeds your expectations
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="feature-card text-center group" data-animate>
+                        <div class="feature-icon mb-6">
+                            <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto group-hover:bg-blue-200 transition-colors">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Premium Quality</h3>
+                        <p class="text-gray-600">
+                            Carefully curated products that meet our high standards for quality and craftsmanship
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card text-center group" data-animate>
+                        <div class="feature-icon mb-6">
+                            <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto group-hover:bg-green-200 transition-colors">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Fast Delivery</h3>
+                        <p class="text-gray-600">
+                            Quick and reliable shipping to get your orders to you as soon as possible
+                        </p>
+                    </div>
+                    
+                    <div class="feature-card text-center group" data-animate>
+                        <div class="feature-icon mb-6">
+                            <div class="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto group-hover:bg-purple-200 transition-colors">
+                                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">24/7 Support</h3>
+                        <p class="text-gray-600">
+                            Our dedicated customer service team is always here to help with any questions
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
+        <!-- Products Preview Section -->
+
+        <!-- CTA Section -->
+        <section class="cta-section py-20 bg-gradient-to-br from-blue-600 to-purple-700">
+            <div class="container">
+                <div class="text-center text-white" data-animate>
+                    <h2 class="text-3xl lg:text-4xl font-bold mb-4">Ready to Get Started?</h2>
+                    <p class="text-lg opacity-90 max-w-2xl mx-auto mb-8">
+                        Join thousands of satisfied customers who trust Clipia Deuchland for their needs
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="/products.html" class="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-blue-700 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                            Browse Products
+                        </a>
+                        <a href="/contact.html" class="inline-flex items-center justify-center px-8 py-3 text-base font-medium text-white border-2 border-white rounded-lg hover:bg-white hover:text-blue-700 transition-colors">
+                            Contact Us
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <footer>
-        
+    <!-- Modern Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="footer-container">
+            
     <div class="footer-content">
       <div class="footer-section">
         <h4>Clipia Deuchland</h4>
@@ -61,11 +234,31 @@
         </ul>
       </div>
     </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 Clipia Deuchland. All rights reserved.</p>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Clipia Deuchland. All rights reserved.</p>
+                <p class="text-sm text-gray-500 mt-2">
+                    Built with modern web technologies for optimal performance
+                </p>
+            </div>
         </div>
     </footer>
 
+    <!-- Search Overlay -->
+
+    <!-- Enhanced JavaScript -->
     <script src="scripts.js"></script>
+    
+    <!-- Analytics and Performance -->
+    <script>
+        // Analytics placeholder
+        console.log('🎯 Home page loaded for Clipia Deuchland');
+        
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+            console.log(`⚡ Page loaded in ${loadTime}ms`);
+        });
+    </script>
 </body>
 </html>
