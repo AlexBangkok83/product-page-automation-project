@@ -107,79 +107,86 @@
         <!-- Main Content -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Header -->
-            <header class="bg-white border-b border-gray-200 px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
+            <header class="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center space-x-4 mb-4 sm:mb-0">
                         <a href="/admin-v2/store/882eacac-d9fa-411c-a9f8-7415c26240b9" class="text-gray-500 hover:text-gray-700">
                             <i data-lucide="arrow-left" class="w-5 h-5"></i>
                         </a>
                         <div>
-                            <h1 class="text-2xl font-semibold text-gray-900">Edit Product: Elegante Solbriller</h1>
+                            <h1 class="text-xl sm:text-2xl font-semibold text-gray-900">Edit Product: Elegante Solbriller</h1>
                             <p class="text-sm text-gray-500 mt-1">clipia.de</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <a href="https://clipia.de/products/elegante-solbriller-for-alle" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <a href="https://clipia.de/products/elegante-solbriller-for-alle" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 w-full sm:w-auto justify-center">
                             <i data-lucide="external-link" class="w-4 h-4 mr-2"></i>
                             View Product
                         </a>
-                        <button onclick="saveProduct()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 mr-2">
-                            <i data-lucide="save" class="w-4 h-4 mr-2"></i>
-                            Save
-                        </button>
-                        <button onclick="deployProduct()" class="deploy-product-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700">
-                            <i data-lucide="rocket" class="w-4 h-4 mr-2"></i>
-                            Deploy to Live Site
-                        </button>
+                        <div class="flex space-x-2 w-full sm:w-auto">
+                            <button onclick="saveProduct()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 flex-1 sm:flex-none justify-center">
+                                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                                Save
+                            </button>
+                            <button onclick="deployProduct()" class="deploy-product-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 flex-1 sm:flex-none justify-center">
+                                <i data-lucide="rocket" class="w-4 h-4 mr-2"></i>
+                                <span class="hidden sm:inline">Deploy to Live Site</span>
+                                <span class="sm:hidden">Deploy</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
             
             <!-- Main Content Area -->
             <main class="flex-1 overflow-hidden">
-                <div class="h-full flex">
-                    <!-- Product Details -->
-                    <div class="flex-1 overflow-y-auto p-6">
+                <div class="h-full flex flex-col lg:flex-row">
+                    <!-- Main Content - Template Configuration -->
+                    <div class="flex-1 min-w-0 lg:min-w-[600px] xl:min-w-[800px] overflow-y-auto p-4 sm:p-6">
                         <div class="space-y-8">
                             
-                            <!-- Template Selection -->
-                            <div class="bg-white rounded-xl border border-gray-200">
-                                <div class="px-6 py-4 border-b border-gray-200">
-                                    <h3 class="text-lg font-medium text-gray-900">Product Page Template</h3>
-                                </div>
-                                <div class="p-6">
-                                    <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Template</label>
-                                        <select id="template-selector" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="loadTemplate()">
-                                            <option value="">No template selected</option>
-                                            <!-- Templates will be loaded dynamically -->
-                                        </select>
-                                    </div>
-                                    <div id="template-preview" class="hidden mt-4">
-                                        <div class="text-sm text-gray-600 bg-blue-50 p-4 rounded-lg mb-4">
-                                            <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
-                                            <span id="template-description">Template loaded. Configure the elements below.</span>
+                            <!-- Template Configuration -->
+                            <div id="template-preview" class="hidden">
+                                <div class="bg-white rounded-xl border border-gray-200">
+                                    <div class="px-6 py-4 border-b border-gray-200">
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="text-lg font-medium text-gray-900">Template Configuration</h3>
+                                            <div class="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg">
+                                                <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+                                                <span id="template-description">Configure your template elements below</span>
+                                            </div>
                                         </div>
-                                        <div id="template-fields" class="space-y-4">
+                                    </div>
+                                    <div class="p-6">
+                                        <div id="template-fields" class="space-y-6">
                                             <!-- Template-specific fields will be loaded here -->
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Empty State -->
+                            <div id="empty-template-state" class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                                <div class="text-gray-400 mb-4">
+                                    <i data-lucide="layout-template" class="w-16 h-16 mx-auto mb-4"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">No Template Selected</h3>
+                                <p class="text-gray-600">Choose a template from the dropdown above to start customizing your product page.</p>
+                            </div>
 
                             <!-- Basic Information (Shopify Data) -->
-                            <div class="bg-white rounded-xl border border-gray-200">
+                            <div class="bg-gray-50 rounded-xl border border-gray-200">
                                 <div class="px-6 py-4 border-b border-gray-200">
                                     <div class="flex items-center justify-between">
-                                        <h3 class="text-lg font-medium text-gray-900">Product Information</h3>
+                                        <h3 class="text-lg font-medium text-gray-600">Product Information</h3>
                                         <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">
                                             <i data-lucide="link" class="w-3 h-3 mr-1"></i>
                                             Synced from Shopify
                                         </span>
                                     </div>
                                 </div>
-                                <div class="p-6 space-y-6">
-                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                                <div class="p-6 space-y-6 opacity-75">
+                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-2">Product Title</label>
                                             <input type="text" value="Elegante Solbriller for Alle" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" readonly>
@@ -217,185 +224,122 @@
                                 </div>
                             </div>
                             
-                            <!-- Images -->
-                            <div class="bg-white rounded-xl border border-gray-200">
-                                <div class="px-6 py-4 border-b border-gray-200">
-                                    <h3 class="text-lg font-medium text-gray-900">Product Images</h3>
-                                </div>
-                                <div class="p-6">
-                                    <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                                        <!-- Primary Image -->
-                                        <div class="relative group">
-                                            <div class="aspect-square bg-gray-200 rounded-lg flex items-center justify-center border-2 border-blue-500">
-                                                <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
-                                            </div>
-                                            <div class="absolute top-2 left-2">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                                    Primary
-                                                </span>
-                                            </div>
-                                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600">
-                                                    <i data-lucide="x" class="w-3 h-3"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Additional Images -->
-                                        <div class="relative group">
-                                            <div class="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                                                <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
-                                            </div>
-                                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button class="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600">
-                                                    <i data-lucide="x" class="w-3 h-3"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Upload New -->
-                                        <div class="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center hover:border-gray-400 cursor-pointer">
-                                            <div class="text-center">
-                                                <i data-lucide="upload" class="w-6 h-6 text-gray-400 mx-auto mb-1"></i>
-                                                <div class="text-xs text-gray-500">Add Image</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Inventory & Shipping -->
-                            <div class="bg-white rounded-xl border border-gray-200">
-                                <div class="px-6 py-4 border-b border-gray-200">
-                                    <h3 class="text-lg font-medium text-gray-900">Inventory & Shipping</h3>
-                                </div>
-                                <div class="p-6 space-y-6">
-                                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">SKU</label>
-                                            <input type="text" value="CLIPIA-SUN-001" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
-                                            <input type="number" value="25" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-2">Weight (g)</label>
-                                            <input type="number" value="150" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center">
-                                        <input type="checkbox" id="track-inventory" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                        <label for="track-inventory" class="ml-2 text-sm text-gray-700">Track inventory for this product</label>
-                                    </div>
-                                    
-                                    <div class="flex items-center">
-                                        <input type="checkbox" id="continue-selling" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                        <label for="continue-selling" class="ml-2 text-sm text-gray-700">Continue selling when out of stock</label>
-                                    </div>
-                                </div>
-                            </div>
-                            
                         </div>
                     </div>
                     
-                    <!-- Sidebar Panel -->
-                    <div class="w-72 lg:w-80 bg-white border-l border-gray-200 flex flex-col">
-                        <!-- Panel Header -->
-                        <div class="px-6 py-4 border-b border-gray-200">
-                            <h3 class="text-lg font-medium text-gray-900">Product Status</h3>
-                        </div>
-                        
-                        <!-- Panel Content -->
-                        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <!-- Sidebar -->
+                    <div class="w-full lg:w-80 xl:w-80 lg:max-w-80 xl:max-w-80 lg:flex-shrink-0 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 overflow-y-auto">
+                        <div class="p-6 space-y-6">
                             
-                            <!-- Status -->
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Visibility</h4>
+                            <!-- Current Template Selection -->
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h3 class="text-sm font-medium text-gray-900 mb-3">Current Template</h3>
                                 <div class="space-y-3">
-                                    <label class="flex items-center">
-                                        <input type="radio" name="status" value="active" checked class="text-blue-600 focus:ring-blue-500">
-                                        <span class="ml-2 text-sm text-gray-700">Active</span>
-                                    </label>
-                                    <label class="flex items-center">
-                                        <input type="radio" name="status" value="draft" class="text-blue-600 focus:ring-blue-500">
-                                        <span class="ml-2 text-sm text-gray-700">Draft</span>
-                                    </label>
-                                    <label class="flex items-center">
-                                        <input type="radio" name="status" value="archived" class="text-blue-600 focus:ring-blue-500">
-                                        <span class="ml-2 text-sm text-gray-700">Archived</span>
-                                    </label>
+                                    <select id="template-selector" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" onchange="loadTemplate()">
+                                        <option value="">Select Template</option>
+                                        <!-- Templates will be loaded dynamically -->
+                                    </select>
+                                    <div id="sidebar-template-info">
+                                        <p class="text-sm text-gray-500">No template selected</p>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <!-- Categories -->
+                            <!-- Product Info (Shopify Data) -->
                             <div>
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Product Type</h4>
-                                <input type="text" value="Accessories" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-sm font-medium text-gray-900">Product Information</h3>
+                                    <button id="sync-shopify-btn" onclick="syncFromShopify()" class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
+                                        <i data-lucide="refresh-cw" class="w-3 h-3 mr-1"></i>
+                                        Sync
+                                    </button>
+                                </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-500">Title:</span>
+                                        <span class="text-gray-900 font-medium" data-product-field="title">Elegante Solbriller</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-500">Price:</span>
+                                        <span class="text-gray-900 font-medium" data-product-field="price">€29.95</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-500">Compare at:</span>
+                                        <span class="text-gray-900 font-medium" data-product-field="compare-price">€39.95</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-500">Status:</span>
+                                        <span data-product-field="availability">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">In Stock</span>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                             
-                            <!-- Tags -->
+                            <!-- Product Images -->
                             <div>
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Tags</h4>
-                                <input type="text" value="sunglasses, accessories, fashion, UV protection" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <p class="text-xs text-gray-500 mt-1">Separate tags with commas</p>
+                                <h3 class="text-sm font-medium text-gray-900 mb-3">Images</h3>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="aspect-square bg-gray-200 rounded-lg flex items-center justify-center border-2 border-blue-500">
+                                        <i data-lucide="image" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <div class="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="image" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                    <div class="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="plus" class="w-4 h-4 text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Publishing -->
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900 mb-3">Publishing</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                                        <select class="w-full text-sm px-2 py-1 border border-gray-300 rounded">
+                                            <option>Active</option>
+                                            <option>Draft</option>
+                                            <option>Archived</option>
+                                        </select>
+                                    </div>
+                                    <button onclick="saveProduct(event)" class="w-full bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Organization -->
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900 mb-3">Organization</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Product Type</label>
+                                        <input type="text" value="Accessories" class="w-full text-sm px-2 py-1 border border-gray-300 rounded">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Tags</label>
+                                        <input type="text" value="sunglasses, accessories, fashion" class="w-full text-sm px-2 py-1 border border-gray-300 rounded">
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- SEO -->
                             <div>
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Search Engine Listing</h4>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
-                                        <input type="text" value="Elegante Solbriller for Alle - Premium Sunglasses" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                        <p class="text-xs text-gray-500 mt-1">60 characters recommended</p>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Meta Description</label>
-                                        <textarea rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">Premium sunglasses with UV protection. Elegant design for every occasion. Shop now at Clipia Germany.</textarea>
-                                        <p class="text-xs text-gray-500 mt-1">160 characters recommended</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Quick Actions -->
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Quick Actions</h4>
-                                <div class="space-y-2">
-                                    <button class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                                        <i data-lucide="copy" class="w-4 h-4 mr-2"></i>
-                                        Duplicate Product
-                                    </button>
-                                    <button class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50">
-                                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
-                                        Sync with Shopify
-                                    </button>
-                                    <button class="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50">
-                                        <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
-                                        Delete Product
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Product History -->
-                            <div>
-                                <h4 class="text-sm font-medium text-gray-900 mb-3">Recent Changes</h4>
+                                <h3 class="text-sm font-medium text-gray-900 mb-3">Search Engine Listing</h3>
                                 <div class="space-y-3">
-                                    <div class="text-xs text-gray-500">
-                                        <div class="font-medium text-gray-900">Price updated</div>
-                                        <div>5 minutes ago by Admin</div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Meta Title</label>
+                                        <input type="text" value="Elegante Solbriller - Premium Sunglasses" class="w-full text-sm px-2 py-1 border border-gray-300 rounded">
                                     </div>
-                                    <div class="text-xs text-gray-500">
-                                        <div class="font-medium text-gray-900">Inventory adjusted</div>
-                                        <div>1 hour ago by System</div>
-                                    </div>
-                                    <div class="text-xs text-gray-500">
-                                        <div class="font-medium text-gray-900">Description updated</div>
-                                        <div>2 days ago by Admin</div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Meta Description</label>
+                                        <textarea rows="2" class="w-full text-sm px-2 py-1 border border-gray-300 rounded">Premium sunglasses with UV protection.</textarea>
                                     </div>
                                 </div>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -439,6 +383,9 @@
                 if (data.success && data.assignment) {
                     console.log('Loading existing assignment:', data.assignment);
                     
+                    // Store the template data for later population
+                    const savedTemplateData = data.assignment.template_data ? JSON.parse(data.assignment.template_data) : {};
+                    
                     // Set the template selector
                     const selector = document.getElementById('template-selector');
                     selector.value = data.assignment.template_id;
@@ -447,22 +394,21 @@
                     await loadTemplate();
                     
                     // Give a small delay to ensure template fields are rendered
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise(resolve => setTimeout(resolve, 200));
                     
                     // Populate the field values if they exist
-                    if (data.assignment.template_data) {
-                        const templateData = JSON.parse(data.assignment.template_data);
-                        console.log('Populating field data:', templateData);
+                    if (Object.keys(savedTemplateData).length > 0) {
+                        console.log('Populating field data:', savedTemplateData);
                         
-                        Object.keys(templateData).forEach(fieldId => {
+                        Object.keys(savedTemplateData).forEach(fieldId => {
                             const input = document.getElementById(fieldId);
                             if (input) {
                                 if (input.type === 'checkbox') {
-                                    input.checked = templateData[fieldId];
+                                    input.checked = savedTemplateData[fieldId];
                                 } else {
-                                    input.value = templateData[fieldId];
+                                    input.value = savedTemplateData[fieldId];
                                 }
-                                console.log('Set field', fieldId, 'to', templateData[fieldId]);
+                                console.log('Set field', fieldId, 'to', savedTemplateData[fieldId]);
                             } else {
                                 console.warn('Field not found:', fieldId);
                             }
@@ -480,6 +426,13 @@
         document.addEventListener('DOMContentLoaded', async function() {
             await loadAvailableTemplates();
             await loadExistingTemplate();
+            
+            // Check if a template is already selected and update UI accordingly
+            const selector = document.getElementById('template-selector');
+            if (selector && selector.value) {
+                console.log('🔧 Template already selected on page load:', selector.value);
+                await loadTemplate();
+            }
         });
         
         // Load template when selected
@@ -487,9 +440,15 @@
             const selector = document.getElementById('template-selector');
             const templateId = selector.value;
             const preview = document.getElementById('template-preview');
+            const emptyState = document.getElementById('empty-template-state');
+            const sidebarInfo = document.getElementById('sidebar-template-info');
             
             if (!templateId) {
                 preview.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                if (sidebarInfo) {
+                    sidebarInfo.innerHTML = '<p class="text-sm text-gray-500">No template selected</p>';
+                }
                 return;
             }
             
@@ -501,8 +460,18 @@
                 if (data.success && data.template) {
                     const template = data.template;
                     
-                    // Show preview
+                    // Show preview and hide empty state
                     preview.classList.remove('hidden');
+                    emptyState.classList.add('hidden');
+                    
+                    // Update sidebar info
+                    if (sidebarInfo) {
+                        sidebarInfo.innerHTML = `
+                            <p class="text-sm text-gray-700 font-medium">${template.name}</p>
+                            <p class="text-xs text-gray-500 mt-1">${template.description}</p>
+                        `;
+                    }
+                    
                     document.getElementById('template-description').textContent = 
                         `Template: ${template.name}${template.description ? ' - ' + template.description : ''}`;
                     
@@ -553,7 +522,7 @@
             
             const fieldMap = {
                 'FreeShippingBar': {
-                    title: 'Free Shipping Message',
+                    title: 'Free Shipping Bar',
                     fields: [
                         { name: 'message', label: 'Shipping Message', type: 'text', placeholder: 'Free shipping on orders over $50!' }
                     ]
@@ -622,7 +591,7 @@
                     ]
                 },
                 'ListSection': {
-                    title: 'Feature List',
+                    title: 'Features List',
                     fields: [
                         { name: 'title', label: 'List Title', type: 'text', placeholder: 'Key Features' },
                         { name: 'items', label: 'List Items (one per line)', type: 'textarea', placeholder: 'Feature 1\nFeature 2\nFeature 3' }
@@ -733,6 +702,98 @@
             
             html += `</div>`;
             return html;
+        }
+        
+        // Sync product data from Shopify
+        async function syncFromShopify() {
+            const syncBtn = document.getElementById('sync-shopify-btn');
+            const originalText = syncBtn.innerHTML;
+            
+            try {
+                // Show loading state
+                syncBtn.innerHTML = '<i data-lucide="loader-2" class="w-3 h-3 mr-1 animate-spin"></i>Syncing...';
+                syncBtn.disabled = true;
+                
+                // Get current product handle from URL
+                const pathSegments = window.location.pathname.split('/');
+                const productHandle = pathSegments[pathSegments.indexOf('product') + 1];
+                
+                const response = await fetch(`/admin-v2/product/${productHandle}/sync`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Update the Product Information display with fresh data
+                    updateProductInfoDisplay(result.product);
+                    
+                    // Show success notification
+                    showNotification('Product synced successfully from Shopify!', 'success');
+                } else {
+                    throw new Error(result.error || 'Failed to sync from Shopify');
+                }
+            } catch (error) {
+                console.error('Error syncing from Shopify:', error);
+                showNotification('Failed to sync from Shopify: ' + error.message, 'error');
+            } finally {
+                // Restore button state
+                syncBtn.innerHTML = originalText;
+                syncBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+        
+        // Update Product Information display
+        function updateProductInfoDisplay(product) {
+            // Update title
+            const titleElement = document.querySelector('[data-product-field="title"]');
+            if (titleElement && product.title) {
+                titleElement.textContent = product.title;
+            }
+            
+            // Update price
+            const priceElement = document.querySelector('[data-product-field="price"]');
+            if (priceElement && product.variants && product.variants.length > 0) {
+                const price = product.variants[0].price;
+                priceElement.textContent = `€${(price / 100).toFixed(2)}`;
+            }
+            
+            // Update compare at price
+            const compareElement = document.querySelector('[data-product-field="compare-price"]');
+            if (compareElement && product.variants && product.variants.length > 0 && product.variants[0].compare_at_price) {
+                const comparePrice = product.variants[0].compare_at_price;
+                compareElement.textContent = `€${(comparePrice / 100).toFixed(2)}`;
+            }
+            
+            // Update availability
+            const availabilityElement = document.querySelector('[data-product-field="availability"]');
+            if (availabilityElement) {
+                const isAvailable = product.availableForSale;
+                availabilityElement.innerHTML = isAvailable 
+                    ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">In Stock</span>'
+                    : '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Out of Stock</span>';
+            }
+        }
+        
+        // Simple notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 
+                type === 'error' ? 'bg-red-500 text-white' : 
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
         }
         
         // Save product with template data

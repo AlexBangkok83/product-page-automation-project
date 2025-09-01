@@ -35,9 +35,29 @@ class CustomTemplateRenderer {
         return null;
       }
       
-      // Parse template elements and field data
-      const elements = JSON.parse(template.elements);
-      const fieldData = assignment.template_data ? JSON.parse(assignment.template_data) : {};
+      // Parse template elements and field data with validation
+      let elements, fieldData = {};
+      
+      try {
+        elements = this.validateAndParseJSON(template.elements, 'template elements');
+        if (!Array.isArray(elements)) {
+          throw new Error('Template elements must be an array');
+        }
+      } catch (error) {
+        console.error(`❌ Invalid template elements for template ${template.id}:`, error);
+        return null;
+      }
+      
+      if (assignment.template_data) {
+        try {
+          fieldData = this.validateAndParseJSON(assignment.template_data, 'template data');
+          fieldData = this.sanitizeTemplateData(fieldData);
+        } catch (error) {
+          console.error(`❌ Invalid template data for product ${product.handle}:`, error);
+          // Continue with empty field data instead of failing
+          fieldData = {};
+        }
+      }
       
       console.log(`📝 Using template "${template.name}" with ${elements.length} sections`);
       console.log(`🔧 Custom field data:`, Object.keys(fieldData).length, 'fields');
@@ -58,8 +78,13 @@ class CustomTemplateRenderer {
     // Generate each section HTML based on template elements
     let sectionsHtml = '';
     
-    elements.forEach(elementType => {
-      sectionsHtml += this.generateSectionHtml(elementType, product, store, fieldData, themeConfig);
+    elements.forEach(element => {
+      // Handle both old string format and new object format
+      const elementType = typeof element === 'string' ? element : element.type;
+      const elementId = typeof element === 'object' ? element.id : null;
+      const elementSettings = typeof element === 'object' ? element.settings : {};
+      
+      sectionsHtml += this.generateSectionHtml(elementType, product, store, fieldData, themeConfig, elementId, elementSettings);
     });
     
     // Prepare base template variables
@@ -118,7 +143,7 @@ class CustomTemplateRenderer {
   /**
    * Generate HTML for individual template sections
    */
-  generateSectionHtml(elementType, product, store, fieldData, themeConfig) {
+  generateSectionHtml(elementType, product, store, fieldData, themeConfig, elementId, elementSettings) {
     const primaryVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
     const primaryImage = product.images && product.images.length > 0 ? product.images[0] : null;
     const price = primaryVariant ? `${primaryVariant.price.toFixed(2)} ${store.currency}` : 'Price unavailable';
@@ -130,6 +155,24 @@ class CustomTemplateRenderer {
       case 'FreeShippingBar':
         const shippingMessage = fieldData[`template_FreeShippingBar_message`] || 'Free shipping on all orders!';
         return `<div class="free-shipping-bar">${shippingMessage}</div>`;
+
+      case 'FreeShippingTeaser':
+        const teaserMessage = fieldData[`template_FreeShippingTeaser_message`] || 'Free shipping worldwide!';
+        return `<div class="free-shipping-teaser">${teaserMessage}</div>`;
+
+      case 'FlashSaleCountdown':
+        const countdownText = fieldData[`template_FlashSaleCountdown_message`] || 'Flash Sale Ends Soon!';
+        return `<div class="flash-sale-countdown">${countdownText}</div>`;
+
+      case 'NavigationBar':
+        const navTitle = fieldData[`template_NavigationBar_title`] || store.name;
+        return `<nav class="navigation-bar"><h2>${navTitle}</h2></nav>`;
+
+      case 'StarRating':
+        const rating = fieldData[`template_StarRating_rating`] || '5';
+        const reviewCount = fieldData[`template_StarRating_review_count`] || '127';
+        const stars = '★'.repeat(parseInt(rating)) + '☆'.repeat(5 - parseInt(rating));
+        return `<div class="star-rating">${stars} (${reviewCount} reviews)</div>`;
       
       case 'ProductTitle':
         const subtitle = fieldData[`template_ProductTitle_subtitle`] || '';
@@ -275,6 +318,14 @@ class CustomTemplateRenderer {
     <link rel="icon" href="">
     <link rel="stylesheet" href="{{css_path}}">
     <style>
+        /* Theme Variables */
+        :root {
+            --theme-primary: {{theme_primary}};
+            --theme-secondary: {{theme_secondary}};
+            --theme-accent: {{theme_accent}};
+            --theme-background: {{theme_background}};
+            --theme-surface: {{theme_surface}};
+        }
         /* Custom template styles */
         .free-shipping-bar {
             background: var(--theme-primary);
@@ -441,6 +492,67 @@ class CustomTemplateRenderer {
     </script>
 </body>
 </html>`;
+  }
+
+  /**
+   * Validate and parse JSON with proper error handling
+   */
+  validateAndParseJSON(jsonString, context = 'data') {
+    if (typeof jsonString !== 'string') {
+      throw new Error(`${context} must be a string`);
+    }
+
+    // Check for potential malicious patterns
+    if (jsonString.includes('<script') || jsonString.includes('javascript:') || jsonString.includes('eval(')) {
+      throw new Error(`${context} contains potentially malicious content`);
+    }
+
+    try {
+      const parsed = JSON.parse(jsonString);
+      return parsed;
+    } catch (error) {
+      throw new Error(`Invalid JSON in ${context}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Sanitize template data to prevent XSS and injection attacks
+   */
+  sanitizeTemplateData(data) {
+    const sanitized = {};
+    
+    for (const [key, value] of Object.entries(data)) {
+      // Validate field names (should only contain alphanumeric, underscore)
+      if (!/^[a-zA-Z0-9_]+$/.test(key)) {
+        console.warn(`Skipping invalid field name: ${key}`);
+        continue;
+      }
+
+      // Sanitize string values
+      if (typeof value === 'string') {
+        sanitized[key] = this.sanitizeString(value);
+      } else if (typeof value === 'boolean' || typeof value === 'number') {
+        sanitized[key] = value;
+      } else {
+        console.warn(`Skipping unsupported value type for field ${key}:`, typeof value);
+      }
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Sanitize string values
+   */
+  sanitizeString(str) {
+    if (typeof str !== 'string') return '';
+    
+    // Remove script tags and javascript: URLs
+    return str
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .trim();
   }
 }
 

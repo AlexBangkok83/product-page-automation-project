@@ -2,6 +2,7 @@ const db = require('../database/db');
 const { v4: uuidv4 } = require('uuid');
 const TemplateRenderer = require('../utils/TemplateRenderer');
 const DeploymentAutomation = require('../utils/DeploymentAutomation');
+const deploymentQueue = require('../utils/DeploymentQueue');
 const { PageTemplate } = require('./PageTemplate');
 const LegalPageLoader = require('../utils/LegalPageLoader');
 const fs = require('fs');
@@ -1402,6 +1403,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
             inventory_quantity: variant.inventory_quantity,
             sku: variant.sku || ''
           })),
+          availableForSale: product.variants.some(variant => variant.inventory_quantity > 0),
           created_at: product.created_at,
           updated_at: product.updated_at
         }));
@@ -1494,6 +1496,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
                 sku: variant.sku || ''
               };
             }),
+            availableForSale: product.variants.edges.some(varEdge => varEdge.node.availableForSale),
             created_at: product.createdAt,
             updated_at: product.updatedAt
           };
@@ -1562,6 +1565,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
             inventory_quantity: variant.inventory_quantity,
             sku: variant.sku || ''
           })),
+          availableForSale: product.variants.some(variant => variant.inventory_quantity > 0),
           created_at: product.created_at,
           updated_at: product.updated_at
         };
@@ -1653,6 +1657,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
               sku: variant.sku || ''
             };
           }),
+          availableForSale: product.variants.edges.some(edge => edge.node.availableForSale),
           created_at: product.createdAt,
           updated_at: product.updatedAt
         };
@@ -1662,6 +1667,81 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       console.error(`❌ Error fetching product ${handle} from ${this.shopify_domain}:`, error.message);
       return null;
     }
+  }
+  /**
+   * Unified deployment method - queues deployment to prevent conflicts
+   */
+  async deployUnified(options = {}) {
+    const { force = false, fast = false, productHandle = null } = options;
+    
+    console.log(`🚀 Queueing deployment for ${this.name}${productHandle ? ` (product: ${productHandle})` : ''}`);
+    
+    try {
+      const result = await deploymentQueue.enqueue(async () => {
+        // Set deployment status
+        await this.updateDeploymentStatus('deploying');
+        
+        try {
+          let deployResult;
+          
+          if (productHandle) {
+            // Product-specific deployment
+            deployResult = await this.deployProductToLive(productHandle);
+          } else if (fast) {
+            // Fast deployment (existing method)
+            deployResult = await this.deployFast(force);
+          } else {
+            // Full deployment (existing method)
+            deployResult = await this.deploy(force);
+          }
+          
+          if (deployResult.success) {
+            await this.updateDeploymentStatus('deployed');
+          } else {
+            await this.updateDeploymentStatus('failed');
+          }
+          
+          return deployResult;
+          
+        } catch (error) {
+          await this.updateDeploymentStatus('failed');
+          throw error;
+        }
+      });
+      
+      return result;
+      
+    } catch (error) {
+      console.error(`❌ Deployment failed for ${this.name}:`, error.message);
+      return {
+        success: false,
+        error: error.message,
+        isLive: false
+      };
+    }
+  }
+
+  /**
+   * Update deployment status with proper error handling
+   */
+  async updateDeploymentStatus(status) {
+    try {
+      await db.run(
+        'UPDATE stores SET deployment_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [status, this.id]
+      );
+      this.deployment_status = status;
+      console.log(`📊 Updated deployment status for ${this.name}: ${status}`);
+    } catch (error) {
+      console.error(`❌ Failed to update deployment status for ${this.name}:`, error.message);
+    }
+  }
+
+  /**
+   * Get deployment queue status
+   */
+  static getDeploymentQueueStatus() {
+    return deploymentQueue.getStatus();
   }
 }
 

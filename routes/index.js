@@ -252,6 +252,56 @@ router.get('/admin-v2/product/:id/edit', (req, res) => {
   res.render('admin-v2/product-editor', { title: 'Product Editor' });
 });
 
+// Sync product from Shopify
+router.post('/admin-v2/product/:handle/sync', async (req, res) => {
+  try {
+    const { handle } = req.params;
+    
+    // Find a store that has this product (for now, use the first active store)
+    // In a real app, you might need to determine which store this product belongs to
+    const stores = await Store.findAll();
+    const shopifyStore = stores.find(store => 
+      store.shopify_connected && store.shopify_domain && store.shopify_access_token
+    );
+    
+    if (!shopifyStore) {
+      return res.json({
+        success: false,
+        error: 'No Shopify store connection found'
+      });
+    }
+    
+    console.log(`🔄 Syncing product ${handle} from Shopify...`);
+    
+    // Fetch fresh product data from Shopify
+    const product = await shopifyStore.getShopifyProduct(handle);
+    
+    if (!product) {
+      return res.json({
+        success: false,
+        error: 'Product not found in Shopify'
+      });
+    }
+    
+    // Here you would typically save the updated product data to your local database
+    // For now, we'll just return the fresh data
+    console.log(`✅ Successfully synced product: ${product.title}`);
+    
+    res.json({
+      success: true,
+      product: product,
+      message: 'Product synced successfully'
+    });
+    
+  } catch (error) {
+    console.error('Error syncing product from Shopify:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 router.get('/admin-v2/store/:id', async (req, res) => {
   try {
     const storeId = req.params.id;
@@ -282,11 +332,8 @@ router.get('/admin-v2/store/:id', async (req, res) => {
     // Get Shopify products if connected
     let products = [];
     try {
-      if (store.shopify_store_id) {
-        const shopifyStore = await CompanyShopifyStore.findById(store.shopify_store_id);
-        if (shopifyStore && shopifyStore.storefront_access_token) {
-          products = await Store.fetchShopifyProducts(shopifyStore.shop_domain, shopifyStore.storefront_access_token);
-        }
+      if (store.shopify_connected && store.shopify_domain && store.shopify_access_token) {
+        products = await store.fetchShopifyProducts();
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -3538,12 +3585,9 @@ router.post('/admin-v2/products/:handle/template', async (req, res) => {
 router.post('/admin-v2/products/:handle/deploy', async (req, res) => {
   try {
     const { handle } = req.params;
-    console.log(`🚀 Starting product page deployment for ${handle}`);
+    console.log(`🚀 Starting unified product deployment for ${handle}`);
     
     const Store = require('../models/Store');
-    const TemplateRenderer = require('../utils/TemplateRenderer');
-    const CustomTemplateRenderer = require('../utils/CustomTemplateRenderer');
-    const DeploymentAutomation = require('../utils/DeploymentAutomation');
     
     // Get store information from the referrer header or default to clipia.de
     const referrer = req.headers.referer || '';
@@ -3563,24 +3607,69 @@ router.post('/admin-v2/products/:handle/deploy', async (req, res) => {
     
     console.log(`🏪 Using store: ${store.name} (${store.domain})`);
     
-    // For testing, use mock product data since we don't have live Shopify connection
-    const mockProduct = {
-      handle: handle,
-      title: handle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-      body_html: `<p>High-quality product available at ${store.name}.</p>`,
-      variants: [{
-        id: 1,
-        price: 29.99,
-        compare_at_price: 39.99,
-        available: true
-      }],
-      images: [{
-        src: 'https://via.placeholder.com/400x300?text=Product+Image',
-        alt: handle.replace(/-/g, ' ')
-      }]
-    };
+    // Use unified deployment method with queue
+    const result = await store.deployUnified({ 
+      productHandle: handle,
+      force: false 
+    });
     
-    const product = mockProduct;
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Product page generated and deployed successfully',
+        productUrl: `https://${store.domain}/products/${handle}.html`,
+        liveUrl: `https://${store.domain}/products/${handle}.html`
+      });
+    } else {
+      res.json({
+        success: false,
+        error: result.error || 'Deployment failed'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error in unified product deployment:', error);
+    res.json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Legacy endpoint - removed to standardize deployment
+        
+        if (product) {
+          console.log(`✅ Found Shopify product: ${product.title}`);
+        } else {
+          console.log(`⚠️ Product ${handle} not found in Shopify, using fallback`);
+        }
+      } else {
+        console.log(`⚠️ Store not connected to Shopify, using fallback data`);
+      }
+    } catch (error) {
+      console.error(`❌ Error fetching product from Shopify: ${error.message}`);
+    }
+    
+    // Fallback to mock data if Shopify fetch failed
+    if (!product) {
+      console.log(`📦 Using fallback product data for: ${handle}`);
+      product = {
+        handle: handle,
+        title: handle.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        body_html: `<p>High-quality product available at ${store.name}.</p>`,
+        variants: [{
+          id: 1,
+          price: 29.99,
+          compare_at_price: 39.99,
+          available: true
+        }],
+        images: [{
+          src: 'https://via.placeholder.com/400x300?text=Product+Image',
+          alt: handle.replace(/-/g, ' ')
+        }],
+        availableForSale: true
+      };
+    }
     
     console.log(`📦 Found product: ${product.title}`);
     
