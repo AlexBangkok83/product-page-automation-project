@@ -1,11 +1,11 @@
 
 /* Generated CSS for theme: Motion Modern */
 :root {
-  --theme-primary: #007cba;
-  --theme-secondary: #f8f9fa;
-  --theme-accent: #007cba;
-  --theme-background: #ffffff;
-  --theme-surface: #f8f9fa;
+  --theme-primary: #FF6F91;
+  --theme-secondary: #FCEEF1;
+  --theme-accent: #FF6F91;
+  --theme-background: #FCEEF1;
+  --theme-surface: #FCEEF1;
 }
 
 /* Reset and base styles */
