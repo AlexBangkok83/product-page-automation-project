@@ -26,12 +26,20 @@ const simpleDomainRouter = (req, res, next) => {
       return next();
     }
 
-    // Check if we have a store directory for this domain
-    const storePath = path.join(process.cwd(), 'stores', cleanDomain);
+    // Check if we have a store directory for this domain (case-insensitive)
+    let storePath = path.join(process.cwd(), 'stores', cleanDomain);
     
     if (!fs.existsSync(storePath)) {
-      console.log(`Store directory not found for ${cleanDomain}: ${storePath}`);
-      return next();
+      // Try with capitalized domain (e.g., clipia.fi -> Clipia.fi)
+      const capitalizedDomain = cleanDomain.charAt(0).toUpperCase() + cleanDomain.slice(1);
+      const capitalizedStorePath = path.join(process.cwd(), 'stores', capitalizedDomain);
+      
+      if (fs.existsSync(capitalizedStorePath)) {
+        storePath = capitalizedStorePath;
+      } else {
+        console.log(`Store directory not found for ${cleanDomain}: ${storePath}`);
+        return next();
+      }
     }
 
     // Determine which file to serve
