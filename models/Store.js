@@ -240,6 +240,17 @@ class Store {
       });
       
       console.log('✅ Store published successfully:', this.name);
+      
+      // IMMEDIATELY deploy the store after publishing
+      console.log('🚀 Auto-deploying store after publication...');
+      const deployResult = await this.deploy(null, true); // force deploy
+      
+      if (deployResult.success) {
+        console.log('✅ Store auto-deployed successfully:', this.name);
+      } else {
+        console.error('❌ Auto-deployment failed:', deployResult.error);
+      }
+      
       return this;
       
     } catch (error) {
@@ -1216,6 +1227,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"`);
       
       throw new Error(`Deployment failed: ${error.message}`);
     }
+  }
+
+  async deployProductToLive(productHandle) {
+    // Product deployments need to push to git, so use full deployment method
+    console.log(`🚀 Product deployment for ${productHandle} using full deployment method (forced)`);
+    return await this.deploy(null, true);  // null progressCallback, force=true
   }
 
   toJSON() {
