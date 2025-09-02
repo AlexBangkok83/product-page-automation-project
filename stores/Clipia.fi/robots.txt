@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clipia.fi/sitemap.xml
+
+# Generated for Clipia Finland

@@ -1,5 +1,5 @@
 
-// Generated JavaScript for Clipia Deuchland
+// Generated JavaScript for Clipia Finland
 
 // Product view function
 function viewProduct(handle) {
@@ -31,4 +31,4 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-console.log('🏪 Store: Clipia Deuchland | Domain: clipia.de | Generated with Claude Code');
+console.log('🏪 Store: Clipia Finland | Domain: clipia.fi | Generated with Claude Code');

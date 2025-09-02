@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://clipia.de/sitemap.xml
-
-# Generated for Clipia Deuchland
